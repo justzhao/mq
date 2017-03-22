@@ -8,6 +8,9 @@
   <modules>
     <module>broker</module>
     <module>namesrv</module>
+      <module>store</module>
+    <module>remoting</module>
+    <module>tools</module>
   </modules>
   <packaging>pom</packaging>
 
