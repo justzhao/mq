@@ -8,7 +8,7 @@ public class NettyServerConfig {
     private int port = 9999;
     private int serverSocketSndBufSize = 65535;
     private int serverSocketRcvBufSize = 65535;
-
+    private int serverWorkerThreads = 8;
     private int serverChannelMaxIdleTimeSeconds = 120;
 
 
@@ -42,5 +42,13 @@ public class NettyServerConfig {
 
     public void setServerChannelMaxIdleTimeSeconds(int serverChannelMaxIdleTimeSeconds) {
         this.serverChannelMaxIdleTimeSeconds = serverChannelMaxIdleTimeSeconds;
+    }
+
+    public int getServerWorkerThreads() {
+        return serverWorkerThreads;
+    }
+
+    public void setServerWorkerThreads(int serverWorkerThreads) {
+        this.serverWorkerThreads = serverWorkerThreads;
     }
 }
