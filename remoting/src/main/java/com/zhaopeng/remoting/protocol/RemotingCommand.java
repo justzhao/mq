@@ -21,11 +21,6 @@ public class RemotingCommand {
     private static AtomicInteger requestId = new AtomicInteger(0);
 
 
-
-
-
-
-
     public ByteBuffer encodeHeader() {
         return encodeHeader(this.body != null ? this.body.length : 0);
     }
@@ -77,4 +72,31 @@ public class RemotingCommand {
     }
 
 
+    public static int getRpcType() {
+        return RPC_TYPE;
+    }
+
+    public byte[] getBody() {
+        return body;
+    }
+
+    public void setBody(byte[] body) {
+        this.body = body;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public void setCode(int code) {
+        this.code = code;
+    }
+
+    public static AtomicInteger getRequestId() {
+        return requestId;
+    }
+
+    public static void setRequestId(AtomicInteger requestId) {
+        RemotingCommand.requestId = requestId;
+    }
 }
