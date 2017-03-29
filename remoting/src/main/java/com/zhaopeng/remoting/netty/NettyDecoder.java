@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
  lengthFieldOffset：长度属性的起始位（偏移位），包中存放有整个大数据包长度的字节，这段字节的起始位置
  lengthFieldLength：长度属性的长度，即存放整个大数据包长度的字节所占的长度
  lengthAdjustmen：长度调节值，在总长被定义为包含包头长度时，修正信息长度。
+ initialBytesToStrip：跳过的字节数，根据需要我们跳过lengthFieldLength个字节，以便接收端直接接受到不含“长度属性”的内容
  */
 public class NettyDecoder extends LengthFieldBasedFrameDecoder {
     private static final Logger logger = LoggerFactory.getLogger(NettyDecoder.class);

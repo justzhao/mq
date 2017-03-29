@@ -20,19 +20,24 @@ public class RemotingCommand {
     //reqId
     private static AtomicInteger requestId = new AtomicInteger(0);
 
+    //req or resp
+    private RemotingCommandType type;
+
 
     public ByteBuffer encodeHeader() {
         return encodeHeader(this.body != null ? this.body.length : 0);
     }
 
     /**
-
+     * 根据body的数据长度产生包头数据
+     * @param bodyLength
+     * @return
      */
     public ByteBuffer encodeHeader(final int bodyLength) {
-        // 1> header length size
+        // 1> header length size , 包头和消息题的总数据长度
         int length = 4;
 
-        // 2> header data length
+        // 2> header data length  包头数据编码
         byte[] headerData;
         headerData = this.headerEncode();
 
@@ -40,13 +45,13 @@ public class RemotingCommand {
 
         // 3> body data length
         length += bodyLength;
-
+        //分配一个4 字节+ 包头长度的缓存
         ByteBuffer result = ByteBuffer.allocate(4 + length - bodyLength);
 
-        // length
+        // length  int 长度为4个字节
         result.putInt(length);
 
-        // header length
+        // header length  包头的长度
         result.put(markProtocolType(headerData.length));
 
         // header data
@@ -98,5 +103,13 @@ public class RemotingCommand {
 
     public static void setRequestId(AtomicInteger requestId) {
         RemotingCommand.requestId = requestId;
+    }
+
+    public RemotingCommandType getType() {
+        return type;
+    }
+
+    public void setType(RemotingCommandType type) {
+        this.type = type;
     }
 }
