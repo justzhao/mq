@@ -1,7 +1,6 @@
 package com.zhaopeng.remoting.protocol;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by zhaopeng on 2017/3/25.
@@ -18,10 +17,12 @@ public class RemotingCommand {
     private int code;
 
     //reqId
-    private static AtomicInteger requestId = new AtomicInteger(0);
+    private String requestId ;
 
     //req or resp
     private RemotingCommandType type;
+
+    private boolean oneWay;
 
 
     public ByteBuffer encodeHeader() {
@@ -97,12 +98,12 @@ public class RemotingCommand {
         this.code = code;
     }
 
-    public static AtomicInteger getRequestId() {
+    public String getRequestId() {
         return requestId;
     }
 
-    public static void setRequestId(AtomicInteger requestId) {
-        RemotingCommand.requestId = requestId;
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
     }
 
     public RemotingCommandType getType() {
@@ -111,5 +112,13 @@ public class RemotingCommand {
 
     public void setType(RemotingCommandType type) {
         this.type = type;
+    }
+
+    public boolean isOneWay() {
+        return oneWay;
+    }
+
+    public void setOneWay(boolean oneWay) {
+        this.oneWay = oneWay;
     }
 }
