@@ -1,5 +1,6 @@
 package com.zhaopeng.remoting.netty;
 
+import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.remoting.protocol.RemotingCommandType;
 import io.netty.channel.ChannelHandlerContext;
@@ -60,5 +61,16 @@ public class NettyRemotingAbstract {
      */
     public void processResponseCommand(ChannelHandlerContext ctx, RemotingCommand cmd) {
 
+    }
+
+    class NettyEventExecuter extends ServiceThread {
+
+        public String getServiceName() {
+            return null;
+        }
+
+        public void run() {
+
+        }
     }
 }

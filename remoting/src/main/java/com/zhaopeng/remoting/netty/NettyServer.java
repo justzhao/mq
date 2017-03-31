@@ -1,5 +1,6 @@
 package com.zhaopeng.remoting.netty;
 
+import com.zhaopeng.remoting.common.Pair;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -9,13 +10,16 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by zhaopeng on 2017/3/23.
  */
-public class NettyServer extends NettyRemotingAbstract  implements Server  {
+public class NettyServer extends NettyRemotingAbstract implements Server {
 
 
     private final ServerBootstrap serverBootstrap;
@@ -23,6 +27,19 @@ public class NettyServer extends NettyRemotingAbstract  implements Server  {
     private final EventLoopGroup eventLoopGroupBoss;
     private final NettyServerConfig nettyServerConfig;
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
+
+
+
+    protected final ConcurrentHashMap<Integer /* opaque */, ResponseFuture> responseTable =
+            new ConcurrentHashMap<Integer, ResponseFuture>(256);
+
+    protected final HashMap<String/* request code */, Pair<NettyRequestProcessor, ExecutorService>> processorTable =
+            new HashMap<String, Pair<NettyRequestProcessor, ExecutorService>>(64);
+
+    protected final NettyEventExecuter nettyEventExecuter = new NettyEventExecuter();
+
+    protected Pair<NettyRequestProcessor, ExecutorService> defaultRequestProcessor;
+
 
     public NettyServer(ServerBootstrap serverBootstrap, EventLoopGroup eventLoopGroupSelector, EventLoopGroup eventLoopGroupBoss, NettyServerConfig nettyServerConfig) {
         this.serverBootstrap = new ServerBootstrap();
@@ -39,6 +56,7 @@ public class NettyServer extends NettyRemotingAbstract  implements Server  {
                     public Thread newThread(Runnable r) {
                         return new Thread(r, "NettyServerCodecThread_" + this.threadIndex.incrementAndGet());
                     }
+
                     private AtomicInteger threadIndex = new AtomicInteger(0);
                 });
 
@@ -76,11 +94,23 @@ public class NettyServer extends NettyRemotingAbstract  implements Server  {
 
     }
 
+    public void registerProcessor(int requestCode, NettyRequestProcessor processor, ExecutorService executor) {
+
+    }
+
+    public void registerDefaultProcessor(NettyRequestProcessor processor, ExecutorService executor) {
+
+    }
+
+    public Pair<NettyRequestProcessor, ExecutorService> getProcessorPair(int requestCode) {
+        return null;
+    }
+
     class NettyServerHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
-              processMessageReceived(ctx, msg);
+            processMessageReceived(ctx, msg);
         }
     }
 
