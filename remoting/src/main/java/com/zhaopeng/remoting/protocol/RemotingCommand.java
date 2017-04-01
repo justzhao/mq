@@ -13,7 +13,7 @@ public class RemotingCommand {
     // body
     private transient byte[] body;
 
-    //
+    // 业务类型
     private int code;
 
     //reqId
@@ -23,6 +23,8 @@ public class RemotingCommand {
     private RemotingCommandType type;
 
     private boolean oneWay;
+
+    String remark;
 
 
     public ByteBuffer encodeHeader() {
@@ -78,6 +80,17 @@ public class RemotingCommand {
     }
 
 
+
+    public static RemotingCommand createResponseCommand(int code, String remark) {
+        RemotingCommand cmd = new RemotingCommand();
+        cmd.setCode(code);
+        cmd.setRemark(remark);
+        cmd.setType(RemotingCommandType.RESPONSE_COMMAND);
+        return cmd;
+    }
+
+
+
     public static int getRpcType() {
         return RPC_TYPE;
     }
@@ -120,5 +133,13 @@ public class RemotingCommand {
 
     public void setOneWay(boolean oneWay) {
         this.oneWay = oneWay;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 }
