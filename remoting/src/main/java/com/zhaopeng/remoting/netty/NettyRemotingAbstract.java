@@ -1,5 +1,6 @@
 package com.zhaopeng.remoting.netty;
 
+import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.common.Pair;
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
@@ -99,6 +100,24 @@ public class NettyRemotingAbstract {
      * @param cmd
      */
     public void processResponseCommand(ChannelHandlerContext ctx, RemotingCommand cmd) {
+        String requestId=cmd.getRequestId();
+        ResponseFuture responseFuture=responseTable.get(requestId);
+        if(responseFuture!=null){
+
+            responseFuture.setResponseCommand(cmd);
+            responseTable.remove(requestId);
+
+            if(responseFuture.getInvokeCallback()!=null){
+
+                responseFuture.executeInvokeCallback();
+            }else{
+                responseFuture.putResponse(cmd);
+            }
+
+
+        }else {
+            logger.error("receive response, but not matched any request, {}" ,ctx.channel());
+        }
 
     }
 

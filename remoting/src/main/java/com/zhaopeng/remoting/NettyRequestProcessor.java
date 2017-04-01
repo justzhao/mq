@@ -1,4 +1,4 @@
-package com.zhaopeng.remoting.netty;
+package com.zhaopeng.remoting;
 
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import io.netty.channel.ChannelHandlerContext;
