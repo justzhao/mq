@@ -24,6 +24,9 @@ public class ResponseFuture {
     private volatile RemotingCommand responseCommand;
     private volatile boolean sendRequestOK = true;
 
+
+    private Throwable cause;
+
     public ResponseFuture(String requestId, long timeoutMillis,InvokeCallback invokeCallback) {
         this.requestId = requestId;
         this.timeoutMillis = timeoutMillis;
@@ -95,5 +98,13 @@ public class ResponseFuture {
 
     public InvokeCallback getInvokeCallback() {
         return invokeCallback;
+    }
+
+    public Throwable getCause() {
+        return cause;
+    }
+
+    public void setCause(Throwable cause) {
+        this.cause = cause;
     }
 }

@@ -1,15 +1,21 @@
 package com.zhaopeng.remoting.netty;
 
+import com.zhaopeng.remoting.InvokeCallback;
 import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.common.Pair;
 import com.zhaopeng.remoting.common.ServiceThread;
+import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.remoting.protocol.RemotingCommandType;
 import com.zhaopeng.remoting.protocol.RemotingSysResponseCode;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -100,26 +106,92 @@ public class NettyRemotingAbstract {
      * @param cmd
      */
     public void processResponseCommand(ChannelHandlerContext ctx, RemotingCommand cmd) {
-        String requestId=cmd.getRequestId();
-        ResponseFuture responseFuture=responseTable.get(requestId);
-        if(responseFuture!=null){
+        String requestId = cmd.getRequestId();
+        ResponseFuture responseFuture = responseTable.get(requestId);
+        if (responseFuture != null) {
 
             responseFuture.setResponseCommand(cmd);
             responseTable.remove(requestId);
 
-            if(responseFuture.getInvokeCallback()!=null){
+            if (responseFuture.getInvokeCallback() != null) {
 
                 responseFuture.executeInvokeCallback();
-            }else{
+            } else {
                 responseFuture.putResponse(cmd);
             }
 
 
-        }else {
-            logger.error("receive response, but not matched any request, {}" ,ctx.channel());
+        } else {
+            logger.error("receive response, but not matched any request, {}", ctx.channel());
         }
 
     }
+
+    /**
+     * 同步请求
+     *
+     * @param channel
+     * @param request
+     * @param timeoutMillis
+     * @return
+     */
+    public RemotingCommand invokeSyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis) throws InterruptedException, RemotingException {
+
+        final String requestId = request.getRequestId();
+
+        try {
+            final ResponseFuture responseFuture;
+            responseFuture = new ResponseFuture(requestId, timeoutMillis, null);
+            this.responseTable.put(requestId, responseFuture);
+            final SocketAddress addr = channel.remoteAddress();
+            channel.writeAndFlush(request).addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture f) throws Exception {
+                    if (f.isSuccess()) {
+                        responseFuture.setSendRequestOK(true);
+                        return;
+                    } else {
+                        responseFuture.setSendRequestOK(false);
+                    }
+
+                    responseTable.remove(requestId);
+                    responseFuture.setCause(f.cause());
+                    responseFuture.putResponse(null);
+                    logger.warn("send a request command to channel <" + addr + "> failed.");
+                }
+            });
+
+            RemotingCommand responseCommand = responseFuture.waitResponse(timeoutMillis);
+            if (null == responseCommand) {
+                if (responseFuture.isSendRequestOK()) {
+                    throw new RemotingException(addr.toString() + " " + timeoutMillis,
+                            responseFuture.getCause());
+                } else {
+                    throw new RemotingException(addr.toString(), responseFuture.getCause());
+                }
+            }
+
+            return responseCommand;
+        } finally {
+            this.responseTable.remove(requestId);
+        }
+
+    }
+
+
+    /**
+     * 异步请求
+     *
+     * @param channel
+     * @param request
+     * @param timeoutMillis
+     * @param invokeCallback
+     */
+    public void invokeAsyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis,
+                                final InvokeCallback invokeCallback) {
+
+    }
+
 
     class NettyEventExecuter extends ServiceThread {
 
