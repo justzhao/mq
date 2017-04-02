@@ -19,12 +19,21 @@ import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by zhaopeng on 2017/3/26.
  */
 public class NettyRemotingAbstract {
     private static final Logger logger = LoggerFactory.getLogger(NettyRemotingAbstract.class);
+
+
+    // 单方面调用的信号量个数
+    protected final Semaphore semaphoreOneway;
+
+    //异步执行任务的信号量个数
+    protected final Semaphore semaphoreAsync;
 
     // 用来存放发出去的request
     protected final ConcurrentHashMap<String /* requestId */, ResponseFuture> responseTable =
@@ -38,6 +47,11 @@ public class NettyRemotingAbstract {
 
     //默认的业务处理器
     protected Pair<NettyRequestProcessor, ExecutorService> defaultRequestProcessor;
+
+    public NettyRemotingAbstract(final int permitsOneway, final int permitsAsync) {
+        this.semaphoreOneway = new Semaphore(permitsOneway, true);
+        this.semaphoreAsync = new Semaphore(permitsAsync, true);
+    }
 
 
     public void processMessageReceived(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
@@ -188,7 +202,54 @@ public class NettyRemotingAbstract {
      * @param invokeCallback
      */
     public void invokeAsyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis,
-                                final InvokeCallback invokeCallback) {
+                                final InvokeCallback invokeCallback) throws InterruptedException, RemotingException {
+
+        final String requestId = request.getRequestId();
+        boolean acquired = this.semaphoreAsync.tryAcquire(timeoutMillis, TimeUnit.MILLISECONDS);
+        if (acquired) {
+
+            final ResponseFuture responseFuture = new ResponseFuture(requestId, timeoutMillis, invokeCallback);
+            this.responseTable.put(requestId, responseFuture);
+            try {
+                channel.writeAndFlush(request).addListener(new ChannelFutureListener() {
+                    @Override
+                    public void operationComplete(ChannelFuture f) throws Exception {
+                        if (f.isSuccess()) {
+                            responseFuture.setSendRequestOK(true);
+                            return;
+                        } else {
+                            responseFuture.setSendRequestOK(false);
+                        }
+
+                        responseFuture.putResponse(null);
+                        responseTable.remove(requestId);
+                        try {
+                            responseFuture.executeInvokeCallback();
+                        } catch (Throwable e) {
+                            logger.warn("excute callback in writeAndFlush addListener, and callback throw", e);
+                        } finally {
+                            semaphoreAsync.release();
+                        }
+
+                        logger.warn("send a request command to channel <{}> failed.", channel);
+                    }
+                });
+            } catch (Exception e) {
+                this.semaphoreAsync.release();
+                logger.warn("send a request command to channel <{}> Exception {}", channel, e);
+                throw new RemotingException(channel.toString(), e);
+            }
+        } else {
+            String info =
+                    String.format("invokeAsyncImpl tryAcquire semaphore timeout, %dms, waiting thread nums: %d semaphoreAsyncValue: %d", //
+                            timeoutMillis, //
+                            this.semaphoreAsync.getQueueLength(), //
+                            this.semaphoreAsync.availablePermits()//
+                    );
+            logger.warn(info);
+            throw new RemotingException(info);
+        }
+
 
     }
 
