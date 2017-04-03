@@ -3,6 +3,7 @@ package com.zhaopeng.remoting.netty;
 import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.Server;
 import com.zhaopeng.remoting.common.Pair;
+import com.zhaopeng.remoting.protocol.ChannelEventListener;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -31,12 +32,16 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
 
     private final ExecutorService publicExecutor;
 
+    private final ChannelEventListener channelEventListener;
 
-    public NettyServer(EventLoopGroup eventLoopGroupSelector, EventLoopGroup eventLoopGroupBoss, NettyServerConfig nettyServerConfig) {
+
+    public NettyServer(EventLoopGroup eventLoopGroupSelector, EventLoopGroup eventLoopGroupBoss, NettyServerConfig nettyServerConfig,ChannelEventListener channelEventListener) {
+        super(10,10);
         this.serverBootstrap = new ServerBootstrap();
         this.eventLoopGroupSelector = eventLoopGroupSelector;
         this.eventLoopGroupBoss = eventLoopGroupBoss;
         this.nettyServerConfig = nettyServerConfig;
+        this.channelEventListener=channelEventListener;
 
         this.publicExecutor = Executors.newFixedThreadPool(4, new ThreadFactory() {
             private AtomicInteger threadIndex = new AtomicInteger(0);
@@ -123,4 +128,8 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
     }
 
 
+    @Override
+    public ChannelEventListener getChannelEventListener() {
+        return channelEventListener;
+    }
 }

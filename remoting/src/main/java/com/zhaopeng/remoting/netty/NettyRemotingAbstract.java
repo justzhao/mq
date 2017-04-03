@@ -5,6 +5,7 @@ import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.common.Pair;
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.remoting.exception.RemotingException;
+import com.zhaopeng.remoting.protocol.ChannelEventListener;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.remoting.protocol.RemotingCommandType;
 import com.zhaopeng.remoting.protocol.RemotingSysResponseCode;
@@ -17,15 +18,12 @@ import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created by zhaopeng on 2017/3/26.
  */
-public class NettyRemotingAbstract {
+public abstract class NettyRemotingAbstract {
     private static final Logger logger = LoggerFactory.getLogger(NettyRemotingAbstract.class);
 
 
@@ -44,6 +42,24 @@ public class NettyRemotingAbstract {
     protected final HashMap<Integer/* request code */, Pair<NettyRequestProcessor, ExecutorService>> processorTable = new HashMap<>(64);
 
     protected final NettyEventExecuter nettyEventExecuter = new NettyEventExecuter();
+
+    /**
+     * 获取监听器
+     *
+     * @return
+     */
+    public abstract ChannelEventListener getChannelEventListener();
+
+
+    /**
+     * 添加一个待监听的事件
+     *
+     * @param event
+     */
+    public void putNettyEvent(NettyEvent event) {
+        this.nettyEventExecuter.putNettyEvent(event);
+    }
+
 
     //默认的业务处理器
     protected Pair<NettyRequestProcessor, ExecutorService> defaultRequestProcessor;
@@ -250,17 +266,70 @@ public class NettyRemotingAbstract {
             throw new RemotingException(info);
         }
 
+    }
+
+    /**
+     * 不需要返回值的请求
+     *
+     * @param channel
+     * @param request
+     * @param timeoutMillis
+     */
+    public void invokeOneWayImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis) {
 
     }
 
-
     class NettyEventExecuter extends ServiceThread {
+        private LinkedBlockingQueue<NettyEvent> events = new LinkedBlockingQueue<>();
+
+        private final int maxSize = 100;
+
+
+        public void putNettyEvent(final NettyEvent event) {
+            if (this.events.size() <= maxSize) {
+                this.events.add(event);
+            } else {
+                logger.warn("event queue size[{}] enough, so drop this event {}", this.events.size(), event.toString());
+            }
+        }
 
         public String getServiceName() {
-            return null;
+            return this.getClass().getSimpleName();
         }
 
         public void run() {
+            logger.info(this.getServiceName() + " service started");
+
+            final ChannelEventListener listener = NettyRemotingAbstract.this.getChannelEventListener();
+
+            while (!this.isStoped()) {
+                try {
+                    NettyEvent event = this.events.poll(3000, TimeUnit.MILLISECONDS);
+                    if (event != null && listener != null) {
+                        switch (event.getType()) {
+                            case IDLE:
+                                listener.onChannelIdle(event.getRemoteAddr(), event.getChannel());
+                                break;
+                            case CLOSE:
+                                listener.onChannelClose(event.getRemoteAddr(), event.getChannel());
+                                break;
+                            case CONNECT:
+                                listener.onChannelConnect(event.getRemoteAddr(), event.getChannel());
+                                break;
+                            case EXCEPTION:
+                                listener.onChannelException(event.getRemoteAddr(), event.getChannel());
+                                break;
+                            default:
+                                break;
+
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn(this.getServiceName() + " service has exception. ", e);
+                }
+            }
+
+            logger.info(this.getServiceName() + " service end");
 
         }
     }

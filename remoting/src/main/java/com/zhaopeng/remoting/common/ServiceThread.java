@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Created by zhaopeng on 2017/3/31.
+ * 用来监听netty 中Channel状态变化的线程
  */
 public abstract class ServiceThread implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(ServiceThread.class);
