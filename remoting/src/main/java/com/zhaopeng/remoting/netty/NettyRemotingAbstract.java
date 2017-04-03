@@ -5,7 +5,7 @@ import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.common.Pair;
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.remoting.exception.RemotingException;
-import com.zhaopeng.remoting.protocol.ChannelEventListener;
+import com.zhaopeng.remoting.ChannelEventListener;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.remoting.protocol.RemotingCommandType;
 import com.zhaopeng.remoting.protocol.RemotingSysResponseCode;
@@ -275,7 +275,43 @@ public abstract class NettyRemotingAbstract {
      * @param request
      * @param timeoutMillis
      */
-    public void invokeOneWayImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis) {
+    public void invokeOneWayImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis) throws InterruptedException, RemotingException {
+
+        request.setOneWay(true);
+        boolean acquired = this.semaphoreOneway.tryAcquire(timeoutMillis, TimeUnit.MILLISECONDS);
+        if (acquired) {
+
+            try {
+                channel.writeAndFlush(request).addListener(new ChannelFutureListener() {
+                    @Override
+                    public void operationComplete(ChannelFuture f) throws Exception {
+
+                        NettyRemotingAbstract.this.semaphoreOneway.release();
+                        if (!f.isSuccess()) {
+                            logger.warn("send a request command to channel <" + channel.remoteAddress() + "> failed.");
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                NettyRemotingAbstract.this.semaphoreOneway.release();
+                ;
+                logger.warn("write send a request command to channel <" + channel.remoteAddress() + "> failed.");
+                throw new RemotingException(channel.toString(), e);
+            }
+        } else {
+            if (timeoutMillis <= 0) {
+                throw new RemotingException("invokeOnewayImpl invoke too fast");
+            } else {
+                String info = String.format(
+                        "invokeOnewayImpl tryAcquire semaphore timeout, %dms, waiting thread nums: %d semaphoreAsyncValue: %d", //
+                        timeoutMillis, //
+                        this.semaphoreOneway.getQueueLength(), //
+                        this.semaphoreOneway.availablePermits()//
+                );
+                logger.warn(info);
+                throw new RemotingException(info);
+            }
+        }
 
     }
 

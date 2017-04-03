@@ -2,6 +2,9 @@ package com.zhaopeng.remoting.protocol;
 
 import java.nio.ByteBuffer;
 
+import static com.zhaopeng.remoting.protocol.SerializeType.JSON;
+import static com.zhaopeng.remoting.protocol.SerializeType.ROCKETMQ;
+
 /**
  * Created by zhaopeng on 2017/3/25.
  */
@@ -17,7 +20,7 @@ public class RemotingCommand {
     private int code;
 
     //reqId
-    private String requestId ;
+    private String requestId;
 
     //req or resp
     private RemotingCommandType type;
@@ -27,12 +30,16 @@ public class RemotingCommand {
     String remark;
 
 
+    private static SerializeType serializeType = JSON;
+
+
     public ByteBuffer encodeHeader() {
         return encodeHeader(this.body != null ? this.body.length : 0);
     }
 
     /**
      * 根据body的数据长度产生包头数据
+     *
      * @param bodyLength
      * @return
      */
@@ -68,7 +75,7 @@ public class RemotingCommand {
     public static byte[] markProtocolType(int source) {
         byte[] result = new byte[4];
 
-        result[0] = (byte)source;
+        result[0] = (byte) source;
         result[1] = (byte) ((source >> 16) & 0xFF);
         result[2] = (byte) ((source >> 8) & 0xFF);
         result[3] = (byte) (source & 0xFF);
@@ -76,9 +83,12 @@ public class RemotingCommand {
     }
 
     private byte[] headerEncode() {
-       return RemotingSerializable.encode(this);
+        if (serializeType == ROCKETMQ) {
+            return MQSerializable.mqProtocolEncode(this);
+        } else {
+            return JsonSerializable.encode(this);
+        }
     }
-
 
 
     public static RemotingCommand createResponseCommand(int code, String remark) {
@@ -89,6 +99,51 @@ public class RemotingCommand {
         return cmd;
     }
 
+    public static RemotingCommand decode(final ByteBuffer byteBuffer) {
+        int length = byteBuffer.limit();
+        int oriHeaderLen = byteBuffer.getInt();
+        int headerLength = getHeaderLength(oriHeaderLen);
+
+        byte[] headerData = new byte[headerLength];
+        byteBuffer.get(headerData);
+
+        RemotingCommand cmd = headerDecode(headerData, getProtocolType(oriHeaderLen));
+
+        int bodyLength = length - 4 - headerLength;
+        byte[] bodyData = null;
+        if (bodyLength > 0) {
+            bodyData = new byte[bodyLength];
+            byteBuffer.get(bodyData);
+        }
+        cmd.body = bodyData;
+
+        return cmd;
+    }
+
+    public static SerializeType getProtocolType(int source) {
+        return SerializeType.valueOf((byte) ((source >> 24) & 0xFF));
+    }
+
+    public static int getHeaderLength(int length) {
+        return length & 0xFFFFFF;
+    }
+
+    private static RemotingCommand headerDecode(byte[] headerData, SerializeType type) {
+        switch (type) {
+            case JSON:
+                RemotingCommand resultJson = JsonSerializable.decode(headerData, RemotingCommand.class);
+                resultJson.setSerializeType(type);
+                return resultJson;
+            case ROCKETMQ:
+                RemotingCommand resultRMQ = MQSerializable.rocketMQProtocolDecode(headerData);
+                resultRMQ.setSerializeType(type);
+                return resultRMQ;
+            default:
+                break;
+        }
+
+        return null;
+    }
 
 
     public static int getRpcType() {
@@ -141,5 +196,13 @@ public class RemotingCommand {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public static SerializeType getSerializeType() {
+        return serializeType;
+    }
+
+    public static void setSerializeType(SerializeType serializeType) {
+        RemotingCommand.serializeType = serializeType;
     }
 }

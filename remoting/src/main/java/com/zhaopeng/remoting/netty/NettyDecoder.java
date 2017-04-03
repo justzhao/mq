@@ -1,6 +1,7 @@
 package com.zhaopeng.remoting.netty;
 
 
+import com.zhaopeng.remoting.protocol.RemotingCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
@@ -43,7 +44,7 @@ public class NettyDecoder extends LengthFieldBasedFrameDecoder {
 
             ByteBuffer byteBuffer = frame.nioBuffer();
             //解码
-            //return RemotingCommand.decode(byteBuffer);
+            return RemotingCommand.decode(byteBuffer);
         } catch (Exception e) {
             logger.error("decode exception {}" ,e);
             ctx.close();
