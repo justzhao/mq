@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ResponseFuture {
 
-    private final String  requestId;
+    private final int  requestId;
     private final long timeoutMillis;
     private final InvokeCallback invokeCallback;
     private final long beginTimestamp = System.currentTimeMillis();
@@ -27,7 +27,7 @@ public class ResponseFuture {
 
     private Throwable cause;
 
-    public ResponseFuture(String requestId, long timeoutMillis,InvokeCallback invokeCallback) {
+    public ResponseFuture(int requestId, long timeoutMillis,InvokeCallback invokeCallback) {
         this.requestId = requestId;
         this.timeoutMillis = timeoutMillis;
         this.invokeCallback=invokeCallback;
@@ -60,7 +60,7 @@ public class ResponseFuture {
     }
 
 
-    public String getRequestId() {
+    public int getRequestId() {
         return requestId;
     }
 

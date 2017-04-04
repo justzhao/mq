@@ -1,6 +1,10 @@
 package com.zhaopeng.remoting.protocol;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.zhaopeng.remoting.protocol.SerializeType.JSON;
 import static com.zhaopeng.remoting.protocol.SerializeType.ROCKETMQ;
@@ -11,26 +15,51 @@ import static com.zhaopeng.remoting.protocol.SerializeType.ROCKETMQ;
 public class RemotingCommand {
 
 
-    private static final int RPC_TYPE = 0; // 0, REQUEST_COMMAND
+    private static final int RPC_TYPE = 0; // 0 是req 1 是 rep
+    private static final int RPC_ONEWAY = 1; // 0  rpc 需要返回结果, 1 ,不需要返回结果
+    /**
+     *  静态变量用来唯一保存 请求id
+     */
+    private static AtomicInteger requestId = new AtomicInteger(0);
 
     // body
     private transient byte[] body;
 
+    /**
+     * 下面参数需要被序列化传输
+     */
+
     // 业务类型
     private int code;
 
-    //reqId
-    private String requestId;
+    private String remark;
+    //标识 RPC的方式
+    private int flag = 0;
+    /**
+     * 扩展字段
+     */
+    private HashMap<String, String> extFields;
 
-    //req or resp
-    private RemotingCommandType type;
+    /**
+     * 用来临时保存 requestId
+     */
+    private int opaque = requestId.getAndIncrement();
 
-    private boolean oneWay;
-
-    String remark;
+    /**
+     * 序列化字段结束
+     */
 
 
     private static SerializeType serializeType = JSON;
+
+
+    /**
+     * 获取最新的requestId
+     * @return
+     */
+    public static int createNewRequestId() {
+        return requestId.incrementAndGet();
+    }
 
 
     public ByteBuffer encodeHeader() {
@@ -89,13 +118,48 @@ public class RemotingCommand {
             return JsonSerializable.encode(this);
         }
     }
+    public void markResponseType() {
+        int bits = 1 << RPC_TYPE;
+        this.flag |= bits;
+    }
+
+    public void markOnewayRPC() {
+        int bits = 1 << RPC_ONEWAY;
+        this.flag |= bits;
+    }
+
+    @JSONField(serialize = false)
+    public boolean isOnewayRPC() {
+        int bits = 1 << RPC_ONEWAY;
+        return (this.flag & bits) == bits;
+    }
+
+    public boolean isOneWay() {
+        int bits = 1 << RPC_ONEWAY;
+        return (this.flag & bits) == bits;
+    }
+
+    @JSONField(serialize = false)
+    public boolean isResponseType() {
+        int bits = 1 << RPC_TYPE;
+        return (this.flag & bits) == bits;
+    }
+
+    @JSONField(serialize = false)
+    public RemotingCommandType getType() {
+        if (this.isResponseType()) {
+            return RemotingCommandType.RESPONSE_COMMAND;
+        }
+
+        return RemotingCommandType.REQUEST_COMMAND;
+    }
 
 
     public static RemotingCommand createResponseCommand(int code, String remark) {
         RemotingCommand cmd = new RemotingCommand();
         cmd.setCode(code);
         cmd.setRemark(remark);
-        cmd.setType(RemotingCommandType.RESPONSE_COMMAND);
+        cmd.markResponseType();
         return cmd;
     }
 
@@ -145,11 +209,6 @@ public class RemotingCommand {
         return null;
     }
 
-
-    public static int getRpcType() {
-        return RPC_TYPE;
-    }
-
     public byte[] getBody() {
         return body;
     }
@@ -166,29 +225,7 @@ public class RemotingCommand {
         this.code = code;
     }
 
-    public String getRequestId() {
-        return requestId;
-    }
 
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public RemotingCommandType getType() {
-        return type;
-    }
-
-    public void setType(RemotingCommandType type) {
-        this.type = type;
-    }
-
-    public boolean isOneWay() {
-        return oneWay;
-    }
-
-    public void setOneWay(boolean oneWay) {
-        this.oneWay = oneWay;
-    }
 
     public String getRemark() {
         return remark;
@@ -204,5 +241,21 @@ public class RemotingCommand {
 
     public static void setSerializeType(SerializeType serializeType) {
         RemotingCommand.serializeType = serializeType;
+    }
+
+    public int getOpaque() {
+        return opaque;
+    }
+
+    public void setOpaque(int opaque) {
+        this.opaque = opaque;
+    }
+
+    public HashMap<String, String> getExtFields() {
+        return extFields;
+    }
+
+    public void setExtFields(HashMap<String, String> extFields) {
+        this.extFields = extFields;
     }
 }

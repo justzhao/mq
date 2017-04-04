@@ -1,13 +1,12 @@
 package com.zhaopeng.remoting.netty;
 
+import com.zhaopeng.remoting.ChannelEventListener;
 import com.zhaopeng.remoting.InvokeCallback;
 import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.common.Pair;
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.remoting.exception.RemotingException;
-import com.zhaopeng.remoting.ChannelEventListener;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
-import com.zhaopeng.remoting.protocol.RemotingCommandType;
 import com.zhaopeng.remoting.protocol.RemotingSysResponseCode;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -34,7 +33,7 @@ public abstract class NettyRemotingAbstract {
     protected final Semaphore semaphoreAsync;
 
     // 用来存放发出去的request
-    protected final ConcurrentHashMap<String /* requestId */, ResponseFuture> responseTable =
+    protected final ConcurrentHashMap<Integer /* requestId */, ResponseFuture> responseTable =
             new ConcurrentHashMap<>(256);
 
 
@@ -96,15 +95,15 @@ public abstract class NettyRemotingAbstract {
 
         final Pair<NettyRequestProcessor, ExecutorService> matched = this.processorTable.get(cmd.getCode());
         final Pair<NettyRequestProcessor, ExecutorService> pair = null == matched ? this.defaultRequestProcessor : matched;
-        final String requestId = cmd.getRequestId();
+        final int requestId = cmd.getOpaque();
         if (pair != null) {
             Runnable run = new Runnable() {
                 public void run() {
                     try {
                         RemotingCommand response = pair.getObject1().processRequest(ctx, cmd);
                         if (!cmd.isOneWay()) {
-                            response.setRequestId(requestId);
-                            response.setType(RemotingCommandType.RESPONSE_COMMAND);
+                            response.setOpaque(requestId);
+                            response.markResponseType();
                             ctx.writeAndFlush(response);
                         }
                     } catch (Exception e) {
@@ -121,7 +120,7 @@ public abstract class NettyRemotingAbstract {
             String error = " request type " + cmd.getCode() + " not supported";
             final RemotingCommand response =
                     RemotingCommand.createResponseCommand(RemotingSysResponseCode.REQUEST_CODE_NOT_SUPPORTED, error);
-            response.setRequestId(requestId);
+            response.setOpaque(requestId);
             ctx.writeAndFlush(response);
 
             logger.error(ctx.channel() + error);
@@ -136,7 +135,7 @@ public abstract class NettyRemotingAbstract {
      * @param cmd
      */
     public void processResponseCommand(ChannelHandlerContext ctx, RemotingCommand cmd) {
-        String requestId = cmd.getRequestId();
+        int requestId = cmd.getOpaque();
         ResponseFuture responseFuture = responseTable.get(requestId);
         if (responseFuture != null) {
 
@@ -167,7 +166,7 @@ public abstract class NettyRemotingAbstract {
      */
     public RemotingCommand invokeSyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis) throws InterruptedException, RemotingException {
 
-        final String requestId = request.getRequestId();
+        final int requestId = request.getOpaque();
 
         try {
             final ResponseFuture responseFuture;
@@ -220,7 +219,7 @@ public abstract class NettyRemotingAbstract {
     public void invokeAsyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis,
                                 final InvokeCallback invokeCallback) throws InterruptedException, RemotingException {
 
-        final String requestId = request.getRequestId();
+        final int requestId = request.getOpaque();
         boolean acquired = this.semaphoreAsync.tryAcquire(timeoutMillis, TimeUnit.MILLISECONDS);
         if (acquired) {
 
@@ -277,7 +276,7 @@ public abstract class NettyRemotingAbstract {
      */
     public void invokeOneWayImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis) throws InterruptedException, RemotingException {
 
-        request.setOneWay(true);
+        request.markOnewayRPC();
         boolean acquired = this.semaphoreOneway.tryAcquire(timeoutMillis, TimeUnit.MILLISECONDS);
         if (acquired) {
 

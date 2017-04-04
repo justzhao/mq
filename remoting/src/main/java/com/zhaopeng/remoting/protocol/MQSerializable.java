@@ -13,6 +13,12 @@ public class MQSerializable {
 
     public static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
+    /**
+     * 需要被序列化的字段有如下
+     * remark  , code（业务类型）, opaque(requestID) ,  type(req,rep),oneWay, 扩展字段,
+     * @param cmd
+     * @return
+     */
     public static byte[] mqProtocolEncode(RemotingCommand cmd) {
         // String remark
         byte[] remarkBytes = null;
@@ -37,7 +43,7 @@ public class MQSerializable {
         // int version(~32767)
       //  headerBuffer.putShort((short) cmd.getVersion());
         // int opaque
-        headerBuffer.put(cmd.getRequestId().getBytes(JsonSerializable.CHARSET_UTF8));
+        headerBuffer.putInt(cmd.getOpaque());
         // int flag
        // headerBuffer.putInt(cmd.);
         // String remark
