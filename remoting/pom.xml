@@ -4,7 +4,6 @@
         <artifactId>mq</artifactId>
         <groupId>com.zhaopeng.mq</groupId>
         <version>${project.version}</version>
-   <!--     <relativePath>../pom.xml</relativePath>-->
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>remoting</artifactId>

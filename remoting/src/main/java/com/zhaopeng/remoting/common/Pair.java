@@ -2,6 +2,7 @@ package com.zhaopeng.remoting.common;
 
 /**
  * Created by zhaopeng on 2017/3/31.
+ * 用于建立处理链接后的业务和线程池之间的关系
  */
 public class Pair<T1, T2> {
 
