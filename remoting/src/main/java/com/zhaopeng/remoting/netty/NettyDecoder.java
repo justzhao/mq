@@ -29,6 +29,11 @@ public class NettyDecoder extends LengthFieldBasedFrameDecoder {
     private static final int FRAME_MAX_LENGTH = 16777216;
 
     public NettyDecoder() {
+        // 传输过程中一共四个部分,
+        // 0 表示长度属性的开始索引
+        // 4 长度属性所占用的字节数
+        // 补偿字节数为0
+        // 跳过4个字节，解码后只需要后面三个部分。
         super(FRAME_MAX_LENGTH, 0, 4, 0, 4);
 
     }
@@ -41,7 +46,6 @@ public class NettyDecoder extends LengthFieldBasedFrameDecoder {
             if (null == frame) {
                 return null;
             }
-
             ByteBuffer byteBuffer = frame.nioBuffer();
             //解码
             return RemotingCommand.decode(byteBuffer);

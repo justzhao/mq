@@ -73,10 +73,10 @@ public class RemotingCommand {
      * @return
      */
     public ByteBuffer encodeHeader(final int bodyLength) {
-        // 1> header length size , 包头和消息题的总数据长度
+        // 1> header length size , 消息头和消息体的总数据长度
         int length = 4;
 
-        // 2> header data length  包头数据编码
+        // 2> header data length  消息头数据的长度
         byte[] headerData;
         headerData = this.headerEncode();
 
@@ -90,8 +90,8 @@ public class RemotingCommand {
         // length  int 长度为4个字节
         result.putInt(length);
 
-        // header length  包头的长度
-        result.put(markProtocolType(headerData.length));
+        // header length  消息头的长度
+        result.put(markProtocolType(headerData.length,serializeType));
 
         // header data
         result.put(headerData);
@@ -101,10 +101,10 @@ public class RemotingCommand {
         return result;
     }
 
-    public static byte[] markProtocolType(int source) {
+    public static byte[] markProtocolType(int source,SerializeType type) {
         byte[] result = new byte[4];
 
-        result[0] = (byte) source;
+        result[0] = type.getCode();
         result[1] = (byte) ((source >> 16) & 0xFF);
         result[2] = (byte) ((source >> 8) & 0xFF);
         result[3] = (byte) (source & 0xFF);
@@ -164,15 +164,17 @@ public class RemotingCommand {
     }
 
     public static RemotingCommand decode(final ByteBuffer byteBuffer) {
+        //length = 存放消息头数据的有多长的所占用字节数+ 消息头数据占用字节数+body数据的占用字节数
         int length = byteBuffer.limit();
+        //oriHeaderlen包含 消息头的长度和序列化的方式
         int oriHeaderLen = byteBuffer.getInt();
+        // 获取到消息头的长度
         int headerLength = getHeaderLength(oriHeaderLen);
-
         byte[] headerData = new byte[headerLength];
         byteBuffer.get(headerData);
-
         RemotingCommand cmd = headerDecode(headerData, getProtocolType(oriHeaderLen));
 
+        // body的长度
         int bodyLength = length - 4 - headerLength;
         byte[] bodyData = null;
         if (bodyLength > 0) {
@@ -184,6 +186,11 @@ public class RemotingCommand {
         return cmd;
     }
 
+    /**
+     * 一共4 个byte。 最高的byte存放序列化的方式
+     * @param source
+     * @return
+     */
     public static SerializeType getProtocolType(int source) {
         return SerializeType.valueOf((byte) ((source >> 24) & 0xFF));
     }
@@ -257,5 +264,14 @@ public class RemotingCommand {
 
     public void setExtFields(HashMap<String, String> extFields) {
         this.extFields = extFields;
+    }
+
+
+    public int getFlag() {
+        return flag;
+    }
+
+    public void setFlag(int flag) {
+        this.flag = flag;
     }
 }
