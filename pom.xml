@@ -11,6 +11,7 @@
         <module>store</module>
         <module>remoting</module>
         <module>tools</module>
+        <module>common</module>
     </modules>
     <packaging>pom</packaging>
 
