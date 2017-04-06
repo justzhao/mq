@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+
+    <property name="ELK_LOG_PATTERN" value ="%date - eagle - %c %level [%thread] [%file : %line] %msg%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${ELK_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="ALL_FILE_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${log.dir}/log/all.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${log.dir}/log/all.log.%d{yyyy-MM-dd}</FileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${ELK_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="ERROR_FILE_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${log.dir}/log/error.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${log.dir}/log/error.log.%d{yyyy-MM-dd}</FileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${ELK_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
+
+
+    <root level="info">
+        <appender-ref ref="ERROR_FILE_APPENDER" />
+        <appender-ref ref="ALL_FILE_APPENDER" />
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+
+
+</configuration>
