@@ -29,4 +29,23 @@ public class NameSrvController {
     public NettyServerConfig getNettyServerConfig() {
         return nettyServerConfig;
     }
+
+
+    public boolean init(){
+
+
+        return true;
+    }
+
+    public boolean start(){
+
+
+        return  true;
+    }
+
+    public void  shutdown(){
+
+    }
+
+
 }

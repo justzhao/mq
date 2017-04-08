@@ -45,6 +45,14 @@ public class NameSrvStart {
             NameSrvController  nameSrvController=new NameSrvController(nameSrvConfig,nettyServerConfig);
 
 
+            if(!nameSrvController.init()){
+
+                nameSrvController.shutdown();
+
+                System.exit(0);
+            }
+
+
 
 
         } catch (Exception e) {
