@@ -42,6 +42,9 @@ public class NameSrvStart {
             configurator.doConfigure(nameSrvConfig.getMqHome() + "/logback.xml");
             final Logger log = LoggerFactory.getLogger(NameSrvStart.class);
 
+            NameSrvController  nameSrvController=new NameSrvController(nameSrvConfig,nettyServerConfig);
+
+
 
 
         } catch (Exception e) {
