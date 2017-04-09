@@ -7,6 +7,7 @@ import com.zhaopeng.remoting.ChannelEventListener;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -35,13 +36,12 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
     private final ChannelEventListener channelEventListener;
 
 
-    public NettyServer(EventLoopGroup eventLoopGroupSelector, EventLoopGroup eventLoopGroupBoss, NettyServerConfig nettyServerConfig,ChannelEventListener channelEventListener) {
-        super(10,10);
+    public NettyServer(final NettyServerConfig nettyServerConfig, final ChannelEventListener channelEventListener) {
+
+        super(10, 10);
         this.serverBootstrap = new ServerBootstrap();
-        this.eventLoopGroupSelector = eventLoopGroupSelector;
-        this.eventLoopGroupBoss = eventLoopGroupBoss;
         this.nettyServerConfig = nettyServerConfig;
-        this.channelEventListener=channelEventListener;
+        this.channelEventListener = channelEventListener;
 
         this.publicExecutor = Executors.newFixedThreadPool(4, new ThreadFactory() {
             private AtomicInteger threadIndex = new AtomicInteger(0);
@@ -50,6 +50,27 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
                 return new Thread(r, "NettyServerPublicExecutor_" + this.threadIndex.incrementAndGet());
             }
         });
+
+
+        this.eventLoopGroupSelector = new NioEventLoopGroup(nettyServerConfig.getServerSelectorThreads(), new ThreadFactory() {
+            private AtomicInteger threadIndex = new AtomicInteger(0);
+            private int threadTotal = nettyServerConfig.getServerSelectorThreads();
+
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, String.format("NettyServerNIOSelector_%d_%d", threadTotal, this.threadIndex.incrementAndGet()));
+            }
+        });
+        this.eventLoopGroupBoss = new NioEventLoopGroup(1, new ThreadFactory() {
+            private AtomicInteger threadIndex = new AtomicInteger(0);
+
+
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, String.format("NettyBoss_%d", this.threadIndex.incrementAndGet()));
+            }
+        });
+
     }
 
     public void start() {

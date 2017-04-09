@@ -23,15 +23,16 @@ public class BrokerStatusListener implements ChannelEventListener {
     @Override
     public void onChannelClose(String remoteAddr, Channel channel) {
 
+        nameSrvController.getRouteInfoManager().onChannelDestroy(remoteAddr,channel);
     }
 
     @Override
     public void onChannelException(String remoteAddr, Channel channel) {
-
+        nameSrvController.getRouteInfoManager().onChannelDestroy(remoteAddr,channel);
     }
 
     @Override
     public void onChannelIdle(String remoteAddr, Channel channel) {
-
+        nameSrvController.getRouteInfoManager().onChannelDestroy(remoteAddr,channel);
     }
 }

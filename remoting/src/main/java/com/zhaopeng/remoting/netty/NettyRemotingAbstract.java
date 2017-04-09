@@ -26,7 +26,7 @@ public abstract class NettyRemotingAbstract {
     private static final Logger logger = LoggerFactory.getLogger(NettyRemotingAbstract.class);
 
 
-    // 单方面调用的信号量个数
+    // 不需要返回值的调用的信号量个数
     protected final Semaphore semaphoreOneway;
 
     //异步执行任务的信号量个数

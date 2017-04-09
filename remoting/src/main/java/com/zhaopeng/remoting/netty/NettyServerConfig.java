@@ -11,6 +11,9 @@ public class NettyServerConfig {
     private int serverWorkerThreads = 8;
     private int serverChannelMaxIdleTimeSeconds = 120;
 
+    private int serverCallbackExecutorThreads = 0;
+    private int serverSelectorThreads = 3;
+
 
     public int getPort() {
         return port;
@@ -50,5 +53,21 @@ public class NettyServerConfig {
 
     public void setServerWorkerThreads(int serverWorkerThreads) {
         this.serverWorkerThreads = serverWorkerThreads;
+    }
+
+    public int getServerCallbackExecutorThreads() {
+        return serverCallbackExecutorThreads;
+    }
+
+    public void setServerCallbackExecutorThreads(int serverCallbackExecutorThreads) {
+        this.serverCallbackExecutorThreads = serverCallbackExecutorThreads;
+    }
+
+    public int getServerSelectorThreads() {
+        return serverSelectorThreads;
+    }
+
+    public void setServerSelectorThreads(int serverSelectorThreads) {
+        this.serverSelectorThreads = serverSelectorThreads;
     }
 }

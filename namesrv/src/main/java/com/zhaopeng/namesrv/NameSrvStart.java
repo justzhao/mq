@@ -42,17 +42,19 @@ public class NameSrvStart {
             configurator.doConfigure(nameSrvConfig.getMqHome() + "/logback.xml");
             final Logger log = LoggerFactory.getLogger(NameSrvStart.class);
 
-            NameSrvController  nameSrvController=new NameSrvController(nameSrvConfig,nettyServerConfig);
+            NameSrvController nameSrvController = new NameSrvController(nameSrvConfig, nettyServerConfig);
 
 
-            if(!nameSrvController.init()){
+            if (!nameSrvController.init()) {
 
                 nameSrvController.shutdown();
 
                 System.exit(0);
             }
 
+            nameSrvController.start();
 
+            log.info("The Name Server boot success.");
 
 
         } catch (Exception e) {
