@@ -3,6 +3,7 @@ package com.zhaopeng.remoting.protocol;
 import com.alibaba.fastjson.annotation.JSONField;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -273,5 +274,18 @@ public class RemotingCommand {
 
     public void setFlag(int flag) {
         this.flag = flag;
+    }
+
+
+    @Override
+    public String toString() {
+        return "RemotingCommand{" +
+                "body=" + Arrays.toString(body) +
+                ", code=" + code +
+                ", remark='" + remark + '\'' +
+                ", flag=" + flag +
+                ", extFields=" + extFields +
+                ", opaque=" + opaque +
+                '}';
     }
 }
