@@ -69,28 +69,64 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         return false;
     }
 
+    /**
+     * 根据body 里面的信息把broker注册到routerManager中去
+     * @param ctx
+     * @param request
+     * @return
+     * @throws RemotingException
+     */
     public RemotingCommand registerBroker(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
+
 
 
         return null;
     }
 
+    /**
+     * 根据body 从删除routerManager删除broker
+     * @param ctx
+     * @param request
+     * @return
+     * @throws RemotingException
+     */
     public RemotingCommand unregisterBroker(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
         return null;
     }
 
+    /**
+     * 根据主题信息获取broker路由
+     * @param ctx
+     * @param request
+     * @return
+     * @throws RemotingException
+     */
     public RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
         return null;
     }
 
+    /**
+     * 获取broker集群信息
+     * @param ctx
+     * @param request
+     * @return
+     * @throws RemotingException
+     */
     public RemotingCommand getBrokerClusterInfo(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
         return null;
     }
 
 
+    /**
+     * 删除topic信息
+     * @param ctx
+     * @param request
+     * @return
+     * @throws RemotingException
+     */
     private RemotingCommand deleteTopicInNamesrv(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
 
