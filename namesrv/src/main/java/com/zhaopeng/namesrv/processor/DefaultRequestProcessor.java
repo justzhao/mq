@@ -1,13 +1,18 @@
 package com.zhaopeng.namesrv.processor;
 
 import com.zhaopeng.common.protocol.RequestCode;
+import com.zhaopeng.common.protocol.body.RegisterBrokerInfo;
+import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
 import com.zhaopeng.namesrv.NameSrvController;
 import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
+import com.zhaopeng.remoting.protocol.RemotingSysResponseCode;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -71,6 +76,8 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
     /**
      * 根据body 里面的信息把broker注册到routerManager中去
+     * 返回注册结果信息
+     *
      * @param ctx
      * @param request
      * @return
@@ -79,12 +86,25 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
     public RemotingCommand registerBroker(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
 
+        RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
 
-        return null;
+        RegisterBrokerInfo registerBrokerInfo = null;
+        if (request.getBody() != null) {
+            registerBrokerInfo = RegisterBrokerInfo.decode(request.getBody(), RegisterBrokerInfo.class);
+        } else {
+            registerBrokerInfo = new RegisterBrokerInfo();
+            registerBrokerInfo.getDataVersion().setCounter(new AtomicLong(0));
+            registerBrokerInfo.getDataVersion().setTimestatmp(0);
+        }
+
+        RegisterBrokerResult result = this.namesrvController.getRouteInfoManager().registerBroker(registerBrokerInfo);
+        respone.setBody(result.encode());
+        return respone;
     }
 
     /**
      * 根据body 从删除routerManager删除broker
+     *
      * @param ctx
      * @param request
      * @return
@@ -97,6 +117,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
     /**
      * 根据主题信息获取broker路由
+     *
      * @param ctx
      * @param request
      * @return
@@ -109,6 +130,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
     /**
      * 获取broker集群信息
+     *
      * @param ctx
      * @param request
      * @return
@@ -122,6 +144,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
     /**
      * 删除topic信息
+     *
      * @param ctx
      * @param request
      * @return

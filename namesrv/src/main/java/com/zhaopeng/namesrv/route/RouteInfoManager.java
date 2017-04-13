@@ -1,5 +1,7 @@
 package com.zhaopeng.namesrv.route;
 
+import com.zhaopeng.common.protocol.body.RegisterBrokerInfo;
+import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
 import io.netty.channel.Channel;
 
 /**
@@ -24,6 +26,14 @@ public class RouteInfoManager {
 
     public void  printAllConfPeriodically(){
 
+    }
+
+    public RegisterBrokerResult registerBroker(RegisterBrokerInfo brokerInfo){
+
+        RegisterBrokerResult result =new RegisterBrokerResult();
+
+        result.setServerAddr(brokerInfo.getServerAddr());
+        return result;
     }
 
 

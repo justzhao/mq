@@ -11,6 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class RegisterBrokerInfo extends JsonSerializable {
 
+
+    private String serverAddr;
+
     private DataVersion dataVersion= new DataVersion();
 
     private ConcurrentHashMap<String, TopicInfo> topicConfigTable =
@@ -30,5 +33,13 @@ public class RegisterBrokerInfo extends JsonSerializable {
 
     public void setTopicConfigTable(ConcurrentHashMap<String, TopicInfo> topicConfigTable) {
         this.topicConfigTable = topicConfigTable;
+    }
+
+    public String getServerAddr() {
+        return serverAddr;
+    }
+
+    public void setServerAddr(String serverAddr) {
+        this.serverAddr = serverAddr;
     }
 }
