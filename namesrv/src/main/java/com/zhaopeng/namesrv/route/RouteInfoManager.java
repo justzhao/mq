@@ -106,11 +106,13 @@ public class RouteInfoManager {
         return result;
     }
 
-    /**
+    /** 新增或者更新一个topic
      * @param brokerName
      * @param topicInfo
      */
     private void createAndUpdateQueueData(final String brokerName, final TopicInfo topicInfo) {
+
+
 
     }
 
