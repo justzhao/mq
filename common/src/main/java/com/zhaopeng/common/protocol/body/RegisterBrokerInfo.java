@@ -12,9 +12,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RegisterBrokerInfo extends JsonSerializable {
 
 
+    private Long brokerId;
+
+    private String brokerName;
+
     private String serverAddr;
 
-    private DataVersion dataVersion= new DataVersion();
+    private DataVersion dataVersion = new DataVersion();
 
     private ConcurrentHashMap<String, TopicInfo> topicConfigTable =
             new ConcurrentHashMap<>();
@@ -41,5 +45,22 @@ public class RegisterBrokerInfo extends JsonSerializable {
 
     public void setServerAddr(String serverAddr) {
         this.serverAddr = serverAddr;
+    }
+
+
+    public Long getBrokerId() {
+        return brokerId;
+    }
+
+    public void setBrokerId(Long brokerId) {
+        this.brokerId = brokerId;
+    }
+
+    public String getBrokerName() {
+        return brokerName;
+    }
+
+    public void setBrokerName(String brokerName) {
+        this.brokerName = brokerName;
     }
 }
