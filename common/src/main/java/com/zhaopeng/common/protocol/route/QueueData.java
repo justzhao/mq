@@ -47,4 +47,25 @@ public class QueueData implements Comparable<QueueData> {
     public void setPerm(int perm) {
         this.perm = perm;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof QueueData)) return false;
+
+        QueueData queueData = (QueueData) o;
+
+        if (readQueueNums != queueData.readQueueNums) return false;
+        if (writeQueueNums != queueData.writeQueueNums) return false;
+        return brokerName.equals(queueData.brokerName);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = brokerName.hashCode();
+        result = 31 * result + readQueueNums;
+        result = 31 * result + writeQueueNums;
+        return result;
+    }
 }

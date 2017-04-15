@@ -10,9 +10,7 @@ import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -106,13 +104,52 @@ public class RouteInfoManager {
         return result;
     }
 
-    /** 新增或者更新一个topic
+    /**
+     * 新增或者更新一个topic
+     *
      * @param brokerName
      * @param topicInfo
      */
     private void createAndUpdateQueueData(final String brokerName, final TopicInfo topicInfo) {
 
+        QueueData queueData = new QueueData();
+        queueData.setBrokerName(brokerName);
+        queueData.setReadQueueNums(topicInfo.getReadQueueNums());
+        queueData.setWriteQueueNums(topicInfo.getWriteQueueNums());
 
+        List<QueueData> queueDatas = this.topicQueueTable.get(topicInfo.getTopicName());
+
+        if (queueData == null) {
+            queueDatas = new ArrayList<>();
+            queueDatas.add(queueData);
+            this.topicQueueTable.put(topicInfo.getTopicName(), queueDatas);
+            logger.info("new topic registerd, {} {}", topicInfo.getTopicName(), queueData);
+
+        } else {
+
+            boolean addNew = true;
+            Iterator<QueueData> itor = queueDatas.iterator();
+            while (itor.hasNext()) {
+                QueueData q = itor.next();
+
+                if (brokerName.equals(q.getBrokerName())) {
+
+                    if (queueData.equals(q)) {
+                        addNew = false;
+                    } else {
+                        logger.info("topic changed, {} OLD: {} NEW: {}", topicInfo.getTopicName(), q,
+                                queueData);
+                        itor.remove();
+                    }
+
+
+                }
+
+            }
+            if (addNew) {
+                queueDatas.add(queueData);
+            }
+        }
 
     }
 
