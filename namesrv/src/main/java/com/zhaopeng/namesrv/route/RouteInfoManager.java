@@ -6,6 +6,7 @@ import com.zhaopeng.common.protocol.body.RegisterBrokerInfo;
 import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.QueueData;
+import com.zhaopeng.common.protocol.route.TopicRouteData;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,9 @@ public class RouteInfoManager {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
+    // 可以有多个brokerName.用brokerId区分
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
+    // 只有一个brokerAddr
     private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
 
     public RouteInfoManager() {
@@ -52,26 +55,23 @@ public class RouteInfoManager {
     }
 
     public RegisterBrokerResult registerBroker(RegisterBrokerInfo brokerInfo, final Channel channel) {
-
         try {
-
             lock.writeLock().lockInterruptibly();
-
             String brokerAddr = brokerInfo.getServerAddr();
             String brokerName = brokerInfo.getBrokerName();
             boolean registerFirst = false;
 
-            BrokerData brokerData = this.brokerAddrTable.get(brokerAddr);
-
+            BrokerData brokerData = this.brokerAddrTable.get(brokerName);
             if (null == brokerData) {
                 registerFirst = true;
                 brokerData = new BrokerData();
                 brokerData.setBrokerName(brokerName);
                 this.brokerAddrTable.put(brokerName, brokerData);
             }
+            // 多个broker可能有相同的名字
             String oldAddr = brokerData.getBrokerAddrs().put(brokerInfo.getBrokerId(), brokerInfo.getServerAddr());
-            registerFirst = registerFirst || (null == oldAddr);
 
+            registerFirst = registerFirst || (null == oldAddr);
             // 存放topic 队列信息
             if (registerFirst) {
                 ConcurrentHashMap<String, TopicInfo> topicInfo = brokerInfo.getTopicConfigTable();
@@ -79,29 +79,50 @@ public class RouteInfoManager {
                     for (Map.Entry<String, TopicInfo> entry : topicInfo.entrySet()) {
                         this.createAndUpdateQueueData(brokerName, entry.getValue());
                     }
-
                 }
             }
-
-
             // 存放brokerLive信息
-            BrokerLiveInfo prevBrokerLiveInfo = this.brokerLiveTable.put(brokerInfo.getServerAddr(),
+            BrokerLiveInfo prevBrokerLiveInfo = this.brokerLiveTable.put(brokerAddr,
                     new BrokerLiveInfo(System.currentTimeMillis(), brokerInfo.getDataVersion(), channel));
             if (null == prevBrokerLiveInfo) {
                 logger.info("new broker registerd, {} ", brokerAddr);
             }
-
-
         } catch (InterruptedException e) {
             logger.error("registerBroker Exception", e);
         } finally {
             lock.writeLock().unlock();
         }
-
         RegisterBrokerResult result = new RegisterBrokerResult();
-
         result.setServerAddr(brokerInfo.getServerAddr());
         return result;
+    }
+
+    public void unRegisterBroker(RegisterBrokerInfo brokerInfo) {
+        try {
+            this.lock.writeLock().lockInterruptibly();
+            String brokerAddr = brokerInfo.getServerAddr();
+            String brokerName = brokerInfo.getBrokerName();
+            // brokerLive
+            BrokerLiveInfo rmL = this.brokerLiveTable.remove(brokerAddr);
+
+            if (rmL != null) {
+                logger.info("unregisterBroker, remove from brokerLiveTable {}", rmL);
+            }
+            //brokerAddr;
+            BrokerData rmD = this.brokerAddrTable.get(brokerName);
+            if (rmD != null) {
+                String addrs = rmD.getBrokerAddrs().remove(brokerInfo.getBrokerId());
+                logger.info("unregisterBroker, remove {} from brokerAddrTable {}", addrs, this.brokerAddrTable);
+            }
+            //topic
+            this.removeTopicByBrokerName(brokerName);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            this.lock.writeLock().unlock();
+
+        }
     }
 
     /**
@@ -118,33 +139,24 @@ public class RouteInfoManager {
         queueData.setWriteQueueNums(topicInfo.getWriteQueueNums());
 
         List<QueueData> queueDatas = this.topicQueueTable.get(topicInfo.getTopicName());
-
         if (queueData == null) {
             queueDatas = new ArrayList<>();
             queueDatas.add(queueData);
             this.topicQueueTable.put(topicInfo.getTopicName(), queueDatas);
             logger.info("new topic registerd, {} {}", topicInfo.getTopicName(), queueData);
-
         } else {
-
             boolean addNew = true;
             Iterator<QueueData> itor = queueDatas.iterator();
             while (itor.hasNext()) {
                 QueueData q = itor.next();
-
                 if (brokerName.equals(q.getBrokerName())) {
-
                     if (queueData.equals(q)) {
                         addNew = false;
                     } else {
-                        logger.info("topic changed, {} OLD: {} NEW: {}", topicInfo.getTopicName(), q,
-                                queueData);
+                        logger.info("topic changed, {} OLD: {} NEW: {}", topicInfo.getTopicName(), q, queueData);
                         itor.remove();
                     }
-
-
                 }
-
             }
             if (addNew) {
                 queueDatas.add(queueData);
@@ -153,7 +165,43 @@ public class RouteInfoManager {
 
     }
 
+    /**
+     * 删除一个broker中的topic信息
+     *
+     * @param brokerName
+     */
+    private void removeTopicByBrokerName(String brokerName) {
 
+        Iterator<Map.Entry<String, List<QueueData>>> itMap = this.topicQueueTable.entrySet().iterator();
+        while (itMap.hasNext()) {
+            Map.Entry<String, List<QueueData>> entry = itMap.next();
+            String topic = entry.getKey();
+            List<QueueData> queueDataList = entry.getValue();
+            Iterator<QueueData> it = queueDataList.iterator();
+            while (it.hasNext()) {
+                QueueData qd = it.next();
+                if (qd.getBrokerName().equals(brokerName)) {
+                    logger.info("removeTopicByBrokerName, remove one broker's topic {} {}", topic, qd);
+                    it.remove();
+                }
+            }
+
+            if (queueDataList.isEmpty()) {
+                logger.info("removeTopicByBrokerName, remove the topic all queue {}", topic);
+                itMap.remove();
+            }
+        }
+
+    }
+
+    /**
+     * 根据 topic选择路由
+     * @param topic
+     * @return
+     */
+    public TopicRouteData selectTopicRouteData(final String topic) {
+
+    }
 }
 
 class BrokerLiveInfo {

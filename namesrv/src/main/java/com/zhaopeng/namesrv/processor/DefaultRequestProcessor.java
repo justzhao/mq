@@ -97,7 +97,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
             registerBrokerInfo.getDataVersion().setTimestatmp(0);
         }
 
-        RegisterBrokerResult result = this.namesrvController.getRouteInfoManager().registerBroker(registerBrokerInfo);
+        RegisterBrokerResult result = this.namesrvController.getRouteInfoManager().registerBroker(registerBrokerInfo, ctx.channel());
         respone.setBody(result.encode());
         return respone;
     }
@@ -125,7 +125,13 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
      */
     public RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
-        return null;
+        RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
+        RegisterBrokerInfo registerBrokerInfo = null;
+        if (request.getBody() != null) {
+            registerBrokerInfo = RegisterBrokerInfo.decode(request.getBody(), RegisterBrokerInfo.class);
+            this.namesrvController.getRouteInfoManager().unRegisterBroker(registerBrokerInfo);
+        }
+        return respone;
     }
 
     /**

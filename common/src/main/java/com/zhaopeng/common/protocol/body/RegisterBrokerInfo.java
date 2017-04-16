@@ -18,6 +18,7 @@ public class RegisterBrokerInfo extends JsonSerializable {
 
     private String serverAddr;
 
+
     private DataVersion dataVersion = new DataVersion();
 
     private ConcurrentHashMap<String, TopicInfo> topicConfigTable =
