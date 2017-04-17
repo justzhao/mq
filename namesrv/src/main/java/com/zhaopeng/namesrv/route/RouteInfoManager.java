@@ -196,11 +196,55 @@ public class RouteInfoManager {
 
     /**
      * 根据 topic选择路由
+     *
      * @param topic
      * @return
      */
     public TopicRouteData selectTopicRouteData(final String topic) {
 
+        TopicRouteData topicRouteData = new TopicRouteData();
+        //LinkedList 方便快速添数据
+        List<BrokerData> brokerDatas = new LinkedList<>();
+        topicRouteData.setBrokerDatas(brokerDatas);
+
+        boolean foundQueueData = false;
+        boolean foundBrokerData = false;
+        try {
+            this.lock.readLock().lockInterruptibly();
+
+            List<QueueData> queueDatas = this.topicQueueTable.get(topic);
+            if (queueDatas != null) {
+                foundQueueData=true;
+                topicRouteData.setQueueDatas(queueDatas);
+                Set<String> brokerNames = new HashSet<>();
+                for (QueueData qd : queueDatas) {
+                    if (qd != null) {
+                        brokerNames.add(qd.getBrokerName());
+                    }
+                }
+                for (String name : brokerNames) {
+                    BrokerData brokerData = this.brokerAddrTable.get(name);
+                    if (brokerData != null) {
+                        foundBrokerData=true;
+                        BrokerData bd=new BrokerData();
+                        bd.setBrokerName(brokerData.getBrokerName());
+                        bd.setBrokerAddrs((HashMap<Long, String>)brokerData.getBrokerAddrs().clone());
+                        brokerDatas.add(bd);
+
+                    }
+                }
+
+            }
+
+        } catch (InterruptedException e) {
+            logger.error("selectTopicRouteData error {}", e);
+        } finally {
+            this.lock.readLock().unlock();
+        }
+        if(foundBrokerData&&foundQueueData){
+            return topicRouteData;
+        }
+        return null;
     }
 }
 

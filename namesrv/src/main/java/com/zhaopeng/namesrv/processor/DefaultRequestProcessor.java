@@ -3,9 +3,11 @@ package com.zhaopeng.namesrv.processor;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.body.RegisterBrokerInfo;
 import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
+import com.zhaopeng.common.protocol.route.TopicRouteData;
 import com.zhaopeng.namesrv.NameSrvController;
 import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.exception.RemotingException;
+import com.zhaopeng.remoting.protocol.JsonSerializable;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.remoting.protocol.RemotingSysResponseCode;
 import io.netty.channel.ChannelHandlerContext;
@@ -85,9 +87,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
      */
     public RemotingCommand registerBroker(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
-
         RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
-
         RegisterBrokerInfo registerBrokerInfo = null;
         if (request.getBody() != null) {
             registerBrokerInfo = RegisterBrokerInfo.decode(request.getBody(), RegisterBrokerInfo.class);
@@ -112,7 +112,14 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
      */
     public RemotingCommand unregisterBroker(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
-        return null;
+        RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
+        RegisterBrokerInfo registerBrokerInfo = null;
+        if (request.getBody() != null) {
+            registerBrokerInfo = RegisterBrokerInfo.decode(request.getBody(), RegisterBrokerInfo.class);
+            this.namesrvController.getRouteInfoManager().unRegisterBroker(registerBrokerInfo);
+        }
+
+        return respone;
     }
 
     /**
@@ -126,11 +133,15 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
     public RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
         RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
-        RegisterBrokerInfo registerBrokerInfo = null;
+        String topic = null;
         if (request.getBody() != null) {
-            registerBrokerInfo = RegisterBrokerInfo.decode(request.getBody(), RegisterBrokerInfo.class);
-            this.namesrvController.getRouteInfoManager().unRegisterBroker(registerBrokerInfo);
+            topic = JsonSerializable.decode(request.getBody(), String.class);
+            TopicRouteData topicRouteData = this.namesrvController.getRouteInfoManager().selectTopicRouteData(topic);
+            if (topicRouteData != null) {
+                respone.setBody(topicRouteData.encode());
+            }
         }
+
         return respone;
     }
 
