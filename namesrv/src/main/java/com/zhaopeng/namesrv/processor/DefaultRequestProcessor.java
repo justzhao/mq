@@ -3,6 +3,7 @@ package com.zhaopeng.namesrv.processor;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.body.RegisterBrokerInfo;
 import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
+import com.zhaopeng.common.protocol.body.TopicList;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
 import com.zhaopeng.namesrv.NameSrvController;
 import com.zhaopeng.remoting.NettyRequestProcessor;
@@ -176,7 +177,13 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
     public RemotingCommand getAllTopicListFromNameserver(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
-        return null;
+        RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
+
+        TopicList topicList = this.namesrvController.getRouteInfoManager().getAllTopicList();
+        if(topicList!=null) {
+            respone.setBody(topicList.encode());
+        }
+        return respone;
     }
 
 }

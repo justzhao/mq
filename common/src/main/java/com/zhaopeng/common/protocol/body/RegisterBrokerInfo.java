@@ -4,14 +4,16 @@ import com.zhaopeng.common.DataVersion;
 import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.remoting.protocol.JsonSerializable;
 
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by zhaopeng on 2017/4/12.
  */
-public class RegisterBrokerInfo extends JsonSerializable {
+public class RegisterBrokerInfo extends JsonSerializable  implements Serializable{
 
 
+    private static final long serialVersionUID = -4425143580279939193L;
     private Long brokerId;
 
     private String brokerName;

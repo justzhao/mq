@@ -4,6 +4,7 @@ import com.zhaopeng.common.DataVersion;
 import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.protocol.body.RegisterBrokerInfo;
 import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
+import com.zhaopeng.common.protocol.body.TopicList;
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.QueueData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
@@ -214,7 +215,7 @@ public class RouteInfoManager {
 
             List<QueueData> queueDatas = this.topicQueueTable.get(topic);
             if (queueDatas != null) {
-                foundQueueData=true;
+                foundQueueData = true;
                 topicRouteData.setQueueDatas(queueDatas);
                 Set<String> brokerNames = new HashSet<>();
                 for (QueueData qd : queueDatas) {
@@ -225,10 +226,10 @@ public class RouteInfoManager {
                 for (String name : brokerNames) {
                     BrokerData brokerData = this.brokerAddrTable.get(name);
                     if (brokerData != null) {
-                        foundBrokerData=true;
-                        BrokerData bd=new BrokerData();
+                        foundBrokerData = true;
+                        BrokerData bd = new BrokerData();
                         bd.setBrokerName(brokerData.getBrokerName());
-                        bd.setBrokerAddrs((HashMap<Long, String>)brokerData.getBrokerAddrs().clone());
+                        bd.setBrokerAddrs((HashMap<Long, String>) brokerData.getBrokerAddrs().clone());
                         brokerDatas.add(bd);
 
                     }
@@ -241,10 +242,27 @@ public class RouteInfoManager {
         } finally {
             this.lock.readLock().unlock();
         }
-        if(foundBrokerData&&foundQueueData){
+        if (foundBrokerData && foundQueueData) {
             return topicRouteData;
         }
         return null;
+    }
+
+    public TopicList getAllTopicList() {
+        TopicList topicList = new TopicList();
+
+        try {
+            try {
+                this.lock.readLock().lockInterruptibly();
+                topicList.getTopicList().addAll(this.topicQueueTable.keySet());
+            } finally {
+                this.lock.readLock().unlock();
+            }
+        } catch (Exception e) {
+            logger.error("getAllTopicList Exception", e);
+        }
+
+        return topicList;
     }
 }
 
