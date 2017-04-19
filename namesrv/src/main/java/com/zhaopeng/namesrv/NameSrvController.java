@@ -78,6 +78,15 @@ public class NameSrvController {
             }
         }, 5, 10, TimeUnit.SECONDS);
 
+        this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+
+            @Override
+            public void run() {
+                NameSrvController.this.routeInfoManager.printAllNameSrvStatistics();
+            }
+        }, 1, 10, TimeUnit.SECONDS);
+
+
         return true;
     }
 

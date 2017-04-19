@@ -24,6 +24,9 @@ public class RouteInfoManager {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteInfoManager.class);
 
+    // broker的默认失效时间,2分钟内没更新
+    private final static long BrokerChannelExpiredTime = 1000 * 60 * 2;
+
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
     // 可以有多个brokerName.用brokerId区分
@@ -49,9 +52,60 @@ public class RouteInfoManager {
 
     public void scanAliveBroker() {
 
+        Iterator<Map.Entry<String, BrokerLiveInfo>> it = this.brokerLiveTable.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, BrokerLiveInfo> next = it.next();
+            long last = next.getValue().getLastUpdateTimestamp();
+            // 分钟内部更新就认为失效
+            if ((last + BrokerChannelExpiredTime) < System.currentTimeMillis()) {
+                next.getValue().getChannel().close();
+                it.remove();
+                logger.info("The broker channel expired, {} {}ms", next.getKey(), BrokerChannelExpiredTime);
+                this.onChannelDestroy(next.getKey(), next.getValue().getChannel());
+            }
+        }
+
+
     }
 
-    public void printAllConfPeriodically() {
+    public void printAllNameSrvStatistics() {
+
+        try {
+            try {
+                this.lock.readLock().lockInterruptibly();
+                logger.info("--------------------------------------------------------");
+
+                // 打印topic信息
+                logger.info("topicQueueTable SIZE: {}", this.topicQueueTable.size());
+                Iterator<Map.Entry<String, List<QueueData>>> itTopic = this.topicQueueTable.entrySet().iterator();
+                while (itTopic.hasNext()) {
+                    Map.Entry<String, List<QueueData>> next = itTopic.next();
+                    logger.info("topicQueueTable Topic: {} {}", next.getKey(), next.getValue());
+                }
+
+                // 根据brokerName打印broker的信息
+                logger.info("brokerAddrTable SIZE: {}", this.brokerAddrTable.size());
+                Iterator<Map.Entry<String, BrokerData>> itName = this.brokerAddrTable.entrySet().iterator();
+                while (itName.hasNext()) {
+                    Map.Entry<String, BrokerData> next = itName.next();
+                    logger.info("brokerAddrTable brokerName: {} {}", next.getKey(), next.getValue());
+                }
+
+                // 根据brokerAddress打印broker的信息
+                logger.info("brokerLiveTable SIZE: {}", this.brokerLiveTable.size());
+                Iterator<Map.Entry<String, BrokerLiveInfo>> itAddr = this.brokerLiveTable.entrySet().iterator();
+                while (itAddr.hasNext()) {
+                    Map.Entry<String, BrokerLiveInfo> next = itAddr.next();
+                    logger.info("brokerLiveTable brokerAddr: {} {}", next.getKey(), next.getValue());
+                }
+
+
+            } finally {
+                this.lock.readLock().unlock();
+            }
+        } catch (Exception e) {
+            logger.error("printAllPeriodically Exception", e);
+        }
 
     }
 
@@ -274,6 +328,30 @@ class BrokerLiveInfo {
     public BrokerLiveInfo(long lastUpdateTimestamp, DataVersion dataVersion, Channel channel) {
         this.lastUpdateTimestamp = lastUpdateTimestamp;
         this.dataVersion = dataVersion;
+        this.channel = channel;
+    }
+
+    public long getLastUpdateTimestamp() {
+        return lastUpdateTimestamp;
+    }
+
+    public void setLastUpdateTimestamp(long lastUpdateTimestamp) {
+        this.lastUpdateTimestamp = lastUpdateTimestamp;
+    }
+
+    public DataVersion getDataVersion() {
+        return dataVersion;
+    }
+
+    public void setDataVersion(DataVersion dataVersion) {
+        this.dataVersion = dataVersion;
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public void setChannel(Channel channel) {
         this.channel = channel;
     }
 }
