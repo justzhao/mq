@@ -170,8 +170,14 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
      */
     private RemotingCommand deleteTopicInNamesrv(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
+        RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
 
-        return null;
+        String topic = null;
+        if (request.getBody() != null) {
+            topic = JsonSerializable.decode(request.getBody(), String.class);
+            this.namesrvController.getRouteInfoManager().deleteTopic(topic);
+        }
+        return respone;
 
     }
 
@@ -180,7 +186,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
 
         TopicList topicList = this.namesrvController.getRouteInfoManager().getAllTopicList();
-        if(topicList!=null) {
+        if (topicList != null) {
             respone.setBody(topicList.encode());
         }
         return respone;

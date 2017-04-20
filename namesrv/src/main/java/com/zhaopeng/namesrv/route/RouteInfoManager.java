@@ -318,6 +318,24 @@ public class RouteInfoManager {
 
         return topicList;
     }
+
+
+    /**
+     * 删除一个topic信息
+     * @param topic
+     */
+    public void deleteTopic(final String topic) {
+        try {
+            try {
+                this.lock.writeLock().lockInterruptibly();
+                this.topicQueueTable.remove(topic);
+            } finally {
+                this.lock.writeLock().unlock();
+            }
+        } catch (Exception e) {
+            logger.error("deleteTopic Exception", e);
+        }
+    }
 }
 
 class BrokerLiveInfo {
