@@ -12,6 +12,7 @@
         <module>remoting</module>
         <module>tools</module>
         <module>common</module>
+        <module>client</module>
     </modules>
     <packaging>pom</packaging>
 
