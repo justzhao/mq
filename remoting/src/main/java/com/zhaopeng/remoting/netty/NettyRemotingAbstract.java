@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
-import java.util.HashMap;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -154,6 +154,30 @@ public abstract class NettyRemotingAbstract {
             logger.error("receive response, but not matched any request, {}", ctx.channel());
         }
 
+    }
+
+
+    public void scanResponseTable() {
+        final List<ResponseFuture> rfList = new LinkedList<>();
+        Iterator<Map.Entry<Integer, ResponseFuture>> it = this.responseTable.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Integer, ResponseFuture> next = it.next();
+            ResponseFuture rep = next.getValue();
+            if ((rep.getBeginTimestamp() + rep.getTimeoutMillis() + 1000) <= System.currentTimeMillis()) {
+
+                it.remove();
+                rfList.add(rep);
+                logger.warn("remove timeout request, " + rep);
+            }
+        }
+
+        for (ResponseFuture rf : rfList) {
+            try {
+                rf.executeInvokeCallback();
+            } catch (Throwable e) {
+                logger.warn("scanResponseTable, operationComplete Exception", e);
+            }
+        }
     }
 
     /**

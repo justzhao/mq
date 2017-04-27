@@ -15,6 +15,8 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -36,6 +38,8 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
 
     private final EventLoopGroup eventLoopGroupWorker;
+
+    private final Timer timer = new Timer("ClientHouseKeepingService", true);
 
     public NettyClient(NettyClientConfig nettyClientConfig) {
         this(nettyClientConfig, null);
@@ -117,17 +121,13 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                     }
                 });
 
- /*       this.timer.scheduleAtFixedRate(new TimerTask() {
-
+        this.timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                try {
-                    NettyRemotingClient.this.scanResponseTable();
-                } catch (Exception e) {
-                    log.error("scanResponseTable exception", e);
-                }
+            NettyClient.this.scanResponseTable();
+
             }
-        }, 1000 * 3, 1000);*/
+        }, 1000 * 3, 1000);
 
         if (this.channelEventListener != null) {
             this.nettyEventExecuter.start();
