@@ -12,6 +12,11 @@ import java.util.concurrent.ExecutorService;
  */
 public interface Client {
 
+    void start();
+
+
+    void shutdown();
+
     public void updateNameServerAddressList(final List<String> addrs);
 
 

@@ -12,6 +12,10 @@ public class NettyClientConfig {
     private int connectTimeoutMillis = 3000;
     private long channelNotActiveInterval = 1000 * 60;
 
+    public  int socketSndbufSize = 65535;
+
+    public  int socketRcvbufSize = 65535;
+
 
     public int getClientWorkerThreads() {
         return clientWorkerThreads;
@@ -59,5 +63,21 @@ public class NettyClientConfig {
 
     public void setChannelNotActiveInterval(long channelNotActiveInterval) {
         this.channelNotActiveInterval = channelNotActiveInterval;
+    }
+
+    public int getSocketSndbufSize() {
+        return socketSndbufSize;
+    }
+
+    public void setSocketSndbufSize(int socketSndbufSize) {
+        this.socketSndbufSize = socketSndbufSize;
+    }
+
+    public int getSocketRcvbufSize() {
+        return socketRcvbufSize;
+    }
+
+    public void setSocketRcvbufSize(int socketRcvbufSize) {
+        this.socketRcvbufSize = socketRcvbufSize;
     }
 }
