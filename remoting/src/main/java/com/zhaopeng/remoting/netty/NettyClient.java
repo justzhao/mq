@@ -182,6 +182,11 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     @Override
     public void invokeOneway(String addr, RemotingCommand request, long timeoutMillis) throws InterruptedException, RemotingException {
 
+        Channel channel = getAndCreateChannel(addr);
+        if (channel == null) {
+            return ;
+        }
+        this.invokeOneWayImpl(channel,request,timeoutMillis);
     }
 
     @Override
