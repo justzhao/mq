@@ -3,6 +3,7 @@ package com.zhaopeng.remoting.netty;
 import com.zhaopeng.remoting.ChannelEventListener;
 import com.zhaopeng.remoting.InvokeCallback;
 import com.zhaopeng.remoting.NettyRequestProcessor;
+import com.zhaopeng.remoting.common.RemotingHelper;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.protocol.Client;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
@@ -13,19 +14,25 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by zhaopeng on 2017/4/26.
  */
 public class NettyClient extends NettyRemotingAbstract implements Client {
+
+    private static final Logger logger = LoggerFactory.getLogger(NettyClient.class);
 
     private final NettyClientConfig nettyClientConfig;
 
@@ -40,6 +47,10 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     private final EventLoopGroup eventLoopGroupWorker;
 
     private final Timer timer = new Timer("ClientHouseKeepingService", true);
+
+    private final ConcurrentHashMap<String /* addr */, Channel> channelTables = new ConcurrentHashMap<>();
+    private static final long LockTimeoutMillis = 3000;
+    private final Lock lockChannelTables = new ReentrantLock();
 
     public NettyClient(NettyClientConfig nettyClientConfig) {
         this(nettyClientConfig, null);
@@ -124,7 +135,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
         this.timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-            NettyClient.this.scanResponseTable();
+                NettyClient.this.scanResponseTable();
 
             }
         }, 1000 * 3, 1000);
@@ -146,12 +157,21 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
     @Override
     public List<String> getNameServerAddressList() {
+
         return null;
     }
 
     @Override
     public RemotingCommand invokeSync(String addr, RemotingCommand request, long timeoutMillis) throws InterruptedException, RemotingException {
-        return null;
+
+
+        Channel channel = getAndCreateChannel(addr);
+        if (channel == null) {
+            return null;
+        }
+        RemotingCommand response = this.invokeSyncImpl(channel, request, timeoutMillis);
+
+        return response;
     }
 
     @Override
@@ -179,6 +199,45 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
         return null;
     }
 
+    private Channel getAndCreateChannel(final String addr) {
+
+
+        final Channel channel = channelTables.get(addr);
+
+
+        if (channel == null) {
+
+            try {
+                this.lockChannelTables.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS);
+
+
+                ChannelFuture future = this.bootstrap.connect(RemotingHelper.string2SocketAddress(addr));
+                logger.info("createChannel: begin to connect remote host[{}] asynchronously", addr);
+                future.addListener(new GenericFutureListener<Future<? super Void>>() {
+                    @Override
+                    public void operationComplete(Future<? super Void> future) throws Exception {
+
+                        if (future.isSuccess()) {
+                            channelTables.put(addr, channel);
+                        }
+                    }
+                });
+
+
+            } catch (InterruptedException e) {
+
+                logger.info("thread {} is Interrupted {}", Thread.currentThread().getName(), e);
+
+            } finally {
+                this.lockChannelTables.unlock();
+            }
+
+        }
+
+        return channel;
+
+    }
+
 
     class NettyClientHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 
@@ -192,4 +251,6 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     class NettyConnetManageHandler extends ChannelDuplexHandler {
 
     }
+
+
 }
