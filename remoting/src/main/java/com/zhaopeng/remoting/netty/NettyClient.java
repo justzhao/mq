@@ -3,6 +3,7 @@ package com.zhaopeng.remoting.netty;
 import com.zhaopeng.remoting.ChannelEventListener;
 import com.zhaopeng.remoting.InvokeCallback;
 import com.zhaopeng.remoting.NettyRequestProcessor;
+import com.zhaopeng.remoting.common.Pair;
 import com.zhaopeng.remoting.common.RemotingHelper;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.protocol.Client;
@@ -19,11 +20,13 @@ import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -47,6 +50,8 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     private final EventLoopGroup eventLoopGroupWorker;
 
     private final Timer timer = new Timer("ClientHouseKeepingService", true);
+
+    private final AtomicReference<List<String>> namesrvAddrList = new AtomicReference<List<String>>();
 
     private final ConcurrentHashMap<String /* addr */, Channel> channelTables = new ConcurrentHashMap<>();
     private static final long LockTimeoutMillis = 3000;
@@ -147,18 +152,42 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
     @Override
     public void shutdown() {
-
+        defaultEventExecutorGroup.shutdownGracefully();
+        eventLoopGroupWorker.shutdownGracefully();
+        timer.cancel();
     }
 
     @Override
     public void updateNameServerAddressList(List<String> addrs) {
+
+        List<String> old = this.namesrvAddrList.get();
+        boolean update = false;
+
+        if (!addrs.isEmpty()) {
+            if (null == old) {
+                update = true;
+            } else if (addrs.size() != old.size()) {
+                update = true;
+            } else {
+                for (int i = 0; i < addrs.size() && !update; i++) {
+                    if (!old.contains(addrs.get(i))) {
+                        update = true;
+                    }
+                }
+            }
+
+            if (update) {
+                Collections.shuffle(addrs);
+                this.namesrvAddrList.set(addrs);
+            }
+        }
 
     }
 
     @Override
     public List<String> getNameServerAddressList() {
 
-        return null;
+        return this.namesrvAddrList.get();
     }
 
     @Override
@@ -177,6 +206,13 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     @Override
     public void invokeAsync(String addr, RemotingCommand request, long timeoutMillis, InvokeCallback invokeCallback) throws InterruptedException, RemotingException {
 
+        Channel channel = getAndCreateChannel(addr);
+        if (channel == null) {
+            return;
+        }
+
+        this.invokeAsyncImpl(channel, request, timeoutMillis, invokeCallback);
+
     }
 
     @Override
@@ -184,13 +220,21 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
         Channel channel = getAndCreateChannel(addr);
         if (channel == null) {
-            return ;
+            return;
         }
-        this.invokeOneWayImpl(channel,request,timeoutMillis);
+        this.invokeOneWayImpl(channel, request, timeoutMillis);
     }
 
     @Override
     public void registerProcessor(int requestCode, NettyRequestProcessor processor, ExecutorService executor) {
+
+
+        if (null == executor) {
+            executor = this.publicExecutor;
+        }
+
+        Pair<NettyRequestProcessor, ExecutorService> pair = new Pair<>(processor, executor);
+        this.processorTable.put(requestCode, pair);
 
     }
 
