@@ -3,7 +3,10 @@ package com.zhaopeng.mq.consumer.impl;
 import com.zhaopeng.common.client.message.MessageInfo;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.client.query.QueryResult;
-import com.zhaopeng.mq.consumer.MQConsumer;
+import com.zhaopeng.mq.consumer.AbstractMQClientOperation;
+import com.zhaopeng.mq.consumer.MessageQueueListener;
+import com.zhaopeng.mq.consumer.PullCallback;
+import com.zhaopeng.mq.consumer.PullResult;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.remoting.exception.RemotingException;
@@ -14,12 +17,50 @@ import java.util.Set;
 /**
  * Created by zhaopeng on 2017/4/30.
  */
-public class MQClientOperation implements MQConsumer {
+public class MQPullClientOperation extends AbstractMQClientOperation {
 
-    private final NettyClient nettyClient;
+    public MQPullClientOperation(NettyClient nettyClient) {
+        super(nettyClient);
+    }
 
-    public MQClientOperation(NettyClient nettyClient) {
-        this.nettyClient = nettyClient;
+    @Override
+    public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+        return null;
+    }
+
+    @Override
+    public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+        return null;
+    }
+
+    @Override
+    public void pull(MessageQueue mq, String subExpression, long offset, int maxNums, PullCallback pullCallback) throws MQClientException, RemotingException, InterruptedException {
+
+    }
+
+    @Override
+    public void pull(MessageQueue mq, String subExpression, long offset, int maxNums, PullCallback pullCallback, long timeout) throws MQClientException, RemotingException, InterruptedException {
+
+    }
+
+    @Override
+    public void updateConsumeOffset(MessageQueue mq, long offset) throws MQClientException {
+
+    }
+
+    @Override
+    public long fetchConsumeOffset(MessageQueue mq, boolean fromStore) throws MQClientException {
+        return 0;
+    }
+
+    @Override
+    public Set<MessageQueue> fetchMessageQueuesInBalance(String topic) throws MQClientException {
+        return null;
+    }
+
+    @Override
+    public void sendMessageBack(MessageInfo msg, int delayLevel, String brokerName, String consumerGroup) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
+
     }
 
 
@@ -66,6 +107,11 @@ public class MQClientOperation implements MQConsumer {
     @Override
     public MessageInfo viewMessage(String topic, String msgId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
         return null;
+    }
+
+    @Override
+    public void registerMessageQueueListener(String topic, MessageQueueListener listener) {
+
     }
 
     @Override

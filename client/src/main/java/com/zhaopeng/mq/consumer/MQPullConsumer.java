@@ -14,20 +14,6 @@ import java.util.Set;
 public interface MQPullConsumer extends MQConsumer {
 
 
-    void start() throws MQClientException;
-
-
-
-    void shutdown();
-
-
-    /**
-     *  注册一个消息监听器
-     * @param topic
-     * @param listener
-     */
-    void registerMessageQueueListener(final String topic, final MessageQueueListener listener);
-
 
 
 
@@ -120,41 +106,6 @@ public interface MQPullConsumer extends MQConsumer {
             InterruptedException;
 
 
-    /**
-     * 拉取消息如果消息不在阻塞一段时间
-     *
-     * @param mq
-     * @param subExpression
-     * @param offset
-     * @param maxNums
-     *
-     * @return
-     *
-     * @throws MQClientException
-     * @throws RemotingException
-     * @throws MQBrokerException
-     * @throws InterruptedException
-     */
-    PullResult pullBlockIfNotFound(final MessageQueue mq, final String subExpression,
-                                   final long offset, final int maxNums) throws MQClientException, RemotingException,
-            MQBrokerException, InterruptedException;
-
-
-    /**
-     * 通过回调的方式拉取消息，如果消息不在则阻塞
-     * @param mq
-     * @param subExpression
-     * @param offset
-     * @param maxNums
-     * @param pullCallback
-     *
-     * @throws MQClientException
-     * @throws RemotingException
-     * @throws InterruptedException
-     */
-    void pullBlockIfNotFound(final MessageQueue mq, final String subExpression, final long offset,
-                             final int maxNums, final PullCallback pullCallback) throws MQClientException, RemotingException,
-            InterruptedException;
 
 
     /**

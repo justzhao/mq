@@ -17,6 +17,15 @@ public interface MQConsumer extends MQOperation {
 
 
     /**
+     *  注册一个消息监听器
+     * @param topic
+     * @param listener
+     */
+    void registerMessageQueueListener(final String topic, final MessageQueueListener listener);
+
+
+
+    /**
      *
      *
      *  如果消费失败，消息会被重新发送到broker，延迟一段时间在消费

@@ -9,6 +9,7 @@ import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.netty.NettyClient;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -17,58 +18,61 @@ import java.util.Set;
 public class DefaultMQPullConsumer extends AbstractMQConsumer implements MQPullConsumer {
 
 
-    private final MQClientOperation clientOperation;
+    private final MQPullClientOperation mqPullClientOperation;
+
+
+    /**
+     * Offset Storage
+     */
+   // private OffsetStore offsetStore;
+    /**
+     * Topic set you want to register
+     */
+    private Set<String> registerTopics = new HashSet<>();
+
+
+    private MessageQueueListener messageQueueListener;
 
 
     public DefaultMQPullConsumer(NettyClient nettyClient, ClientRemotingProcessor clientRemotingProcessor) {
         super(nettyClient, clientRemotingProcessor);
-        clientOperation=new MQClientOperation(nettyClient);
+        mqPullClientOperation = new MQPullClientOperation(nettyClient);
     }
 
-    @Override
-    public void start() throws MQClientException {
-
-    }
-
-    @Override
-    public void shutdown() {
-
-    }
 
     @Override
     public void registerMessageQueueListener(String topic, MessageQueueListener listener) {
+
+        synchronized (this.registerTopics) {
+            this.registerTopics.add(topic);
+            if (listener != null) {
+                this.messageQueueListener = listener;
+            }
+        }
 
     }
 
     @Override
     public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
-        return null;
+        return mqPullClientOperation.pull(mq, subExpression, offset, maxNums);
     }
 
     @Override
     public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
-        return null;
+        return mqPullClientOperation.pull(mq, subExpression, offset, maxNums,timeout);
     }
 
     @Override
     public void pull(MessageQueue mq, String subExpression, long offset, int maxNums, PullCallback pullCallback) throws MQClientException, RemotingException, InterruptedException {
-
+         mqPullClientOperation.pull(mq, subExpression, offset, maxNums,pullCallback);
     }
 
     @Override
     public void pull(MessageQueue mq, String subExpression, long offset, int maxNums, PullCallback pullCallback, long timeout) throws MQClientException, RemotingException, InterruptedException {
-
+        mqPullClientOperation.pull(mq, subExpression, offset, maxNums,pullCallback,timeout);
     }
 
-    @Override
-    public PullResult pullBlockIfNotFound(MessageQueue mq, String subExpression, long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
-        return null;
-    }
 
-    @Override
-    public void pullBlockIfNotFound(MessageQueue mq, String subExpression, long offset, int maxNums, PullCallback pullCallback) throws MQClientException, RemotingException, InterruptedException {
-
-    }
 
     @Override
     public void updateConsumeOffset(MessageQueue mq, long offset) throws MQClientException {
