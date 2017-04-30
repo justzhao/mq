@@ -14,4 +14,11 @@ public class RequestCode {
     public static final int DELETE_TOPIC_IN_NAMESRV = 1006;
 
 
+    public static final int NOTIFY_CONSUMER_IDS_CHANGED = 1007;
+    public static final int RESET_CONSUMER_CLIENT_OFFSET = 1008;
+    public static final int GET_CONSUMER_STATUS_FROM_CLIENT = 1009;
+    public static final int GET_CONSUMER_RUNNING_INFO = 1010;
+    public static final int CONSUME_MESSAGE_DIRECTLY = 1011;
+
+
 }
