@@ -24,8 +24,6 @@ public interface MQOperation {
             throws MQClientException;
 
 
-    void createTopic(String key, String newTopic, int queueNum, int topicSysFlag)
-            throws MQClientException;
 
 
 

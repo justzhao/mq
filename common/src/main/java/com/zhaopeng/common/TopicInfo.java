@@ -10,6 +10,10 @@ public class TopicInfo {
     private int readQueueNums = defaultReadQueueNums;
     private int writeQueueNums = defaultWriteQueueNums;
 
+    public TopicInfo(String topicName) {
+        this.topicName = topicName;
+    }
+
     public String getTopicName() {
         return topicName;
     }

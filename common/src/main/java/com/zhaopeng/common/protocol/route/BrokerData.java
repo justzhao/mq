@@ -5,7 +5,7 @@ import java.util.HashMap;
 /**
  * Created by zhaopeng on 2017/4/13.
  */
-public class BrokerData {
+public class BrokerData  implements Comparable<BrokerData>{
 
     private String brokerName;
     private HashMap<Long/* brokerId */, String/* broker address */> brokerAddrs=new HashMap<>();
@@ -24,5 +24,10 @@ public class BrokerData {
 
     public void setBrokerAddrs(HashMap<Long, String> brokerAddrs) {
         this.brokerAddrs = brokerAddrs;
+    }
+
+    @Override
+    public int compareTo(BrokerData o) {
+        return this.brokerName.compareTo(o.getBrokerName());
     }
 }

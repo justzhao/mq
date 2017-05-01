@@ -102,11 +102,7 @@ public class DefaultMQPullConsumer extends AbstractMQConsumer implements MQPullC
         mqPullClientOperation.createTopic(key, newTopic, queueNum);
     }
 
-    @Override
-    public void createTopic(String key, String newTopic, int queueNum, int topicSysFlag) throws MQClientException {
 
-        mqPullClientOperation.createTopic(key, newTopic, queueNum, topicSysFlag);
-    }
 
     @Override
     public long searchOffset(MessageQueue mq, long timestamp) throws MQClientException {

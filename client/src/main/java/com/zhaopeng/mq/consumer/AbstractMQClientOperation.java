@@ -7,7 +7,7 @@ import com.zhaopeng.remoting.netty.NettyClient;
  */
 public abstract class AbstractMQClientOperation implements MQPullConsumer {
 
-    private final NettyClient nettyClient;
+    protected final NettyClient nettyClient;
 
     public AbstractMQClientOperation(NettyClient nettyClient) {
         this.nettyClient = nettyClient;
