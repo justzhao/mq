@@ -56,10 +56,9 @@ public class MQClientFactory {
         this.clientConfig = clientConfig;
         this.clientId = clientId;
         this.nettyClientConfig = nettyClientConfig;
-        this.clientRemotingProcessor=new ClientRemotingProcessor();
+        this.clientRemotingProcessor = new ClientRemotingProcessor();
 
-        NettyClient nettyClient=new NettyClient(nettyClientConfig);
-
+        NettyClient nettyClient = new NettyClient(this.nettyClientConfig);
 
 
         nettyClient.registerProcessor(RequestCode.NOTIFY_CONSUMER_IDS_CHANGED, this.clientRemotingProcessor, null);
@@ -72,7 +71,7 @@ public class MQClientFactory {
 
         nettyClient.registerProcessor(RequestCode.CONSUME_MESSAGE_DIRECTLY, this.clientRemotingProcessor, null);
 
-        this.mqPullConsumer=new DefaultMQPullConsumer(nettyClient,clientRemotingProcessor);
+        this.mqPullConsumer = new DefaultMQPullConsumer(nettyClient, clientRemotingProcessor);
         logger.info("created a new client Instance, ClinetID:  {} {}, serializeType={}", //
                 this.clientId, //
                 this.clientConfig, //

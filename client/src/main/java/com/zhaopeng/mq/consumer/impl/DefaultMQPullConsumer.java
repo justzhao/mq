@@ -24,7 +24,7 @@ public class DefaultMQPullConsumer extends AbstractMQConsumer implements MQPullC
     /**
      * Offset Storage
      */
-   // private OffsetStore offsetStore;
+    // private OffsetStore offsetStore;
     /**
      * Topic set you want to register
      */
@@ -59,94 +59,98 @@ public class DefaultMQPullConsumer extends AbstractMQConsumer implements MQPullC
 
     @Override
     public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
-        return mqPullClientOperation.pull(mq, subExpression, offset, maxNums,timeout);
+        return mqPullClientOperation.pull(mq, subExpression, offset, maxNums, timeout);
     }
 
     @Override
     public void pull(MessageQueue mq, String subExpression, long offset, int maxNums, PullCallback pullCallback) throws MQClientException, RemotingException, InterruptedException {
-         mqPullClientOperation.pull(mq, subExpression, offset, maxNums,pullCallback);
+        mqPullClientOperation.pull(mq, subExpression, offset, maxNums, pullCallback);
     }
 
     @Override
     public void pull(MessageQueue mq, String subExpression, long offset, int maxNums, PullCallback pullCallback, long timeout) throws MQClientException, RemotingException, InterruptedException {
-        mqPullClientOperation.pull(mq, subExpression, offset, maxNums,pullCallback,timeout);
+        mqPullClientOperation.pull(mq, subExpression, offset, maxNums, pullCallback, timeout);
     }
-
 
 
     @Override
     public void updateConsumeOffset(MessageQueue mq, long offset) throws MQClientException {
 
+        mqPullClientOperation.updateConsumeOffset(mq, offset);
+
     }
 
     @Override
     public long fetchConsumeOffset(MessageQueue mq, boolean fromStore) throws MQClientException {
-        return 0;
+        return mqPullClientOperation.fetchConsumeOffset(mq, fromStore);
     }
 
     @Override
     public Set<MessageQueue> fetchMessageQueuesInBalance(String topic) throws MQClientException {
-        return null;
+        return mqPullClientOperation.fetchMessageQueuesInBalance(topic);
     }
 
     @Override
     public void sendMessageBack(MessageInfo msg, int delayLevel, String brokerName, String consumerGroup) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
 
+        mqPullClientOperation.sendMessageBack(msg, delayLevel, brokerName, consumerGroup);
     }
 
     @Override
     public void createTopic(String key, String newTopic, int queueNum) throws MQClientException {
 
-
+        mqPullClientOperation.createTopic(key, newTopic, queueNum);
     }
 
     @Override
     public void createTopic(String key, String newTopic, int queueNum, int topicSysFlag) throws MQClientException {
 
+        mqPullClientOperation.createTopic(key, newTopic, queueNum, topicSysFlag);
     }
 
     @Override
     public long searchOffset(MessageQueue mq, long timestamp) throws MQClientException {
-        return 0;
+        return mqPullClientOperation.searchOffset(mq, timestamp);
     }
 
     @Override
     public long maxOffset(MessageQueue mq) throws MQClientException {
-        return 0;
+        return mqPullClientOperation.maxOffset(mq);
     }
 
     @Override
     public long minOffset(MessageQueue mq) throws MQClientException {
-        return 0;
+        return mqPullClientOperation.minOffset(mq);
     }
 
     @Override
     public long earliestMsgStoreTime(MessageQueue mq) throws MQClientException {
-        return 0;
+        return mqPullClientOperation.earliestMsgStoreTime(mq);
     }
 
     @Override
     public MessageInfo viewMessage(String messageId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
-        return null;
+        return mqPullClientOperation.viewMessage(messageId);
     }
 
     @Override
     public QueryResult queryMessage(String topic, String key, int maxNum, long begin, long end) throws MQClientException, InterruptedException {
-        return null;
+        return mqPullClientOperation.queryMessage(topic, key, maxNum, begin, end);
     }
 
     @Override
     public MessageInfo viewMessage(String topic, String msgId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
-        return null;
+        return mqPullClientOperation.viewMessage(topic, msgId);
     }
 
     @Override
     public void sendMessageBack(MessageInfo msg, int delayLevel, String brokerName) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
 
+        mqPullClientOperation.sendMessageBack(msg, delayLevel, brokerName);
     }
 
     @Override
     public Set<MessageQueue> fetchSubscribeMessageQueues(String topic) throws MQClientException {
-        return null;
+        return mqPullClientOperation.fetchSubscribeMessageQueues(topic);
     }
 }
