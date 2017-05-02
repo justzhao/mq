@@ -8,6 +8,8 @@ import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.client.query.QueryResult;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.ResponseCode;
+import com.zhaopeng.common.protocol.body.SearchOffsetRequest;
+import com.zhaopeng.common.protocol.body.SearchOffsetResponse;
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
 import com.zhaopeng.mq.consumer.AbstractMQClientOperation;
@@ -23,14 +25,8 @@ import com.zhaopeng.remoting.protocol.RemotingCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -47,8 +43,11 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
     private final Lock lockHeartbeat = new ReentrantLock();
 
     private long timeoutMillis = 6000;
+    private long LockTimeoutMillis = 3000;
 
     private final ConcurrentHashMap<String/* Broker Name */, HashMap<Long/* brokerId */, String/* address */>> brokerAddrTable = new ConcurrentHashMap<>();
+
+    private final ConcurrentHashMap<String/* Topic */, TopicRouteData> topicRouteTable = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -162,7 +161,26 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
 
     @Override
     public long searchOffset(MessageQueue mq, long timestamp) throws MQClientException {
-        return 0;
+
+        String brokerAddr = getBrokerAddrByName(mq.getBrokerName());
+        if (null == brokerAddr) {
+            // 重新根据topic获取addr
+
+            updateTopicRouteInfoFromNameServer(mq.getTopic());
+            brokerAddr = getBrokerAddrByName(mq.getBrokerName());
+
+        }
+
+        if (brokerAddr != null) {
+            try {
+                return searchOffset(brokerAddr, mq.getTopic(), mq.getQueueId(), timestamp,
+                        timeoutMillis);
+            } catch (Exception e) {
+                throw new MQClientException("Invoke Broker[" + brokerAddr + "] exception", e);
+            }
+        }
+
+        throw new MQClientException("The broker[" + mq.getBrokerName() + "] not exist", null);
     }
 
     @Override
@@ -246,4 +264,111 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
 
         throw new MQClientException(response.getCode(), response.getRemark());
     }
+
+
+    public String getBrokerAddrByName(String name) {
+        HashMap<Long, String> broker = this.brokerAddrTable.get(name);
+        if (broker == null) {
+            return null;
+        }
+        String addr = broker.get(All.MASTER_ID);
+        return addr;
+    }
+
+    long searchOffset(final String addr, final String topic, final int queueId, final long timestamp, final long timeoutMillis) {
+
+        SearchOffsetRequest searchOffset = new SearchOffsetRequest();
+        searchOffset.setTopic(topic);
+        searchOffset.setQueueId(queueId);
+        searchOffset.setTimestamp(timestamp);
+        RemotingCommand request = RemotingCommand.createResponseCommand(RequestCode.SEARCH_OFFSET_BY_TIMESTAMP, null);
+        request.setBody(searchOffset.encode());
+
+        try {
+
+            RemotingCommand response = this.nettyClient.invokeSync(addr, request, timeoutMillis);
+            assert response != null;
+            switch (response.getCode()) {
+                case ResponseCode.SUCCESS: {
+                    if (response.getBody() != null) ;
+                    SearchOffsetResponse searchOffsetResponse = SearchOffsetResponse.decode(response.getBody(), SearchOffsetResponse.class);
+
+                    return searchOffsetResponse.getOffset();
+                }
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            logger.error("searchOffset error  {}", e);
+        }
+        logger.error("searchOffset fail {} {}", addr, topic);
+
+        return 0;
+    }
+
+
+    void updateTopicRouteInfoFromNameServer(final String topic) {
+
+        try {
+            if (this.lockNamesrv.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS)) {
+                try {
+                    TopicRouteData topicRouteData = getTopicRouteInfoFromNameServer(topic, timeoutMillis);
+
+                    if (topicRouteData != null) {
+                        TopicRouteData old = this.topicRouteTable.get(topic);
+                        boolean changed = isTopicRouteChange(old, topicRouteData);
+
+
+                        if (changed) {
+                            TopicRouteData cloneTopicRouteData = topicRouteData.cloneOne();
+
+                            for (BrokerData bd : topicRouteData.getBrokerDatas()) {
+                                this.brokerAddrTable.put(bd.getBrokerName(), bd.getBrokerAddrs());
+                            }
+
+                            // 更新发布路由信息
+                            {
+
+                            }
+
+                            // 更新订阅路由信息
+                            {
+
+                            }
+                            logger.info("topicRouteTable.put TopicRouteData[{}]", cloneTopicRouteData);
+                            this.topicRouteTable.put(topic, cloneTopicRouteData);
+
+                        }
+                    } else {
+                        logger.warn("updateTopicRouteInfoFromNameServer, getTopicRouteInfoFromNameServer return null, Topic: {}", topic);
+                    }
+                } catch (Exception e) {
+
+                    logger.warn("updateTopicRouteInfoFromNameServer Exception", e);
+
+                } finally {
+                    this.lockNamesrv.unlock();
+                }
+            } else {
+                logger.warn("updateTopicRouteInfoFromNameServer tryLock timeout {}ms", LockTimeoutMillis);
+            }
+        } catch (InterruptedException e) {
+            logger.warn("updateTopicRouteInfoFromNameServer Exception", e);
+        }
+
+
+    }
+
+    public  boolean isTopicRouteChange(TopicRouteData olddata, TopicRouteData nowdata){
+        if (olddata == null || nowdata == null)
+            return true;
+        TopicRouteData old = olddata.cloneOne();
+        TopicRouteData now = nowdata.cloneOne();
+        Collections.sort(old.getQueueDatas());
+        Collections.sort(old.getBrokerDatas());
+        Collections.sort(now.getQueueDatas());
+        Collections.sort(now.getBrokerDatas());
+        return !old.equals(now);
+    }
+
 }

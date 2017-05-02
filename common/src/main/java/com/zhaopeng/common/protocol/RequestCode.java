@@ -20,5 +20,7 @@ public class RequestCode {
     public static final int GET_CONSUMER_RUNNING_INFO = 1010;
     public static final int CONSUME_MESSAGE_DIRECTLY = 1011;
 
+    public static final int SEARCH_OFFSET_BY_TIMESTAMP=1012;
+
 
 }
