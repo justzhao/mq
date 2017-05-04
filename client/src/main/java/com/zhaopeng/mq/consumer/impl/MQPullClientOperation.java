@@ -7,18 +7,15 @@ import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.MessageInfo;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.client.query.QueryResult;
-
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
 import com.zhaopeng.mq.consumer.AbstractMQClientOperation;
-import com.zhaopeng.mq.consumer.MessageQueueListener;
 import com.zhaopeng.mq.consumer.PullCallback;
 import com.zhaopeng.mq.consumer.PullResult;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.netty.NettyClient;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,25 +73,15 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
 
     }
 
-    @Override
-    public void updateConsumeOffset(MessageQueue mq, long offset) throws MQClientException {
 
-    }
 
-    @Override
-    public long fetchConsumeOffset(MessageQueue mq, boolean fromStore) throws MQClientException {
-        return 0;
-    }
 
     @Override
     public Set<MessageQueue> fetchMessageQueuesInBalance(String topic) throws MQClientException {
         return null;
     }
 
-    @Override
-    public void sendMessageBack(MessageInfo msg, int delayLevel, String brokerName, String consumerGroup) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
 
-    }
 
 
     @Override
@@ -210,15 +197,8 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
         return null;
     }
 
-    @Override
-    public void registerMessageQueueListener(String topic, MessageQueueListener listener) {
 
-    }
 
-    @Override
-    public void sendMessageBack(MessageInfo msg, int delayLevel, String brokerName) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
-
-    }
 
     @Override
     public Set<MessageQueue> fetchSubscribeMessageQueues(String topic) throws MQClientException {

@@ -1,6 +1,5 @@
 package com.zhaopeng.mq.consumer;
 
-import com.zhaopeng.common.client.message.MessageInfo;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
@@ -109,30 +108,6 @@ public interface MQPullConsumer extends MQConsumer {
 
 
     /**
-     * 更新offset
-     *
-     * @param mq
-     * @param offset
-     *
-     * @throws MQClientException
-     */
-    void updateConsumeOffset(final MessageQueue mq, final long offset) throws MQClientException;
-
-
-    /**
-     * 查询偏移量
-     *
-     * @param mq
-     * @param fromStore
-     *
-     * @return
-     *
-     * @throws MQClientException
-     */
-    long fetchConsumeOffset(final MessageQueue mq, final boolean fromStore) throws MQClientException;
-
-
-    /**
      * 根据topic查询 messageQueue
      *
      * @param topic
@@ -144,19 +119,5 @@ public interface MQPullConsumer extends MQConsumer {
      */
     Set<MessageQueue> fetchMessageQueuesInBalance(final String topic) throws MQClientException;
 
-    /**
-     *
-     *如果消费失败，消息会被重新发送到broker，延迟一段时间在消费
-     * @param msg
-     * @param delayLevel
-     * @param brokerName
-     * @param consumerGroup
-     *
-     * @throws RemotingException
-     * @throws MQBrokerException
-     * @throws InterruptedException
-     * @throws MQClientException
-     */
-    void sendMessageBack(MessageInfo msg, int delayLevel, String brokerName, String consumerGroup)
-            throws RemotingException, MQBrokerException, InterruptedException, MQClientException;
+
 }
