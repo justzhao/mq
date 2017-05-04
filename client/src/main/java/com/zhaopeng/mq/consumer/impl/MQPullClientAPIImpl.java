@@ -2,13 +2,17 @@ package com.zhaopeng.mq.consumer.impl;
 
 import com.google.common.base.Strings;
 import com.zhaopeng.common.All;
+import com.zhaopeng.common.TopicInfo;
+import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.SearchOffsetRequest;
 import com.zhaopeng.common.protocol.body.SearchOffsetResponse;
 import com.zhaopeng.common.protocol.route.BrokerData;
+import com.zhaopeng.common.protocol.route.QueueData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
 import com.zhaopeng.mq.consumer.MQPullClientAPI;
+import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.netty.NettyClient;
@@ -17,8 +21,7 @@ import com.zhaopeng.remoting.protocol.RemotingCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -179,6 +182,63 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
         Collections.sort(now.getQueueDatas());
         Collections.sort(now.getBrokerDatas());
         return !old.equals(now);
+    }
+
+    public Set<MessageQueue> fetchSubscribeMessageQueues(String topic) throws MQClientException {
+
+        try {
+            TopicRouteData topicRouteData = getTopicRouteInfoFromNameServer(topic, timeoutMillis);
+            if (topicRouteData != null) {
+                Set<MessageQueue> mqList = topicRouteData2TopicSubscribeInfo(topic, topicRouteData);
+                if (!mqList.isEmpty()) {
+                    return mqList;
+                } else {
+                    return mqList;
+                }
+            }
+        } catch (Exception e) {
+            throw new MQClientException(
+                    "Can not find Message Queue for this topic, " + topic + e);
+        }
+
+        return null;
+    }
+
+    public static Set<MessageQueue> topicRouteData2TopicSubscribeInfo(final String topic, final TopicRouteData route) {
+        Set<MessageQueue> mqList = new HashSet<>();
+        List<QueueData> qds = route.getQueueDatas();
+        for (QueueData qd : qds) {
+
+            for (int i = 0; i < qd.getReadQueueNums(); i++) {
+                MessageQueue mq = new MessageQueue(topic, qd.getBrokerName(), i);
+                mqList.add(mq);
+            }
+
+        }
+
+        return mqList;
+    }
+
+    public void createTopic(final String addr, final String defaultTopic, final TopicInfo topicConfig, final long timeoutMillis)
+            throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
+
+        if (topicConfig == null) return;
+
+        RemotingCommand request = RemotingCommand.createResponseCommand(RequestCode.CREATE_TOPIC, null);
+        request.setBody(topicConfig.encode());
+
+        RemotingCommand response = nettyClient.invokeSync(addr, request, timeoutMillis);
+
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
+        }
+
+        throw new MQClientException(response.getCode(), response.getRemark());
     }
 
 }

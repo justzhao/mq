@@ -1,9 +1,11 @@
 package com.zhaopeng.common;
 
+import com.zhaopeng.remoting.protocol.JsonSerializable;
+
 /**
  * Created by zhaopeng on 2017/4/12.
  */
-public class TopicInfo {
+public class TopicInfo extends JsonSerializable {
     public static int defaultReadQueueNums = 16;
     public static int defaultWriteQueueNums = 16;
     private String topicName;

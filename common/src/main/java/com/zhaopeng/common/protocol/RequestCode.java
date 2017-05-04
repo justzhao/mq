@@ -22,5 +22,7 @@ public class RequestCode {
 
     public static final int SEARCH_OFFSET_BY_TIMESTAMP=1012;
 
+    public static final int CREATE_TOPIC=1013;
+
 
 }

@@ -1,6 +1,7 @@
 package com.zhaopeng.mq.consumer.impl;
 
 
+import com.google.common.base.Strings;
 import com.zhaopeng.common.All;
 import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.MessageInfo;
@@ -36,7 +37,6 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
     private static final Logger logger = LoggerFactory.getLogger(MQPullClientOperation.class);
 
     private final long bootTime = System.currentTimeMillis();
-
 
 
     private final MQPullClientAPIImpl mqPullClientAPI;
@@ -122,7 +122,7 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
                         // 重试五次
                         for (int i = 0; i < 5; i++) {
                             try {
-                                this.createTopic(addr, key, topicInfo, timeoutMillis);
+                                mqPullClientAPI.createTopic(addr, key, topicInfo, timeoutMillis);
                                 createOK = true;
                                 createOKAtLeastOnce = true;
                                 break;
@@ -222,14 +222,9 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
 
     @Override
     public Set<MessageQueue> fetchSubscribeMessageQueues(String topic) throws MQClientException {
-        return null;
+        if (Strings.isNullOrEmpty(topic)) return null;
+        return mqPullClientAPI.fetchSubscribeMessageQueues(topic);
     }
-
-
-    public void createTopic(final String addr, final String defaultTopic, final TopicInfo topicInfo, final long timeoutMillis) {
-
-    }
-
 
 
 }
