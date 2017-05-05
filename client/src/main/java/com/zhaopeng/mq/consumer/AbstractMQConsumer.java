@@ -1,7 +1,8 @@
 package com.zhaopeng.mq.consumer;
 
-import com.zhaopeng.mq.consumer.impl.ClientRemotingProcessor;
+
 import com.zhaopeng.remoting.netty.NettyClient;
+import com.zhaopeng.remoting.netty.NettyClientConfig;
 
 /**
  * Created by zhaopeng on 2017/4/30.
@@ -9,10 +10,10 @@ import com.zhaopeng.remoting.netty.NettyClient;
 public abstract class AbstractMQConsumer {
 
     protected final NettyClient nettyClient;
-    protected final ClientRemotingProcessor clientRemotingProcessor;
 
-    protected AbstractMQConsumer(NettyClient nettyClient, ClientRemotingProcessor clientRemotingProcessor) {
-        this.nettyClient = nettyClient;
-        this.clientRemotingProcessor = clientRemotingProcessor;
+
+    protected AbstractMQConsumer(NettyClientConfig nettyClientConfig) {
+        this.nettyClient = new NettyClient(nettyClientConfig);
+
     }
 }

@@ -34,6 +34,8 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
     private static final Logger logger = LoggerFactory.getLogger(MQPullClientAPIImpl.class);
 
 
+    private String namesrv;
+
     private final Lock lockNamesrv = new ReentrantLock();
     private final Lock lockHeartbeat = new ReentrantLock();
 
@@ -46,8 +48,9 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
 
     protected final NettyClient nettyClient;
 
-    public MQPullClientAPIImpl(NettyClient nettyClient) {
+    public MQPullClientAPIImpl(NettyClient nettyClient, String addr) {
         this.nettyClient = nettyClient;
+        this.namesrv = addr;
     }
 
     long searchOffset(final String addr, final String topic, final int queueId, final long timestamp, final long timeoutMillis) {
@@ -149,7 +152,7 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
         request.setBody(JsonSerializable.encode(topic));
 
 
-        RemotingCommand response = this.nettyClient.invokeSync(null, request, timeoutMillis);
+        RemotingCommand response = this.nettyClient.invokeSync(namesrv, request, timeoutMillis);
 
         assert response != null;
         switch (response.getCode()) {
@@ -208,7 +211,7 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
         Set<MessageQueue> mqList = new HashSet<>();
         List<QueueData> qds = route.getQueueDatas();
         for (QueueData qd : qds) {
-
+            // 针对每个队列，每个队列可以设置nums个读队列。
             for (int i = 0; i < qd.getReadQueueNums(); i++) {
                 MessageQueue mq = new MessageQueue(topic, qd.getBrokerName(), i);
                 mqList.add(mq);

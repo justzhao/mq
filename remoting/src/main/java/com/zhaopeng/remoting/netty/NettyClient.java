@@ -253,8 +253,6 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
 
         final Channel channel = channelTables.get(addr);
-
-
         if (channel == null) {
 
             try {

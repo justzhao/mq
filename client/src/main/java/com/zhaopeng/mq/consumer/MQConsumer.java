@@ -13,9 +13,6 @@ public interface MQConsumer extends MQOperation {
 
 
 
-
-
-
     /**
      * 根据topic去查询consumer的缓存 message queues
      * @param topic

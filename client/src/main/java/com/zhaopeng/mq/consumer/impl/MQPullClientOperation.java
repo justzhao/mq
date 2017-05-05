@@ -4,13 +4,10 @@ package com.zhaopeng.mq.consumer.impl;
 import com.google.common.base.Strings;
 import com.zhaopeng.common.All;
 import com.zhaopeng.common.TopicInfo;
-import com.zhaopeng.common.client.message.MessageInfo;
 import com.zhaopeng.common.client.message.MessageQueue;
-import com.zhaopeng.common.client.query.QueryResult;
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
 import com.zhaopeng.mq.consumer.AbstractMQClientOperation;
-import com.zhaopeng.mq.consumer.PullCallback;
 import com.zhaopeng.mq.consumer.PullResult;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
@@ -47,41 +44,15 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
         }
     });
 
-
-    public MQPullClientOperation(NettyClient nettyClient) {
+    public MQPullClientOperation(NettyClient nettyClient, String addr) {
         super(nettyClient);
-        mqPullClientAPI = new MQPullClientAPIImpl(nettyClient);
+        mqPullClientAPI = new MQPullClientAPIImpl(nettyClient, addr);
     }
 
     @Override
     public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
         return null;
     }
-
-    @Override
-    public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
-        return null;
-    }
-
-    @Override
-    public void pull(MessageQueue mq, String subExpression, long offset, int maxNums, PullCallback pullCallback) throws MQClientException, RemotingException, InterruptedException {
-
-    }
-
-    @Override
-    public void pull(MessageQueue mq, String subExpression, long offset, int maxNums, PullCallback pullCallback, long timeout) throws MQClientException, RemotingException, InterruptedException {
-
-    }
-
-
-
-
-    @Override
-    public Set<MessageQueue> fetchMessageQueuesInBalance(String topic) throws MQClientException {
-        return null;
-    }
-
-
 
 
     @Override
@@ -142,17 +113,13 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
     }
 
 
-    @Override
     public long searchOffset(MessageQueue mq, long timestamp) throws MQClientException {
 
         String brokerAddr = mqPullClientAPI.getBrokerAddrByName(mq.getBrokerName());
         if (null == brokerAddr) {
             // 重新根据topic获取addr
-
             mqPullClientAPI.updateTopicRouteInfoFromNameServer(mq.getTopic());
             brokerAddr = mqPullClientAPI.getBrokerAddrByName(mq.getBrokerName());
-
-
         }
 
         if (brokerAddr != null) {
@@ -166,38 +133,6 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
 
         throw new MQClientException("The broker[" + mq.getBrokerName() + "] not exist", null);
     }
-
-    @Override
-    public long maxOffset(MessageQueue mq) throws MQClientException {
-        return 0;
-    }
-
-    @Override
-    public long minOffset(MessageQueue mq) throws MQClientException {
-        return 0;
-    }
-
-    @Override
-    public long earliestMsgStoreTime(MessageQueue mq) throws MQClientException {
-        return 0;
-    }
-
-    @Override
-    public MessageInfo viewMessage(String messageId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
-        return null;
-    }
-
-    @Override
-    public QueryResult queryMessage(String topic, String key, int maxNum, long begin, long end) throws MQClientException, InterruptedException {
-        return null;
-    }
-
-    @Override
-    public MessageInfo viewMessage(String topic, String msgId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
-        return null;
-    }
-
-
 
 
     @Override
