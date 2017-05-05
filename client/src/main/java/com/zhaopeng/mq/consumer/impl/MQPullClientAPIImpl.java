@@ -6,12 +6,14 @@ import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.ResponseCode;
+import com.zhaopeng.common.protocol.body.PullMesageInfo;
 import com.zhaopeng.common.protocol.body.SearchOffsetRequest;
 import com.zhaopeng.common.protocol.body.SearchOffsetResponse;
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.QueueData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
 import com.zhaopeng.mq.consumer.MQPullClientAPI;
+import com.zhaopeng.mq.consumer.PullResult;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.remoting.exception.RemotingException;
@@ -91,8 +93,6 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
                     if (topicRouteData != null) {
                         TopicRouteData old = this.topicRouteTable.get(topic);
                         boolean changed = isTopicRouteChange(old, topicRouteData);
-
-
                         if (changed) {
                             TopicRouteData cloneTopicRouteData = topicRouteData.cloneOne();
 
@@ -138,8 +138,8 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
         if (broker == null) {
             return null;
         }
-        String addr = broker.get(All.MASTER_ID);
-        return addr;
+        return broker.get(All.MASTER_ID);
+
     }
 
     public TopicRouteData getTopicRouteInfoFromNameServer(final String topic, final long timeoutMillis)
@@ -242,6 +242,39 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
+    }
+
+    public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+        String topic = mq.getTopic();
+
+        String brokerAddr = getBrokerAddrByName(mq.getBrokerName());
+        if (Strings.isNullOrEmpty(brokerAddr)) {
+            updateTopicRouteInfoFromNameServer(topic);
+        }
+        brokerAddr = getBrokerAddrByName(mq.getBrokerName());
+        if (Strings.isNullOrEmpty(brokerAddr)) {
+
+            logger.error("Can not find Broker Address for this topic  {}", topic);
+            return null;
+        }
+
+        RemotingCommand request = RemotingCommand.createResponseCommand(RequestCode.PULL_MESSAGE, null);
+
+        PullMesageInfo pullMesageInfo = new PullMesageInfo(topic, mq.getQueueId(), offset, maxNums, 0l);
+        request.setBody(pullMesageInfo.encode());
+
+        RemotingCommand respone = this.nettyClient.invokeSync(brokerAddr, request, timeoutMillis);
+
+        if (respone.getCode()==ResponseCode.SUCCESS){
+            if(respone.getBody()!=null) {
+                PullResult result =PullResult.decode(respone.getBody(),PullResult.class);
+
+                return  result;
+
+            }
+        }
+
+        return null;
     }
 
 }

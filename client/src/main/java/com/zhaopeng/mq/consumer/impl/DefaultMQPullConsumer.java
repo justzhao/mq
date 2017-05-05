@@ -24,8 +24,7 @@ public class DefaultMQPullConsumer extends AbstractMQConsumer implements MQPullC
 
     public DefaultMQPullConsumer(NettyClientConfig nettyClientConfig, String addr) {
         super(nettyClientConfig);
-        this.namesrv = addr;
-        mqPullClientOperation = new MQPullClientOperation(nettyClient);
+        mqPullClientOperation = new MQPullClientOperation(nettyClient,addr);
     }
 
 

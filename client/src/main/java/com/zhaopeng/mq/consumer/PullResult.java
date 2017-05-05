@@ -2,13 +2,14 @@ package com.zhaopeng.mq.consumer;
 
 import com.zhaopeng.common.client.enums.PullStatus;
 import com.zhaopeng.common.client.message.MessageInfo;
+import com.zhaopeng.remoting.protocol.JsonSerializable;
 
 import java.util.List;
 
 /**
  * Created by zhaopeng on 2017/4/25.
  */
-public class PullResult {
+public class PullResult extends JsonSerializable {
     private final PullStatus pullStatus;
     private final long nextBeginOffset;
     private final long minOffset;
