@@ -134,9 +134,9 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
     public RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingException {
 
         RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
-        String topic = null;
+
         if (request.getBody() != null) {
-            topic = JsonSerializable.decode(request.getBody(), String.class);
+            String topic = new String(request.getBody());
             TopicRouteData topicRouteData = this.namesrvController.getRouteInfoManager().selectTopicRouteData(topic);
             if (topicRouteData != null) {
                 respone.setBody(topicRouteData.encode());
