@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by zhaopeng on 2017/4/5.
@@ -60,17 +59,17 @@ public class NameSrvController {
         // netty
         this.nettyServer = new NettyServer(nettyServerConfig, brokerStatusListener);
 
-        // 注册请求处理器
 
-        this.registerProcessor();
         // 线程池
 
         this.executorService =
                 Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
+        // 注册请求处理器
 
+        this.registerProcessor();
         // 定时任务
 
-        this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+     /*   this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
             public void run() {
@@ -84,7 +83,7 @@ public class NameSrvController {
             public void run() {
                 NameSrvController.this.routeInfoManager.printAllNameSrvStatistics();
             }
-        }, 1, 10, TimeUnit.SECONDS);
+        }, 1, 10, TimeUnit.SECONDS);*/
 
 
         return true;

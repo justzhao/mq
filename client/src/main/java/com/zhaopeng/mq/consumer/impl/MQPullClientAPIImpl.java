@@ -148,10 +148,8 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
         if (Strings.isNullOrEmpty(topic)) {
             return null;
         }
-        RemotingCommand request = RemotingCommand.createResponseCommand(RequestCode.GET_ROUTEINTO_BY_TOPIC, null);
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ROUTEINTO_BY_TOPIC, null);
         request.setBody(JsonSerializable.encode(topic));
-
-
         RemotingCommand response = this.nettyClient.invokeSync(namesrv, request, timeoutMillis);
 
         assert response != null;
@@ -170,8 +168,7 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
             default:
                 break;
         }
-
-        throw new MQClientException(response.getCode(), response.getRemark());
+    return  null;
     }
 
 
@@ -200,8 +197,8 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
                 }
             }
         } catch (Exception e) {
-            throw new MQClientException(
-                    "Can not find Message Queue for this topic, " + topic + e);
+       logger.error("Can not find Message Queue for this topic, {} {}" , topic , e);
+
         }
 
         return null;

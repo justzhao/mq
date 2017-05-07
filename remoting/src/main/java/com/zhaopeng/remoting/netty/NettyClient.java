@@ -17,8 +17,6 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +77,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
         this.publicExecutor = Executors.newFixedThreadPool(publicThreadNums, new ThreadFactory() {
             private AtomicInteger threadIndex = new AtomicInteger(0);
+
             @Override
             public Thread newThread(Runnable r) {
                 return new Thread(r, "NettyClientPublicExecutor_" + this.threadIndex.incrementAndGet());
@@ -252,40 +251,46 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     private Channel getAndCreateChannel(final String addr) {
 
 
-        final Channel channel = channelTables.get(addr);
+        Channel channel = channelTables.get(addr);
         if (channel == null) {
 
             try {
                 this.lockChannelTables.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS);
+                //final ChannelFuture f = this.bootstrap.connect(RemotingHelper.string2SocketAddress(addr));
+                final ChannelFuture f = this.bootstrap.connect("localhost", 9876);
 
-
-                ChannelFuture future = this.bootstrap.connect(RemotingHelper.string2SocketAddress(addr));
                 logger.info("createChannel: begin to connect remote host[{}] asynchronously", addr);
-                future.addListener(new GenericFutureListener<Future<? super Void>>() {
-                    @Override
-                    public void operationComplete(Future<? super Void> future) throws Exception {
 
-                        if (future.isSuccess()) {
-                            channelTables.put(addr, channel);
-                        }
+                if (f.awaitUninterruptibly(this.nettyClientConfig.getConnectTimeoutMillis())) {
+                    if (ischannelFutureOK(f)) {
+                        logger.info("createChannel: connect remote host[{}] success, {}", addr, f.toString());
+                        return f.channel();
+                    } else {
+                        logger.warn("createChannel: connect remote host[" + addr + "] failed, " + f.toString(), f.cause());
                     }
-                });
 
+                }
 
             } catch (InterruptedException e) {
 
                 logger.info("thread {} is Interrupted {}", Thread.currentThread().getName(), e);
 
+            } catch (Exception e) {
+                logger.info("getChannelEventListener error {}", e);
             } finally {
                 this.lockChannelTables.unlock();
             }
 
         }
 
-        return channel;
+        return null;
 
     }
 
+
+    public boolean ischannelFutureOK(ChannelFuture channelFuture) {
+        return channelFuture.channel() != null && channelFuture.channel().isActive();
+    }
 
     class NettyClientHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 

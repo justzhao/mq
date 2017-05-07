@@ -19,7 +19,7 @@ public class RemotingCommand {
     private static final int RPC_TYPE = 0; // 0 是req 1 是 rep
     private static final int RPC_ONEWAY = 1; // 0  rpc 需要返回结果, 1 ,不需要返回结果
     /**
-     *  静态变量用来唯一保存 请求id
+     * 静态变量用来唯一保存 请求id
      */
     private static AtomicInteger requestId = new AtomicInteger(0);
 
@@ -56,6 +56,7 @@ public class RemotingCommand {
 
     /**
      * 获取最新的requestId
+     *
      * @return
      */
     public static int createNewRequestId() {
@@ -92,7 +93,7 @@ public class RemotingCommand {
         result.putInt(length);
 
         // header length  消息头的长度
-        result.put(markProtocolType(headerData.length,serializeType));
+        result.put(markProtocolType(headerData.length, serializeType));
 
         // header data
         result.put(headerData);
@@ -102,7 +103,7 @@ public class RemotingCommand {
         return result;
     }
 
-    public static byte[] markProtocolType(int source,SerializeType type) {
+    public static byte[] markProtocolType(int source, SerializeType type) {
         byte[] result = new byte[4];
 
         result[0] = type.getCode();
@@ -119,6 +120,7 @@ public class RemotingCommand {
             return JsonSerializable.encode(this);
         }
     }
+
     public void markResponseType() {
         int bits = 1 << RPC_TYPE;
         this.flag |= bits;
@@ -164,6 +166,13 @@ public class RemotingCommand {
         return cmd;
     }
 
+    public static RemotingCommand createRequestCommand(int code, String remark) {
+        RemotingCommand cmd = new RemotingCommand();
+        cmd.setCode(code);
+        cmd.setRemark(remark);
+        return cmd;
+    }
+
     public static RemotingCommand decode(final ByteBuffer byteBuffer) {
         //length = 存放消息头数据的有多长的所占用字节数+ 消息头数据占用字节数+body数据的占用字节数
         int length = byteBuffer.limit();
@@ -189,6 +198,7 @@ public class RemotingCommand {
 
     /**
      * 一共4 个byte。 最高的byte存放序列化的方式
+     *
      * @param source
      * @return
      */
@@ -232,7 +242,6 @@ public class RemotingCommand {
     public void setCode(int code) {
         this.code = code;
     }
-
 
 
     public String getRemark() {

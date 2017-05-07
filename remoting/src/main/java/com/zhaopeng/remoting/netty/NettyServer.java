@@ -1,9 +1,9 @@
 package com.zhaopeng.remoting.netty;
 
+import com.zhaopeng.remoting.ChannelEventListener;
 import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.Server;
 import com.zhaopeng.remoting.common.Pair;
-import com.zhaopeng.remoting.ChannelEventListener;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -13,7 +13,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -99,8 +98,6 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
                 .option(ChannelOption.SO_SNDBUF, nettyServerConfig.getServerSocketSndBufSize())
                 //
                 .option(ChannelOption.SO_RCVBUF, nettyServerConfig.getServerSocketRcvBufSize())
-                //
-                .localAddress(new InetSocketAddress(this.nettyServerConfig.getPort()))
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
@@ -112,6 +109,8 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
                                 new NettyServerHandler());
                     }
                 });
+
+        this.serverBootstrap.bind(nettyServerConfig.getPort());
 
     }
 

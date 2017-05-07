@@ -363,8 +363,10 @@ public class RouteInfoManager {
     public TopicRouteData selectTopicRouteData(final String topic) {
 
         TopicRouteData topicRouteData = new TopicRouteData();
+
+        return  topicRouteData;
         //LinkedList 方便快速添数据
-        List<BrokerData> brokerDatas = new LinkedList<>();
+     /*   List<BrokerData> brokerDatas = new LinkedList<>();
         topicRouteData.setBrokerDatas(brokerDatas);
 
         boolean foundQueueData = false;
@@ -404,7 +406,7 @@ public class RouteInfoManager {
         if (foundBrokerData && foundQueueData) {
             return topicRouteData;
         }
-        return null;
+        return null;*/
     }
 
     public TopicList getAllTopicList() {

@@ -17,6 +17,8 @@ public class ConsumerStart {
             NettyClientConfig clientConfig=new NettyClientConfig();
             String namesrv="127.0.0.1:9876";
             DefaultMQPullConsumer consumer=new DefaultMQPullConsumer(clientConfig,namesrv);
+            consumer.init();
+
 
             logger.info("the fetch result is {}",consumer.fetchSubscribeMessageQueues("order_system"));
 
