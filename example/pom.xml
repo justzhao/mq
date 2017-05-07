@@ -7,10 +7,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>client</artifactId>
+    <artifactId>example</artifactId>
     <packaging>jar</packaging>
 
-    <name>client</name>
+    <name>example</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -26,18 +26,14 @@
         </dependency>
 
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
+            <groupId>com.zhaopeng.mq</groupId>
+            <artifactId>namesrv</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.zhaopeng.mq</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>client</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

@@ -1,7 +1,5 @@
 package com.zhaopeng.namesrv;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
 import com.zhaopeng.common.All;
 import com.zhaopeng.common.namesrv.NameSrvConfig;
 import com.zhaopeng.remoting.netty.NettyServerConfig;
@@ -15,11 +13,12 @@ import org.slf4j.LoggerFactory;
  */
 public class NameSrvStart {
 
-    public static void main(String args[]) {
-        startUp();
-    }
+    final Logger log = LoggerFactory.getLogger(NameSrvStart.class);
 
-    private static void startUp() {
+
+
+
+    public   void startUp() {
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setPort(9876);
 
@@ -34,13 +33,6 @@ public class NameSrvStart {
                 System.exit(0);
             }
 
-
-            LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-            JoranConfigurator configurator = new JoranConfigurator();
-            configurator.setContext(lc);
-            lc.reset();
-            configurator.doConfigure(nameSrvConfig.getMqHome() + "/logback.xml");
-            final Logger log = LoggerFactory.getLogger(NameSrvStart.class);
 
             NameSrvController nameSrvController = new NameSrvController(nameSrvConfig, nettyServerConfig);
 

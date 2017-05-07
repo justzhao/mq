@@ -2,7 +2,7 @@
 <configuration>
 
 
-    <property name="ELK_LOG_PATTERN" value ="%date - namesrv - %c %level [%thread] [%file : %line] %msg%n"/>
+    <property name="ELK_LOG_PATTERN" value ="%date - client - %c %level [%thread] [%file : %line] %msg%n"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

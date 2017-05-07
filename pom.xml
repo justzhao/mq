@@ -13,6 +13,7 @@
         <module>tools</module>
         <module>common</module>
         <module>client</module>
+        <module>example</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -88,10 +89,10 @@
                 <version>4.2.2</version>
             </dependency>
 
-            <dependency>
+          <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>21.0</version>
+                <version>17.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
