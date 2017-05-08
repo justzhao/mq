@@ -149,7 +149,7 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
             return null;
         }
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ROUTEINTO_BY_TOPIC, null);
-        request.setBody(JsonSerializable.encode(topic));
+        request.setBody(topic.getBytes(JsonSerializable.CHARSET_UTF8));
         RemotingCommand response = this.nettyClient.invokeSync(namesrv, request, timeoutMillis);
 
         assert response != null;
@@ -265,7 +265,6 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
         if (respone.getCode()==ResponseCode.SUCCESS){
             if(respone.getBody()!=null) {
                 PullResult result =PullResult.decode(respone.getBody(),PullResult.class);
-
                 return  result;
 
             }

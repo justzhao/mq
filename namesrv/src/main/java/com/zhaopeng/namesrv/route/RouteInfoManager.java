@@ -39,6 +39,28 @@ public class RouteInfoManager {
         this.topicQueueTable = new HashMap<>();
         this.brokerAddrTable = new HashMap<>();
         this.brokerLiveTable = new HashMap<>();
+
+        initData();
+    }
+
+    // 仅仅是为来初始化有数据
+    private void initData() {
+        TopicInfo topicInfo = new TopicInfo("order_system");
+        // createAndUpdateQueueData("test1",topicInfo);
+
+        RegisterBrokerInfo brokerInfo = new RegisterBrokerInfo();
+        DataVersion v=new DataVersion();
+
+        brokerInfo.setDataVersion(v);
+        brokerInfo.setBrokerId(1l);
+        brokerInfo.setServerAddr("127.0.0.1");
+        brokerInfo.setBrokerName("test1");
+        ConcurrentHashMap<String,TopicInfo> map=new ConcurrentHashMap<>();
+        map.put("order_system",topicInfo);
+        brokerInfo.setTopicConfigTable(map);
+
+        Channel channel = null;
+        registerBroker(brokerInfo, channel);
     }
 
     /**
@@ -299,7 +321,7 @@ public class RouteInfoManager {
         queueData.setWriteQueueNums(topicInfo.getWriteQueueNums());
 
         List<QueueData> queueDatas = this.topicQueueTable.get(topicInfo.getTopicName());
-        if (queueData == null) {
+        if (queueDatas == null) {
             queueDatas = new ArrayList<>();
             queueDatas.add(queueData);
             this.topicQueueTable.put(topicInfo.getTopicName(), queueDatas);
@@ -363,10 +385,8 @@ public class RouteInfoManager {
     public TopicRouteData selectTopicRouteData(final String topic) {
 
         TopicRouteData topicRouteData = new TopicRouteData();
-
-        return  topicRouteData;
         //LinkedList 方便快速添数据
-     /*   List<BrokerData> brokerDatas = new LinkedList<>();
+        List<BrokerData> brokerDatas = new LinkedList<>();
         topicRouteData.setBrokerDatas(brokerDatas);
 
         boolean foundQueueData = false;
@@ -406,7 +426,7 @@ public class RouteInfoManager {
         if (foundBrokerData && foundQueueData) {
             return topicRouteData;
         }
-        return null;*/
+        return topicRouteData;
     }
 
     public TopicList getAllTopicList() {
