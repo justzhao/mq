@@ -22,6 +22,8 @@ public class DefaultMQProducer extends AbstractMQProducer implements MQProducer 
 
     private int maxMessageSize = 1024 * 1024 * 4; // 4M
 
+
+
     private final MQProducerOperation mqProducerOperation;
 
     public DefaultMQProducer(NettyClientConfig nettyClientConfig) {
@@ -30,8 +32,13 @@ public class DefaultMQProducer extends AbstractMQProducer implements MQProducer 
     }
 
 
-    @Override
     public SendResult send(Message msg) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
-        return mqProducerOperation.send(msg);
+        return mqProducerOperation.send(msg,sendMsgTimeout);
+    }
+
+
+    @Override
+    public SendResult send(Message msg, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+        return mqProducerOperation.send(msg,timeout);
     }
 }

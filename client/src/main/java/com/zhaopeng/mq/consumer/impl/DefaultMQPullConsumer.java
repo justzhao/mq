@@ -6,6 +6,7 @@ import com.zhaopeng.mq.consumer.MQPullConsumer;
 import com.zhaopeng.mq.consumer.PullResult;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
+import com.zhaopeng.remoting.common.RemotingUtil;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.netty.NettyClientConfig;
 
@@ -15,24 +16,26 @@ import java.util.Set;
  * Created by zhaopeng on 2017/4/25.
  */
 public class DefaultMQPullConsumer extends AbstractMQConsumer implements MQPullConsumer {
+    // namesrv的地址
+    private String addr;
+    private String clientIP = RemotingUtil.getLocalAddress();
+    private String instanceName = System.getProperty("rocketmq.client.name", "DEFAULT");
 
 
     private final MQPullClientOperation mqPullClientOperation;
 
-    // namesrv的地址
-    private String namesrv;
+
+
 
     public DefaultMQPullConsumer(NettyClientConfig nettyClientConfig, String addr) {
         super(nettyClientConfig);
-        mqPullClientOperation = new MQPullClientOperation(nettyClient,addr);
+        this.addr = addr;
+        mqPullClientOperation = new MQPullClientOperation(nettyClient, addr);
     }
 
-    public void init(){
-
+    public void init() {
         nettyClient.start();
     }
-
-
 
 
     @Override

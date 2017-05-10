@@ -10,5 +10,5 @@ import com.zhaopeng.remoting.exception.RemotingException;
  */
 public interface MQProducer {
 
-    public SendResult send(Message msg) throws MQClientException, RemotingException, MQBrokerException, InterruptedException;
+    public SendResult send(Message msg,long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException;
 }

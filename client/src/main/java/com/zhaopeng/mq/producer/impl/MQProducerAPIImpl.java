@@ -20,7 +20,7 @@ public class MQProducerAPIImpl implements MQProducerAPI {
         this.nettyClient = nettyClient;
     }
 
-    public SendResult send(Message msg) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+    public SendResult send(Message msg,long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
         return null;
     }
 }
