@@ -25,6 +25,8 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
 
     private final ConcurrentHashMap<String/* Broker Name */, HashMap<Long/* brokerId */, String/* address */>> brokerAddrTable =
             new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String/* topic */, TopicPublishInfo> topicPublishInfoTable =
+            new ConcurrentHashMap<>();
 
     protected MQProducerOperation(NettyClientConfig nettyClientConfig) {
         super(nettyClientConfig);
@@ -47,7 +49,7 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
                         findTopicPublishInfo(mq.getTopic());
                         brokerAddr = findBrokerAddressInPublish(mq.getBrokerName());
                     }
-                    SendResult result = mqProducerAPI.send(mq,topicPublishInfo,msg, timeout);
+                    SendResult result = mqProducerAPI.send(mq, topicPublishInfo, msg, timeout);
                     return result;
                 } catch (Exception e) {
 
@@ -65,13 +67,27 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
     private TopicPublishInfo findTopicPublishInfo(String topic) {
 
 
-        // 更新 brokerAddrTable
+        TopicPublishInfo topicPublishInfo = this.topicPublishInfoTable.get(topic);
+        if (null == topicPublishInfo ) {
+            this.topicPublishInfoTable.putIfAbsent(topic, new TopicPublishInfo());
+           updateTopicRouteInfoFromNameServer(topic,false);
+            topicPublishInfo = this.topicPublishInfoTable.get(topic);
+        }
 
-        return null;
+        if (topicPublishInfo.isHaveTopicRouterInfo() ) {
+            return topicPublishInfo;
+        } else {
+             updateTopicRouteInfoFromNameServer(topic,true);
+            topicPublishInfo = this.topicPublishInfoTable.get(topic);
+            return topicPublishInfo;
+        }
     }
 
+    private void updateTopicRouteInfoFromNameServer(String topic,boolean isDefault){
 
-    private String findBrokerAddressInPublish(String brokerName){
+    }
+
+    private String findBrokerAddressInPublish(String brokerName) {
 
         HashMap<Long/* brokerId */, String/* address */> map = this.brokerAddrTable.get(brokerName);
         if (map != null && !map.isEmpty()) {
