@@ -26,5 +26,7 @@ public class RequestCode {
 
     public static final int PULL_MESSAGE = 1014;
 
+    public static final int SEND_MESSAGE = 1015;
+
 
 }

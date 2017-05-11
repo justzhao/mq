@@ -11,10 +11,11 @@ import java.util.List;
  */
 public class TopicPublishInfo {
 
+
     private boolean orderTopic = false;
     private boolean haveTopicRouterInfo = false;
     private List<MessageQueue> messageQueueList = new ArrayList<MessageQueue>();
-   // private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex(0);
+    private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex(0);
     private TopicRouteData topicRouteData;
 
     public boolean isOrderTopic() {
@@ -47,5 +48,14 @@ public class TopicPublishInfo {
 
     public void setTopicRouteData(TopicRouteData topicRouteData) {
         this.topicRouteData = topicRouteData;
+    }
+
+
+    public MessageQueue selectOneMessageQueue() {
+        int index = this.sendWhichQueue.getAndIncrement();
+        int pos = Math.abs(index) % this.messageQueueList.size();
+        if (pos < 0)
+            pos = 0;
+        return this.messageQueueList.get(pos);
     }
 }
