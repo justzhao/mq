@@ -1,8 +1,9 @@
-package com.zhaopeng.mq.consumer.impl;
+package com.zhaopeng.mq;
 
 import com.google.common.base.Strings;
 import com.zhaopeng.common.All;
 import com.zhaopeng.common.TopicInfo;
+import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.ResponseCode;
@@ -12,10 +13,12 @@ import com.zhaopeng.common.protocol.body.SearchOffsetResponse;
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.QueueData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
-import com.zhaopeng.mq.consumer.MQPullClientAPI;
 import com.zhaopeng.mq.consumer.PullResult;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
+import com.zhaopeng.mq.producer.SendMessage;
+import com.zhaopeng.mq.producer.SendResult;
+import com.zhaopeng.mq.producer.TopicPublishInfo;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.netty.NettyClient;
 import com.zhaopeng.remoting.protocol.JsonSerializable;
@@ -32,8 +35,8 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by zhaopeng on 2017/5/2.
  */
-public class MQPullClientAPIImpl implements MQPullClientAPI {
-    private static final Logger logger = LoggerFactory.getLogger(MQPullClientAPIImpl.class);
+public class MQAdminClientAPIImpl implements MQAdminClientAPI {
+    private static final Logger logger = LoggerFactory.getLogger(MQAdminClientAPIImpl.class);
 
 
     private String namesrv;
@@ -50,12 +53,12 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
 
     protected final NettyClient nettyClient;
 
-    public MQPullClientAPIImpl(NettyClient nettyClient, String addr) {
+    public MQAdminClientAPIImpl(NettyClient nettyClient, String addr) {
         this.nettyClient = nettyClient;
         this.namesrv = addr;
     }
 
-    long searchOffset(final String addr, final String topic, final int queueId, final long timestamp, final long timeoutMillis) {
+    public long searchOffset(final String addr, final String topic, final int queueId, final long timestamp, final long timeoutMillis) {
         SearchOffsetRequest searchOffset = new SearchOffsetRequest();
         searchOffset.setTopic(topic);
         searchOffset.setQueueId(queueId);
@@ -83,7 +86,7 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
     }
 
 
-    void updateTopicRouteInfoFromNameServer(final String topic) {
+    public void updateTopicRouteInfoFromNameServer(String topic) {
 
         try {
             if (this.lockNamesrv.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS)) {
@@ -168,7 +171,7 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
             default:
                 break;
         }
-    return  null;
+        return null;
     }
 
 
@@ -197,7 +200,7 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
                 }
             }
         } catch (Exception e) {
-       logger.error("Can not find Message Queue for this topic, {} {}" , topic , e);
+            logger.error("Can not find Message Queue for this topic, {} {}", topic, e);
 
         }
 
@@ -262,15 +265,80 @@ public class MQPullClientAPIImpl implements MQPullClientAPI {
 
         RemotingCommand respone = this.nettyClient.invokeSync(brokerAddr, request, timeoutMillis);
 
-        if (respone.getCode()==ResponseCode.SUCCESS){
-            if(respone.getBody()!=null) {
-                PullResult result =PullResult.decode(respone.getBody(),PullResult.class);
-                return  result;
+        if (respone.getCode() == ResponseCode.SUCCESS) {
+            if (respone.getBody() != null) {
+                PullResult result = PullResult.decode(respone.getBody(), PullResult.class);
+                return result;
 
             }
         }
 
         return null;
     }
+
+    public TopicRouteData getDefaultTopicRouteInfoFromNameServer(final String topic, final long timeoutMillis)
+            throws RemotingException, MQClientException, InterruptedException {
+        if (Strings.isNullOrEmpty(topic)) {
+            return null;
+        }
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ROUTEINTO_BY_TOPIC, null);
+
+        request.setBody(topic.getBytes(JsonSerializable.CHARSET_UTF8));
+        RemotingCommand response = nettyClient.invokeSync(null, request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.TOPIC_NOT_EXIST: {
+                // TODO LOG
+                break;
+            }
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    return TopicRouteData.decode(body, TopicRouteData.class);
+                }
+            }
+            default:
+                break;
+        }
+
+        throw new MQClientException(response.getCode(), response.getRemark());
+    }
+
+    public SendResult send(String brokerAddr, final MessageQueue mq, final TopicPublishInfo topicPublishInfo, Message msg, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+
+        if (Strings.isNullOrEmpty(brokerAddr)) {
+            return null;
+        }
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.SEND_MESSAGE, null);
+
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setBrokerName(mq.getBrokerName());
+        sendMessage.setTopic(mq.getTopic());
+        sendMessage.setBrokerAddr(brokerAddr);
+        sendMessage.setMsg(msg);
+
+        RemotingCommand response = this.nettyClient.invokeSync(brokerAddr, request, timeout);
+        switch (response.getCode()) {
+
+            case ResponseCode.SUCCESS: {
+                if (response.getBody() != null) {
+
+                    SendResult result = JsonSerializable.decode(response.getBody(), SendResult.class);
+
+                    return result;
+                }
+
+                return null;
+
+            }
+            default: {
+                return null;
+            }
+        }
+
+    }
+
 
 }

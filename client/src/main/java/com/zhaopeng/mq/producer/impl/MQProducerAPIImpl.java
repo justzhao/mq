@@ -24,9 +24,5 @@ public class MQProducerAPIImpl implements MQProducerAPI {
         this.nettyClient = nettyClient;
     }
 
-    public SendResult send(final MessageQueue mq, final TopicPublishInfo topicPublishInfo, Message msg, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
 
-       RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.SEND_MESSAGE,null);
-        return null;
-    }
 }

@@ -7,6 +7,7 @@ import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
+import com.zhaopeng.mq.MQAdminClientAPIImpl;
 import com.zhaopeng.mq.consumer.AbstractMQClientOperation;
 import com.zhaopeng.mq.consumer.PullResult;
 import com.zhaopeng.mq.exception.MQBrokerException;
@@ -33,7 +34,7 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
     private final long bootTime = System.currentTimeMillis();
 
 
-    private final MQPullClientAPIImpl mqPullClientAPI;
+    private final MQAdminClientAPIImpl mqPullClientAPI;
 
     private long timeoutMillis = 6000;
 
@@ -46,7 +47,7 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
 
     public MQPullClientOperation(NettyClient nettyClient, String addr) {
         super(nettyClient);
-        mqPullClientAPI = new MQPullClientAPIImpl(nettyClient, addr);
+        mqPullClientAPI = new MQAdminClientAPIImpl(nettyClient, addr);
     }
 
     @Override
@@ -118,7 +119,7 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
 
         String brokerAddr = mqPullClientAPI.getBrokerAddrByName(mq.getBrokerName());
         if (null == brokerAddr) {
-            // 重新根据topic获取addr
+            // 重新根据topic获取adar
             mqPullClientAPI.updateTopicRouteInfoFromNameServer(mq.getTopic());
             brokerAddr = mqPullClientAPI.getBrokerAddrByName(mq.getBrokerName());
         }
