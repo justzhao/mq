@@ -29,4 +29,7 @@ public class RequestCode {
     public static final int SEND_MESSAGE = 1015;
 
 
+    public static final int QUERY_MESSAGE = 1016;
+    public static final int QUERY_BROKER_OFFSET = 1017;
+
 }

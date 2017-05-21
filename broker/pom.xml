@@ -28,5 +28,10 @@
             <artifactId>remoting</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.zhaopeng.mq</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>
