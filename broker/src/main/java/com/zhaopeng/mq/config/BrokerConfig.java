@@ -11,7 +11,6 @@ public class BrokerConfig {
     private int clientAsyncSemaphoreValue = 100;
     private int connectTimeoutMillis = 3000;
     private long channelNotActiveInterval = 1000 * 60;
-
     public int socketSndbufSize = 65535;
 
     public int socketRcvbufSize = 65535;
