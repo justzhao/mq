@@ -17,6 +17,12 @@ public class PullMesageInfo extends JsonSerializable {
 
     private Long commitOffset;
 
+    /**
+     *每一个消息队列里面还有偏移(commitOffset, offset)的区别，为什么有2个offset
+     * offset 当前MessageQueue消费进度的偏移量
+     * commitOffset . 确认已经被消费的消息偏移量。也就是真正消息消费的进度
+     */
+
     public PullMesageInfo(String topic, Integer queueId, Long queueOffset, Integer maxMsgNums, Long commitOffset) {
         this.topic = topic;
         this.queueId = queueId;
