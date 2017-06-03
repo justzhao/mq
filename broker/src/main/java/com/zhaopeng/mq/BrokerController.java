@@ -2,7 +2,7 @@ package com.zhaopeng.mq;
 
 import com.zhaopeng.common.ThreadFactoryImpl;
 import com.zhaopeng.mq.config.BrokerConfig;
-import com.zhaopeng.mq.processer.BrokerProcessor;
+import com.zhaopeng.mq.processor.BrokerProcessor;
 import com.zhaopeng.remoting.netty.NettyClient;
 import com.zhaopeng.remoting.netty.NettyClientConfig;
 import com.zhaopeng.remoting.netty.NettyServer;

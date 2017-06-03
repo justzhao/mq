@@ -1,4 +1,4 @@
-package com.zhaopeng.mq.processer;
+package com.zhaopeng.mq.processor;
 
 import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
