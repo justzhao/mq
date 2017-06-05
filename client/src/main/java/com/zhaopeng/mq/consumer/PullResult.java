@@ -16,6 +16,14 @@ public class PullResult extends JsonSerializable {
     private final long maxOffset;
     private List<MessageInfo> msgFoundList;
 
+
+    public PullResult(PullStatus pullStatus) {
+        this.pullStatus = pullStatus;
+        this.nextBeginOffset = 0;
+        this.minOffset = 0;
+        this.maxOffset = 0;
+    }
+
     public PullResult(PullStatus pullStatus, long nextBeginOffset, long minOffset, long maxOffset) {
         this.pullStatus = pullStatus;
         this.nextBeginOffset = nextBeginOffset;

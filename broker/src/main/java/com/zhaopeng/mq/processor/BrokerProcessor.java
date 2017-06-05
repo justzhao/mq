@@ -29,8 +29,11 @@ public class BrokerProcessor implements NettyRequestProcessor {
         switch (code){
             case PULL_MESSAGE :{
 
+                // 把消息先保存在内存中。
+
             }
             case SEND_MESSAGE:{
+                //
 
             }
         }

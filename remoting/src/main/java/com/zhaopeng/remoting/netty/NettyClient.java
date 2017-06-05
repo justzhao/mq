@@ -132,7 +132,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                                 new NettyEncoder(), //
                                 new NettyDecoder(), //
                                 new IdleStateHandler(0, 0, 100), //
-                                new NettyConnetManageHandler(), //
+                                new NettyConnectManageHandler(), //
                                 new NettyClientHandler());
                     }
                 });
@@ -301,7 +301,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
         }
     }
 
-    class NettyConnetManageHandler extends ChannelDuplexHandler {
+    class NettyConnectManageHandler extends ChannelDuplexHandler {
         @Override
         public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise)
                 throws Exception {

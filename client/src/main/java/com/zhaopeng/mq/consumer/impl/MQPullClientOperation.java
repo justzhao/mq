@@ -53,7 +53,7 @@ public class MQPullClientOperation extends AbstractMQClientOperation {
     @Override
     public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
 
-       return mqPullClientAPI.pull(mq,subExpression,offset,maxNums);
+       return mqPullClientAPI.pull(mq,offset,maxNums);
     }
 
 

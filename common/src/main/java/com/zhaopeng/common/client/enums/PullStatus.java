@@ -11,7 +11,8 @@ public enum PullStatus {
 
     NO_MATCHED_MSG(3,"没有匹配的消息"),
 
-    OFFSET_ILLEGAL(4,"非法的偏移量")
+    OFFSET_ILLEGAL(4,"非法的偏移量"),
+    FAIL(5,"失败了"),
     ;
 
 

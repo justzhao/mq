@@ -68,7 +68,7 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
                         findTopicPublishInfo(mq.getTopic());
                         brokerAddr = findBrokerAddressInPublish(mq.getBrokerName());
                     }
-                    SendResult result = mqAdminApi.send(brokerAddr,mq, topicPublishInfo, msg, timeout);
+                    SendResult result = mqAdminApi.send(brokerAddr,mq, msg, timeout);
                     return result;
                 } catch (Exception e) {
 

@@ -3,6 +3,8 @@ package com.zhaopeng.mq;
 import com.google.common.base.Strings;
 import com.zhaopeng.common.All;
 import com.zhaopeng.common.TopicInfo;
+import com.zhaopeng.common.client.enums.PullStatus;
+import com.zhaopeng.common.client.enums.SendStatus;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.protocol.RequestCode;
@@ -18,7 +20,6 @@ import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.mq.producer.SendMessage;
 import com.zhaopeng.mq.producer.SendResult;
-import com.zhaopeng.mq.producer.TopicPublishInfo;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.netty.NettyClient;
 import com.zhaopeng.remoting.protocol.JsonSerializable;
@@ -244,7 +245,7 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         throw new MQClientException(response.getCode(), response.getRemark());
     }
 
-    public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+    public PullResult pull(MessageQueue mq,  long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
         String topic = mq.getTopic();
 
         String brokerAddr = getBrokerAddrByName(mq.getBrokerName());
@@ -271,6 +272,12 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
                 return result;
 
             }
+        }else if(respone.getCode()==ResponseCode.FAIL){
+
+            PullResult result =new PullResult(PullStatus.FAIL);
+
+            return result;
+
         }
 
         return null;
@@ -288,9 +295,9 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         RemotingCommand response = nettyClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-            case ResponseCode.TOPIC_NOT_EXIST: {
-                // TODO LOG
-                break;
+            case ResponseCode.FAIL: {
+
+                return null;
             }
             case ResponseCode.SUCCESS: {
                 byte[] body = response.getBody();
@@ -305,7 +312,7 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         throw new MQClientException(response.getCode(), response.getRemark());
     }
 
-    public SendResult send(String brokerAddr, final MessageQueue mq, final TopicPublishInfo topicPublishInfo, Message msg, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+    public SendResult send(String brokerAddr, final MessageQueue mq, Message msg, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
 
         if (Strings.isNullOrEmpty(brokerAddr)) {
             return null;
@@ -326,12 +333,16 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
                 if (response.getBody() != null) {
 
                     SendResult result = JsonSerializable.decode(response.getBody(), SendResult.class);
-
+                    result.setSendStatus(SendStatus.OK);
                     return result;
                 }
 
-                return null;
+            }
+            case ResponseCode.FAIL: {
+                SendResult result = new SendResult();
 
+                result.setSendStatus(SendStatus.NOTOK);
+                return result;
             }
             default: {
                 return null;
