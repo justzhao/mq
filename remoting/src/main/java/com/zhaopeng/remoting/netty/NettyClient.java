@@ -239,6 +239,15 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     }
 
     @Override
+    public void registerDefaultProcessor(NettyRequestProcessor processor, ExecutorService executor) {
+
+        if (null == executor) {
+            executor = this.publicExecutor;
+        }
+        this.defaultRequestProcessor = new Pair<>(processor, executor);
+    }
+
+    @Override
     public boolean isChannelWriteable(String addr) {
         return false;
     }

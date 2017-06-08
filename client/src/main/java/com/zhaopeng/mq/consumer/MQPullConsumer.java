@@ -10,10 +10,6 @@ import com.zhaopeng.remoting.exception.RemotingException;
  */
 public interface MQPullConsumer extends MQConsumer {
 
-
-
-
-
     /**
      * 拉取一条消息，不会阻塞
      * @param mq
@@ -29,16 +25,5 @@ public interface MQPullConsumer extends MQConsumer {
     PullResult pull(final MessageQueue mq, final String subExpression, final long offset,
                     final int maxNums) throws MQClientException, RemotingException, MQBrokerException,
             InterruptedException;
-
-
-
-
-
-
-
-
-
-
-
 
 }

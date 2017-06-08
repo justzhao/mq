@@ -39,5 +39,9 @@ public interface Client {
                                   final ExecutorService executor);
 
 
+    void registerDefaultProcessor(final NettyRequestProcessor processor, final ExecutorService executor);
+
+
+
     public boolean isChannelWriteable(final String addr);
 }
