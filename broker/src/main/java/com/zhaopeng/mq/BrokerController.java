@@ -2,7 +2,8 @@ package com.zhaopeng.mq;
 
 import com.zhaopeng.common.ThreadFactoryImpl;
 import com.zhaopeng.mq.config.BrokerConfig;
-import com.zhaopeng.mq.processor.BrokerProcessor;
+import com.zhaopeng.mq.processor.BrokerClientProcessor;
+import com.zhaopeng.mq.processor.BrokerServerProcessor;
 import com.zhaopeng.remoting.netty.NettyClient;
 import com.zhaopeng.remoting.netty.NettyClientConfig;
 import com.zhaopeng.remoting.netty.NettyServer;
@@ -27,17 +28,23 @@ public class BrokerController {
 
     private NettyServerConfig nettyServerConfig;
 
-    private ExecutorService executorService;
+    private ExecutorService serverExecutor;
+
+    private ExecutorService clientExecutor;
 
     public BrokerController() {
         nettyClient = new NettyClient(nettyClientConfig);
         nettyServer = new NettyServer(nettyServerConfig, null);
-        executorService = Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("BrokerControllerThead_"));
+        serverExecutor = Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new
+                ThreadFactoryImpl("ServerExecutor_"));
+        clientExecutor = Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new
+                ThreadFactoryImpl("ClientExecutor_"));
     }
 
     public void start() {
 
-        nettyServer.registerDefaultProcessor(new BrokerProcessor(), executorService);
+        nettyServer.registerDefaultProcessor(new BrokerServerProcessor(), serverExecutor);
+        nettyClient.registerDefaultProcessor(new BrokerClientProcessor(), clientExecutor);
         nettyClient.start();
         nettyServer.start();
 
