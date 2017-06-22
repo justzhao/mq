@@ -52,7 +52,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
     private final Timer timer = new Timer("ClientHouseKeepingService", true);
 
-    private final AtomicReference<List<String>> namesrvAddrList = new AtomicReference<List<String>>();
+    private final AtomicReference<List<String>> namesrvAddrList = new AtomicReference<>();
 
     private final ConcurrentHashMap<String /* addr */, Channel> channelTables = new ConcurrentHashMap<>();
     private static final long LockTimeoutMillis = 3000;
