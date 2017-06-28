@@ -10,6 +10,10 @@ import com.zhaopeng.remoting.exception.RemotingException;
  */
 public interface MQPullConsumer extends MQConsumer {
 
+
+
+
+
     /**
      * 拉取一条消息，不会阻塞
      * @param mq
