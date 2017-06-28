@@ -14,7 +14,7 @@ import static com.zhaopeng.common.protocol.RequestCode.SEND_MESSAGE;
 public class BrokerServerProcessor implements NettyRequestProcessor {
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
-        return this.processRequest(ctx.channel(),request);
+        return this.processRequest(ctx.channel(), request);
     }
 
     @Override
@@ -22,21 +22,27 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
         return false;
     }
 
-    private  RemotingCommand processRequest(final Channel channel, RemotingCommand request){
+    private RemotingCommand processRequest(final Channel channel, RemotingCommand request) {
 
-        int code=request.getCode();
+        int code = request.getCode();
 
-        switch (code){
-            case PULL_MESSAGE :{
+        switch (code) {
+            case PULL_MESSAGE: {
 
                 // 把消息先保存在内存中。
 
             }
-            case SEND_MESSAGE:{
+            case SEND_MESSAGE: {
                 //
-
+                processMessage(request);
             }
         }
         return null;
+    }
+
+
+    private void processMessage(RemotingCommand request) {
+
+
     }
 }
