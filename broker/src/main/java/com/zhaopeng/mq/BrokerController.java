@@ -56,7 +56,7 @@ public class BrokerController {
 
     public void start() {
 
-        nettyServer.registerDefaultProcessor(new BrokerServerProcessor(), serverExecutor);
+        nettyServer.registerDefaultProcessor(new BrokerServerProcessor(messageHandler), serverExecutor);
         nettyClient.registerDefaultProcessor(new BrokerClientProcessor(), clientExecutor);
         nettyClient.start();
         nettyServer.start();

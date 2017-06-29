@@ -1,6 +1,5 @@
-package com.zhaopeng.mq.producer;
+package com.zhaopeng.common.client.message;
 
-import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.remoting.protocol.JsonSerializable;
 
 /**

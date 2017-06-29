@@ -1,7 +1,6 @@
-package com.zhaopeng.mq.producer;
+package com.zhaopeng.common.client.message;
 
 import com.zhaopeng.common.client.enums.SendStatus;
-import com.zhaopeng.common.client.message.MessageQueue;
 
 /**
  * Created by zhaopeng on 2017/5/6.
