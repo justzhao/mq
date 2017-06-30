@@ -1,7 +1,6 @@
-package com.zhaopeng.mq.consumer;
+package com.zhaopeng.common.client.message;
 
 import com.zhaopeng.common.client.enums.PullStatus;
-import com.zhaopeng.common.client.message.MessageInfo;
 import com.zhaopeng.remoting.protocol.JsonSerializable;
 
 import java.util.List;
@@ -15,6 +14,8 @@ public class PullResult extends JsonSerializable {
     private final long minOffset;
     private final long maxOffset;
     private List<MessageInfo> msgFoundList;
+
+    private List<Message> messages;
 
 
     public PullResult(PullStatus pullStatus) {
@@ -53,5 +54,13 @@ public class PullResult extends JsonSerializable {
 
     public void setMsgFoundList(List<MessageInfo> msgFoundList) {
         this.msgFoundList = msgFoundList;
+    }
+
+    public List<Message> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
     }
 }

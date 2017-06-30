@@ -1,6 +1,7 @@
 package com.zhaopeng.mq.consumer;
 
 import com.zhaopeng.common.client.message.MessageQueue;
+import com.zhaopeng.common.client.message.PullResult;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.remoting.exception.RemotingException;

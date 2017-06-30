@@ -1,6 +1,7 @@
 package com.zhaopeng.common.client.message;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -46,5 +47,16 @@ public class Message implements Serializable {
 
     public void setBody(byte[] body) {
         this.body = body;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "topic='" + topic + '\'' +
+                ", flag=" + flag +
+                ", properties=" + properties +
+                ", body=" + Arrays.toString(body) +
+                '}';
     }
 }

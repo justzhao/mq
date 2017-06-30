@@ -1,15 +1,22 @@
 package com.zhaopeng.mq.processor;
 
+import com.google.common.collect.Lists;
+import com.zhaopeng.common.client.enums.PullStatus;
 import com.zhaopeng.common.client.enums.SendStatus;
+import com.zhaopeng.common.client.message.Message;
+import com.zhaopeng.common.client.message.PullResult;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.client.message.SendResult;
 import com.zhaopeng.common.protocol.ResponseCode;
+import com.zhaopeng.common.protocol.body.PullMesageInfo;
 import com.zhaopeng.mq.MessageHandler;
 import com.zhaopeng.remoting.NettyRequestProcessor;
 import com.zhaopeng.remoting.protocol.JsonSerializable;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+
+import java.util.List;
 
 import static com.zhaopeng.common.protocol.RequestCode.PULL_MESSAGE;
 import static com.zhaopeng.common.protocol.RequestCode.SEND_MESSAGE;
@@ -48,11 +55,12 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
             case PULL_MESSAGE: {
 
                 // 把消息先保存在内存中。
+                return processGetMessage(request);
 
             }
             case SEND_MESSAGE: {
                 //这里要使用线程池操作。
-                processMessage(request);
+                processPutMessage(request);
 
                 SendResult result = new SendResult();
 
@@ -71,15 +79,37 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
         return null;
     }
 
+    private RemotingCommand processGetMessage(RemotingCommand request) {
 
-    private void processMessage(RemotingCommand request) {
+        RemotingCommand remotingCommand = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
+
+        byte body[] = remotingCommand.getBody();
+
+        if (body != null) {
+            PullMesageInfo pullMesageInfo = PullMesageInfo.decode(body, PullMesageInfo.class);
+            Message message = messageHandler.getMessageByTopic(pullMesageInfo.getTopic());
+            List<Message> msg = Lists.newArrayList();
+            msg.add(message);
+            PullResult result = new PullResult(PullStatus.FOUND);
+            result.setMessages(msg);
+
+            remotingCommand.setBody(pullMesageInfo.encode());
+
+        }
+
+
+        return remotingCommand;
+
+    }
+
+    private void processPutMessage(RemotingCommand request) {
 
 
         byte[] body = request.getBody();
 
         SendMessage sendMessage = SendMessage.decode(body, SendMessage.class);
 
-        messageHandler.addMessage(sendMessage.getTopic(),sendMessage.getMsg());
+        messageHandler.addMessage(sendMessage.getTopic(), sendMessage.getMsg());
 
 
     }

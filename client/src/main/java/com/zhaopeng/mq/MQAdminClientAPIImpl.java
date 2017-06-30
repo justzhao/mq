@@ -5,10 +5,7 @@ import com.zhaopeng.common.All;
 import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.enums.PullStatus;
 import com.zhaopeng.common.client.enums.SendStatus;
-import com.zhaopeng.common.client.message.Message;
-import com.zhaopeng.common.client.message.MessageQueue;
-import com.zhaopeng.common.client.message.SendMessage;
-import com.zhaopeng.common.client.message.SendResult;
+import com.zhaopeng.common.client.message.*;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
@@ -17,7 +14,6 @@ import com.zhaopeng.common.protocol.body.SearchOffsetResponse;
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.QueueData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
-import com.zhaopeng.mq.consumer.PullResult;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.remoting.exception.RemotingException;
@@ -245,7 +241,7 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         throw new MQClientException(response.getCode(), response.getRemark());
     }
 
-    public PullResult pull(MessageQueue mq,  long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+    public PullResult pull(MessageQueue mq, long offset, int maxNums) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
         String topic = mq.getTopic();
 
         String brokerAddr = getBrokerAddrByName(mq.getBrokerName());
