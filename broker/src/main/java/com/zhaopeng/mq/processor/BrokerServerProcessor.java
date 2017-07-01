@@ -80,11 +80,8 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
     }
 
     private RemotingCommand processGetMessage(RemotingCommand request) {
-
-        RemotingCommand remotingCommand = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
-
-        byte body[] = remotingCommand.getBody();
-
+        RemotingCommand respone = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
+        byte body[] = request.getBody();
         if (body != null) {
             PullMesageInfo pullMesageInfo = PullMesageInfo.decode(body, PullMesageInfo.class);
             Message message = messageHandler.getMessageByTopic(pullMesageInfo.getTopic());
@@ -92,23 +89,15 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
             msg.add(message);
             PullResult result = new PullResult(PullStatus.FOUND);
             result.setMessages(msg);
-
-            remotingCommand.setBody(pullMesageInfo.encode());
-
+            respone.setBody(pullMesageInfo.encode());
         }
-
-
-        return remotingCommand;
+        return respone;
 
     }
 
     private void processPutMessage(RemotingCommand request) {
-
-
         byte[] body = request.getBody();
-
         SendMessage sendMessage = SendMessage.decode(body, SendMessage.class);
-
         messageHandler.addMessage(sendMessage.getTopic(), sendMessage.getMsg());
 
 

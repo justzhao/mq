@@ -14,4 +14,35 @@ public class BrokerConfig {
     public int socketSndbufSize = 65535;
 
     public int socketRcvbufSize = 65535;
+
+
+    private String brokerName;
+
+    private Long brokerId;
+
+    private int registerBrokerTimeoutMills;
+
+    public String getBrokerName() {
+        return brokerName;
+    }
+
+    public void setBrokerName(String brokerName) {
+        this.brokerName = brokerName;
+    }
+
+    public Long getBrokerId() {
+        return brokerId;
+    }
+
+    public void setBrokerId(Long brokerId) {
+        this.brokerId = brokerId;
+    }
+
+    public int  getRegisterBrokerTimeoutMills() {
+        return registerBrokerTimeoutMills;
+    }
+
+    public void setRegisterBrokerTimeoutMills(int registerBrokerTimeoutMills) {
+        this.registerBrokerTimeoutMills = registerBrokerTimeoutMills;
+    }
 }

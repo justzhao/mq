@@ -1,6 +1,7 @@
 package com.zhaopeng.mq;
 
 import com.zhaopeng.common.ThreadFactoryImpl;
+import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
 import com.zhaopeng.mq.config.BrokerConfig;
 import com.zhaopeng.mq.processor.BrokerClientProcessor;
 import com.zhaopeng.mq.processor.BrokerServerProcessor;
@@ -51,12 +52,12 @@ public class BrokerController {
                 ThreadFactoryImpl("ServerExecutor_"));
         clientExecutor = Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new
                 ThreadFactoryImpl("ClientExecutor_"));
-         brokerOutApi=new BrokerOutApi(nettyClient);
+        brokerOutApi = new BrokerOutApi(nettyClient);
     }
 
     public void start() {
 
-        nettyServer.registerDefaultProcessor(new BrokerServerProcessor(messageHandler), serverExecutor);
+        nettyServer.registerDefaultProcessor(new BrokerServerProcessor(), serverExecutor);
         nettyClient.registerDefaultProcessor(new BrokerClientProcessor(), clientExecutor);
         nettyClient.start();
         nettyServer.start();
@@ -78,25 +79,21 @@ public class BrokerController {
 
     public synchronized void registerBroker() {
 
-
-       /* RegisterBrokerResult registerBrokerResult = this.brokerOutApi.registerBrokerAll(//
-                this.brokerConfig.getBrokerClusterName(), //
+        RegisterBrokerResult registerBrokerResult = this.brokerOutApi.registerBrokerAll(
+                this.brokerConfig.getBrokerName(),
                 this.getBrokerAddr(), //
                 this.brokerConfig.getBrokerName(), //
                 this.brokerConfig.getBrokerId(), //
-                this.getHAServerAddr(), //
-                topicConfigWrapper,//
-                this.filterServerManager.buildNewFilterServerList(),//
-                oneway,//
-                this.brokerConfig.getRegisterBrokerTimeoutMills());*/
+                true,//
+                this.brokerConfig.getRegisterBrokerTimeoutMills());
 
-     /*   if (registerBrokerResult != null) {
-            if (this.updateMasterHAServerAddrPeriodically && registerBrokerResult.getHaServerAddr() != null) {
-                this.messageStore.updateHaMasterAddress(registerBrokerResult.getHaServerAddr());
+        logger.info(" register broker Result is {}", registerBrokerResult);
 
+    }
 
-            }
-        }*/
+    private String getBrokerAddr() {
+
+        return "";
     }
 
 }
