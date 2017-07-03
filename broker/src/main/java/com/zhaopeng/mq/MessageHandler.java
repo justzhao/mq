@@ -32,6 +32,7 @@ public class MessageHandler {
 
         logger.info("{} add new msg {}", topic, message);
         store.getQueue().add(message);
+        store.increatCount();
 
     }
 
