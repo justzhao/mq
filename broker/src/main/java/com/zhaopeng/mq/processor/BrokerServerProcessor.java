@@ -39,6 +39,8 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
 
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
+
+
         return this.processRequest(ctx.channel(), request);
     }
 
@@ -50,17 +52,15 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
     private RemotingCommand processRequest(final Channel channel, RemotingCommand request) {
 
         int code = request.getCode();
-
         switch (code) {
             case PULL_MESSAGE: {
 
                 // 把消息先保存在内存中。
-                return processGetMessage(request);
+                return processGetMessage(channel ,request);
 
             }
             case SEND_MESSAGE: {
-                //这里要使用线程池操作。
-                processPutMessage(request);
+                processPutMessage(channel,request);
 
                 SendResult result = new SendResult();
 
@@ -79,7 +79,7 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
         return null;
     }
 
-    private RemotingCommand processGetMessage(RemotingCommand request) {
+    private RemotingCommand processGetMessage(final Channel channel,RemotingCommand request) {
         RemotingCommand respone = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
         byte body[] = request.getBody();
         if (body != null) {
@@ -87,15 +87,22 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
             Message message = messageHandler.getMessageByTopic(pullMesageInfo.getTopic());
             List<Message> msg = Lists.newArrayList();
             msg.add(message);
-            PullResult result = new PullResult(PullStatus.FOUND);
-            result.setMessages(msg);
-            respone.setBody(pullMesageInfo.encode());
+            PullResult result = null;
+            if (message != null) {
+                result = new PullResult(PullStatus.FOUND);
+                result.setMessages(msg);
+            } else {
+                result = new PullResult(PullStatus.NO_NEW_MSG);
+            }
+            respone.setBody(result.encode());
         }
         return respone;
 
     }
 
-    private void processPutMessage(RemotingCommand request) {
+    private void processPutMessage(final Channel channel,RemotingCommand request) {
+
+
         byte[] body = request.getBody();
         SendMessage sendMessage = SendMessage.decode(body, SendMessage.class);
         messageHandler.addMessage(sendMessage.getTopic(), sendMessage.getMsg());

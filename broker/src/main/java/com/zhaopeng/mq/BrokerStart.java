@@ -7,6 +7,7 @@ public class BrokerStart {
     public static void main(String args[]){
 
         BrokerController controller=new BrokerController();
+        controller.start();
 
 
     }

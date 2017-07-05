@@ -12,6 +12,8 @@ import com.zhaopeng.remoting.netty.NettyServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -46,6 +48,8 @@ public class BrokerController {
             "BrokerControllerScheduledThread"));
 
     public BrokerController() {
+        nettyClientConfig = new NettyClientConfig();
+        nettyServerConfig = new NettyServerConfig();
         nettyClient = new NettyClient(nettyClientConfig);
         nettyServer = new NettyServer(nettyServerConfig, null);
         serverExecutor = Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new
@@ -93,7 +97,14 @@ public class BrokerController {
 
     private String getBrokerAddr() {
 
-        return "";
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+
+        }
+
+        return "127.0.0.1";
     }
 
 }

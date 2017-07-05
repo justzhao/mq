@@ -109,7 +109,6 @@ public abstract class NettyRemotingAbstract {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
                 }
             };
 
