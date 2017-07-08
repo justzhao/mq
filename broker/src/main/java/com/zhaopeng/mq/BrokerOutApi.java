@@ -11,6 +11,7 @@ import com.zhaopeng.remoting.protocol.RemotingCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -27,6 +28,10 @@ public class BrokerOutApi {
         this.nettyClient = nettyClient;
     }
 
+
+    public void updateNamesrv(String namesrv) {
+        nettyClient.updateNameServerAddressList(Arrays.asList(namesrv));
+    }
 
     public RegisterBrokerResult registerBrokerAll(//
                                                   final String groupName, // 1

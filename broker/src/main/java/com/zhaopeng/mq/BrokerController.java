@@ -44,12 +44,16 @@ public class BrokerController {
 
     private BrokerOutApi brokerOutApi;
 
+    private String namesrv;
+
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryImpl(
             "BrokerControllerScheduledThread"));
 
-    public BrokerController() {
+    public BrokerController(String namesrv) {
         nettyClientConfig = new NettyClientConfig();
         nettyServerConfig = new NettyServerConfig();
+
+        brokerConfig = new BrokerConfig();
         nettyClient = new NettyClient(nettyClientConfig);
         nettyServer = new NettyServer(nettyServerConfig, null);
         serverExecutor = Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new
@@ -57,6 +61,8 @@ public class BrokerController {
         clientExecutor = Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new
                 ThreadFactoryImpl("ClientExecutor_"));
         brokerOutApi = new BrokerOutApi(nettyClient);
+        this.namesrv = namesrv;
+        brokerOutApi.updateNamesrv(namesrv);
     }
 
     public void start() {
