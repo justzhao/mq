@@ -53,7 +53,6 @@ public class BrokerOutApi {
                     if (result != null) {
                         registerBrokerResult = result;
                     }
-
                     logger.info("register broker to name server {} OK", namesrvAddr);
                 } catch (Exception e) {
                     logger.warn("registerBroker Exception, " + namesrvAddr, e);
@@ -85,33 +84,24 @@ public class BrokerOutApi {
         if (oneway) {
             try {
                 this.nettyClient.invokeOneway(namesrvAddr, request, timeoutMills);
-
             } catch (RemotingException e) {
-
                 logger.error("netty invokerOneWay error {}", e);
-
             }
             return null;
         }
-
         RegisterBrokerResult registerBrokerResult = null;
         RemotingCommand response = this.nettyClient.invokeSync(namesrvAddr, request, timeoutMills);
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
-
-
                 if (response.getBody() != null) {
-
-                    JsonSerializable.decode(request.getBody(), RegisterBrokerResult.class);
+                    registerBrokerResult = JsonSerializable.decode(request.getBody(), RegisterBrokerResult.class);
                 }
 
             }
             default:
                 break;
         }
-
-
         return registerBrokerResult;
     }
 

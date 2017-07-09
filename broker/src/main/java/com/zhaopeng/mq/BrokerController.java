@@ -94,7 +94,7 @@ public class BrokerController {
                 this.getBrokerAddr(), //
                 this.brokerConfig.getBrokerName(), //
                 this.brokerConfig.getBrokerId(), //
-                true,//
+                false,// 需要返回值
                 this.brokerConfig.getRegisterBrokerTimeoutMills());
 
         logger.info(" register broker Result is {}", registerBrokerResult);

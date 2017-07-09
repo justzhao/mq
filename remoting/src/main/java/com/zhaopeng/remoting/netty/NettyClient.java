@@ -258,28 +258,20 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     }
 
     private Channel getAndCreateChannel(final String addr) {
-
-
         Channel channel = channelTables.get(addr);
         if (channel == null) {
-
             try {
                 this.lockChannelTables.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS);
-                //final ChannelFuture f = this.bootstrap.connect(RemotingHelper.string2SocketAddress(addr));
-                final ChannelFuture f = this.bootstrap.connect("localhost", 9876);
-
+                final ChannelFuture f = this.bootstrap.connect(addr, 9876);
                 logger.info("createChannel: begin to connect remote host[{}] asynchronously", addr);
-
                 if (f.awaitUninterruptibly(this.nettyClientConfig.getConnectTimeoutMillis())) {
                     if (ischannelFutureOK(f)) {
                         logger.info("createChannel: connect remote host[{}] success, {}", addr, f.toString());
                         return f.channel();
                     } else {
-                        logger.warn("createChannel: connect remote host[" + addr + "] failed, " + f.toString(), f.cause());
+                        logger.info("createChannel: connect remote host[" + addr + "] failed, " + f.toString(), f.cause());
                     }
-
                 }
-
             } catch (InterruptedException e) {
 
                 logger.info("thread {} is Interrupted {}", Thread.currentThread().getName(), e);

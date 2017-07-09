@@ -20,4 +20,11 @@ public class RegisterBrokerResult extends JsonSerializable implements Serializab
     public void setServerAddr(String serverAddr) {
         this.serverAddr = serverAddr;
     }
+
+    @Override
+    public String toString() {
+        return "RegisterBrokerResult{" +
+                "serverAddr='" + serverAddr + '\'' +
+                '}';
+    }
 }
