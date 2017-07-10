@@ -1,5 +1,7 @@
 package com.zhaopeng.mq.consumer;
 
+import com.zhaopeng.common.client.message.PullResult;
+
 /**
  * Created by zhaopeng on 2017/4/25.
  */

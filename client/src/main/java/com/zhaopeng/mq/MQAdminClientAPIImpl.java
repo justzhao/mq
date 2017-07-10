@@ -152,7 +152,6 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         request.setBody(topic.getBytes(JsonSerializable.CHARSET_UTF8));
         RemotingCommand response = this.nettyClient.invokeSync(namesrv, request, timeoutMillis);
 
-        assert response != null;
         switch (response.getCode()) {
             case ResponseCode.TOPIC_NOT_EXIST: {
 
@@ -288,7 +287,7 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ROUTEINTO_BY_TOPIC, null);
 
         request.setBody(topic.getBytes(JsonSerializable.CHARSET_UTF8));
-        RemotingCommand response = nettyClient.invokeSync(null, request, timeoutMillis);
+        RemotingCommand response = nettyClient.invokeSync(namesrv, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.FAIL: {

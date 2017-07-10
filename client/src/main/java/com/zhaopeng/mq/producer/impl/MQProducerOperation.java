@@ -4,6 +4,7 @@ package com.zhaopeng.mq.producer.impl;
 import com.zhaopeng.common.All;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.MessageQueue;
+import com.zhaopeng.common.client.message.SendResult;
 import com.zhaopeng.common.protocol.route.BrokerData;
 import com.zhaopeng.common.protocol.route.QueueData;
 import com.zhaopeng.common.protocol.route.TopicRouteData;
@@ -11,7 +12,6 @@ import com.zhaopeng.mq.MQAdminClientAPIImpl;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.mq.producer.AbstractMQProducerOperation;
-import com.zhaopeng.mq.producer.SendResult;
 import com.zhaopeng.mq.producer.TopicPublishInfo;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.netty.NettyClientConfig;
@@ -47,9 +47,9 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
     private final Lock lockNamesrv = new ReentrantLock();
     private final static long LockTimeoutMillis = 3000;
 
-    protected MQProducerOperation(NettyClientConfig nettyClientConfig) {
+    protected MQProducerOperation(NettyClientConfig nettyClientConfig,String addr) {
         super(nettyClientConfig);
-        this.mqAdminApi = new MQAdminClientAPIImpl(nettyClient, null);
+        this.mqAdminApi = new MQAdminClientAPIImpl(nettyClient, addr);
     }
 
 

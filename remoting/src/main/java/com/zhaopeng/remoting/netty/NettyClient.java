@@ -102,17 +102,14 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(//
                 nettyClientConfig.getClientWorkerThreads(), //
                 new ThreadFactory() {
-
                     private AtomicInteger threadIndex = new AtomicInteger(0);
-
-
                     @Override
                     public Thread newThread(Runnable r) {
                         return new Thread(r, "NettyClientWorkerThread_" + this.threadIndex.incrementAndGet());
                     }
                 });
 
-        Bootstrap handler = this.bootstrap.group(this.eventLoopGroupWorker).channel(NioSocketChannel.class)//
+        this.bootstrap.group(this.eventLoopGroupWorker).channel(NioSocketChannel.class)//
                 //
                 .option(ChannelOption.TCP_NODELAY, true)
                 //
@@ -263,6 +260,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
             try {
                 this.lockChannelTables.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS);
                 final ChannelFuture f = this.bootstrap.connect(addr, 9876);
+                //bootstrap.group()
                 logger.info("createChannel: begin to connect remote host[{}] asynchronously", addr);
                 if (f.awaitUninterruptibly(this.nettyClientConfig.getConnectTimeoutMillis())) {
                     if (ischannelFutureOK(f)) {
