@@ -12,6 +12,9 @@ public class TopicInfo extends JsonSerializable {
     private int readQueueNums = defaultReadQueueNums;
     private int writeQueueNums = defaultWriteQueueNums;
 
+    public TopicInfo() {
+    }
+
     public TopicInfo(String topicName) {
         this.topicName = topicName;
     }

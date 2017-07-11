@@ -218,12 +218,20 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         return mqList;
     }
 
+
+    public void createTopic( final String topic, final TopicInfo topicConfig, final long timeoutMillis) throws InterruptedException, RemotingException, MQClientException, MQBrokerException {
+
+        createTopic(namesrv,topic,topicConfig,timeoutMillis);
+
+    }
+
     public void createTopic(final String addr, final String defaultTopic, final TopicInfo topicConfig, final long timeoutMillis)
             throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
 
         if (topicConfig == null) return;
 
         RemotingCommand request = RemotingCommand.createResponseCommand(RequestCode.CREATE_TOPIC, null);
+        topicConfig.setTopicName(defaultTopic);
         request.setBody(topicConfig.encode());
 
         RemotingCommand response = nettyClient.invokeSync(addr, request, timeoutMillis);

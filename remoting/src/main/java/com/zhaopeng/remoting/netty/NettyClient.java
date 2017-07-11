@@ -42,7 +42,8 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
     private final ChannelEventListener channelEventListener;
 
-    private Bootstrap bootstrap;
+    private Bootstrap bootstrap = new Bootstrap();
+
 
     private final ExecutorService publicExecutor;
 
@@ -67,14 +68,10 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
         super(10, 10);
         this.nettyClientConfig = nettyClientConfig;
         this.channelEventListener = channelEventListener;
-
-        bootstrap = new Bootstrap();
-
         int publicThreadNums = nettyClientConfig.getClientCallbackExecutorThreads();
         if (publicThreadNums <= 0) {
             publicThreadNums = 4;
         }
-
         this.publicExecutor = Executors.newFixedThreadPool(publicThreadNums, new ThreadFactory() {
             private AtomicInteger threadIndex = new AtomicInteger(0);
 
@@ -83,17 +80,14 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                 return new Thread(r, "NettyClientPublicExecutor_" + this.threadIndex.incrementAndGet());
             }
         });
-
         this.eventLoopGroupWorker = new NioEventLoopGroup(1, new ThreadFactory() {
             private AtomicInteger threadIndex = new AtomicInteger(0);
-
 
             @Override
             public Thread newThread(Runnable r) {
                 return new Thread(r, String.format("NettyClientSelector_%d", this.threadIndex.incrementAndGet()));
             }
         });
-
     }
 
 
@@ -103,24 +97,35 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                 nettyClientConfig.getClientWorkerThreads(), //
                 new ThreadFactory() {
                     private AtomicInteger threadIndex = new AtomicInteger(0);
+
                     @Override
                     public Thread newThread(Runnable r) {
                         return new Thread(r, "NettyClientWorkerThread_" + this.threadIndex.incrementAndGet());
                     }
                 });
 
-        this.bootstrap.group(this.eventLoopGroupWorker).channel(NioSocketChannel.class)//
-                //
+        setBootstrapGroup();
+
+        System.out.println(bootstrap);
+        this.timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                NettyClient.this.scanResponseTable();
+            }
+        }, 1000 * 3, 1000);
+        if (this.channelEventListener != null) {
+            this.nettyEventExecuter.start();
+        }
+    }
+
+
+    public void  setBootstrapGroup(){
+        bootstrap.group(this.eventLoopGroupWorker).channel(NioSocketChannel.class)//
                 .option(ChannelOption.TCP_NODELAY, true)
-                //
                 .option(ChannelOption.SO_KEEPALIVE, false)
-                //
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nettyClientConfig.getConnectTimeoutMillis())
-                //
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nettyClientConfig.getConnectTimeoutMillis())//
                 .option(ChannelOption.SO_SNDBUF, nettyClientConfig.getSocketSndbufSize())
-                //
                 .option(ChannelOption.SO_RCVBUF, nettyClientConfig.getSocketRcvbufSize())
-                //
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
@@ -133,20 +138,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                                 new NettyClientHandler());
                     }
                 });
-
-        this.timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                NettyClient.this.scanResponseTable();
-
-            }
-        }, 1000 * 3, 1000);
-
-        if (this.channelEventListener != null) {
-            this.nettyEventExecuter.start();
-        }
     }
-
     @Override
     public void shutdown() {
         defaultEventExecutorGroup.shutdownGracefully();
@@ -156,10 +148,8 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
     @Override
     public void updateNameServerAddressList(List<String> addrs) {
-
         List<String> old = this.namesrvAddrList.get();
         boolean update = false;
-
         if (!addrs.isEmpty()) {
             if (null == old) {
                 update = true;
@@ -172,7 +162,6 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                     }
                 }
             }
-
             if (update) {
                 Collections.shuffle(addrs);
                 this.namesrvAddrList.set(addrs);
@@ -183,38 +172,30 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
     @Override
     public List<String> getNameServerAddressList() {
-
         return this.namesrvAddrList.get();
     }
 
     @Override
     public RemotingCommand invokeSync(String addr, RemotingCommand request, long timeoutMillis) throws InterruptedException, RemotingException {
-
-
         Channel channel = getAndCreateChannel(addr);
         if (channel == null) {
             return null;
         }
         RemotingCommand response = this.invokeSyncImpl(channel, request, timeoutMillis);
-
         return response;
     }
 
     @Override
     public void invokeAsync(String addr, RemotingCommand request, long timeoutMillis, InvokeCallback invokeCallback) throws InterruptedException, RemotingException {
-
         Channel channel = getAndCreateChannel(addr);
         if (channel == null) {
             return;
         }
-
         this.invokeAsyncImpl(channel, request, timeoutMillis, invokeCallback);
-
     }
 
     @Override
     public void invokeOneway(String addr, RemotingCommand request, long timeoutMillis) throws InterruptedException, RemotingException {
-
         Channel channel = getAndCreateChannel(addr);
         if (channel == null) {
             return;
@@ -224,20 +205,15 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
     @Override
     public void registerProcessor(int requestCode, NettyRequestProcessor processor, ExecutorService executor) {
-
-
         if (null == executor) {
             executor = this.publicExecutor;
         }
-
         Pair<NettyRequestProcessor, ExecutorService> pair = new Pair<>(processor, executor);
         this.processorTable.put(requestCode, pair);
-
     }
 
     @Override
     public void registerDefaultProcessor(NettyRequestProcessor processor, ExecutorService executor) {
-
         if (null == executor) {
             executor = this.publicExecutor;
         }
@@ -259,7 +235,12 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
         if (channel == null) {
             try {
                 this.lockChannelTables.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS);
-                final ChannelFuture f = this.bootstrap.connect(addr, 9876);
+                System.out.println(bootstrap);
+
+                if(bootstrap.group()==null){
+                    setBootstrapGroup();
+                }
+                final ChannelFuture f = bootstrap.connect(addr, 9876);
                 //bootstrap.group()
                 logger.info("createChannel: begin to connect remote host[{}] asynchronously", addr);
                 if (f.awaitUninterruptibly(this.nettyClientConfig.getConnectTimeoutMillis())) {
@@ -271,19 +252,14 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                     }
                 }
             } catch (InterruptedException e) {
-
                 logger.info("thread {} is Interrupted {}", Thread.currentThread().getName(), e);
-
             } catch (Exception e) {
                 logger.info("getChannelEventListener error {}", e);
             } finally {
                 this.lockChannelTables.unlock();
             }
-
         }
-
         return null;
-
     }
 
 

@@ -3,6 +3,7 @@ package com.zhaopeng.namesrv.route;
 import com.google.common.base.Strings;
 import com.zhaopeng.common.DataVersion;
 import com.zhaopeng.common.TopicInfo;
+import com.zhaopeng.common.protocol.body.CreateTopicResult;
 import com.zhaopeng.common.protocol.body.RegisterBrokerInfo;
 import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
 import com.zhaopeng.common.protocol.body.TopicList;
@@ -40,27 +41,45 @@ public class RouteInfoManager {
         this.brokerAddrTable = new HashMap<>();
         this.brokerLiveTable = new HashMap<>();
 
-        initData();
+        //   initData();
     }
 
     // 仅仅是为来初始化有数据
     private void initData() {
-        TopicInfo topicInfo = new TopicInfo("order_system");
-        // createAndUpdateQueueData("test1",topicInfo);
-
+        TopicInfo topicInfo = new TopicInfo("default");
         RegisterBrokerInfo brokerInfo = new RegisterBrokerInfo();
-        DataVersion v=new DataVersion();
+        DataVersion v = new DataVersion();
 
         brokerInfo.setDataVersion(v);
         brokerInfo.setBrokerId(1l);
         brokerInfo.setServerAddr("127.0.0.1");
-        brokerInfo.setBrokerName("test1");
-        ConcurrentHashMap<String,TopicInfo> map=new ConcurrentHashMap<>();
-        map.put("order_system",topicInfo);
+        brokerInfo.setBrokerName("default");
+        ConcurrentHashMap<String, TopicInfo> map = new ConcurrentHashMap<>();
+        map.put("default", topicInfo);
         brokerInfo.setTopicConfigTable(map);
 
         Channel channel = null;
         registerBroker(brokerInfo, channel);
+    }
+
+
+    public CreateTopicResult createTopic(TopicInfo topicInfo) {
+        CreateTopicResult result = new CreateTopicResult();
+        if (topicInfo == null) {
+            return result;
+        }
+        List<QueueData> queueDatas = this.topicQueueTable.get(topicInfo.getTopicName());
+        if (queueDatas == null) {
+            queueDatas = new ArrayList<>();
+        }
+        QueueData queueData = new QueueData();
+        queueData.setWriteQueueNums(topicInfo.getWriteQueueNums());
+        queueData.setReadQueueNums(topicInfo.getReadQueueNums());
+        queueDatas.add(queueData);
+        this.topicQueueTable.put(topicInfo.getTopicName(), queueDatas);
+        logger.info("new topic registerd, {} {}", topicInfo.getTopicName(), queueData);
+
+        return result;
     }
 
     /**

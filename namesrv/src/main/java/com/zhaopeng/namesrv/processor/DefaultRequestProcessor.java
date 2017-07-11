@@ -1,6 +1,8 @@
 package com.zhaopeng.namesrv.processor;
 
+import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.protocol.RequestCode;
+import com.zhaopeng.common.protocol.body.CreateTopicResult;
 import com.zhaopeng.common.protocol.body.RegisterBrokerInfo;
 import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
 import com.zhaopeng.common.protocol.body.TopicList;
@@ -44,6 +46,11 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
         logger.info("receive request {}  {}", ctx, request);
+
+        if(request.getCode()==1003){
+            System.out.println("123");
+        }
+
         switch (request.getCode()) {
             case RequestCode.REGISTER_BROKER:
                 return this.registerBroker(ctx, request);
@@ -53,6 +60,8 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
                 return this.getRouteInfoByTopic(ctx, request);
             case RequestCode.GET_BROKER_CLUSTER_INFO:
                 return this.getBrokerClusterInfo(ctx, request);
+            case RequestCode.CREATE_TOPIC:
+                return this.createTopic(ctx,request);
 
             case RequestCode.DELETE_TOPIC_IN_NAMESRV:
                 return this.deleteTopicInNamesrv(ctx, request);
@@ -97,6 +106,28 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         return respone;
     }
 
+
+    /**
+     * 添加一个topic
+     * @param ctx
+     * @param request
+     * @return
+     */
+    public RemotingCommand createTopic(ChannelHandlerContext ctx, RemotingCommand request){
+
+        RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
+
+
+        TopicInfo  topicInfo = new TopicInfo();
+        if (request.getBody() != null) {
+            topicInfo = RegisterBrokerInfo.decode(request.getBody(), TopicInfo.class);
+        }
+
+        CreateTopicResult result = this.namesrvController.getRouteInfoManager().createTopic(topicInfo);
+        respone.setBody(result.encode());
+        return respone;
+
+    }
     /**
      * 根据body 从删除routerManager删除broker
      *
@@ -152,6 +183,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
         return null;
     }
+
 
 
     /**

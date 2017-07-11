@@ -2,6 +2,7 @@ package com.zhaopeng.mq.producer.impl;
 
 
 import com.zhaopeng.common.All;
+import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.client.message.SendResult;
@@ -84,19 +85,17 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
     }
 
     private TopicPublishInfo findTopicPublishInfo(String topic) {
-
-
         TopicPublishInfo topicPublishInfo = this.topicPublishInfoTable.get(topic);
         if (null == topicPublishInfo) {
             this.topicPublishInfoTable.putIfAbsent(topic, new TopicPublishInfo());
-            updateTopicRouteInfoFromNameServer(topic, false);
+            updateTopicRouteInfoFromNameServer(topic, true);
             topicPublishInfo = this.topicPublishInfoTable.get(topic);
         }
 
         if (topicPublishInfo.isHaveTopicRouterInfo()) {
             return topicPublishInfo;
         } else {
-            updateTopicRouteInfoFromNameServer(topic, true);
+            updateTopicRouteInfoFromNameServer(topic, false);
             topicPublishInfo = this.topicPublishInfoTable.get(topic);
             return topicPublishInfo;
         }
@@ -111,13 +110,23 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
                     if (isDefault) {
                         topicRouteData = mqAdminApi.getDefaultTopicRouteInfoFromNameServer(All.DEFAULT_TOPIC,
                                 1000 * 3);
+                        TopicInfo topicInfo=new TopicInfo();
                         if (topicRouteData != null) {
+
                             for (QueueData data : topicRouteData.getQueueDatas()) {
                                 int queueNums = data.getReadQueueNums();
                                 data.setReadQueueNums(queueNums);
                                 data.setWriteQueueNums(queueNums);
+
+                                topicInfo.setReadQueueNums(queueNums);
+                                topicInfo.setWriteQueueNums(queueNums);
+
                             }
                         }
+                        // 然后再注册
+                        topicInfo.setTopicName(topic);
+                        mqAdminApi.createTopic(topic,topicInfo,1000 * 3);
+
                     } else {
                         topicRouteData = this.mqAdminApi.getTopicRouteInfoFromNameServer(topic, 1000 * 3);
                     }

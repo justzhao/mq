@@ -213,8 +213,7 @@ public abstract class NettyRemotingAbstract {
             RemotingCommand responseCommand = responseFuture.waitResponse(timeoutMillis);
             if (null == responseCommand) {
                 if (responseFuture.isSendRequestOK()) {
-                    throw new RemotingException(addr.toString() + " " + timeoutMillis,
-                            responseFuture.getCause());
+
                 } else {
                     throw new RemotingException(addr.toString(), responseFuture.getCause());
                 }

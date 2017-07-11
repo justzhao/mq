@@ -1,5 +1,6 @@
 package com.zhaopeng.mq;
 
+import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.RegisterBrokerInfo;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by zhaopeng on 2017/6/20.
@@ -72,12 +74,18 @@ public class BrokerOutApi {
                                                 final int timeoutMills) throws RemotingException, InterruptedException {
 
 
+        TopicInfo topicInfo = new TopicInfo("default");
+
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.REGISTER_BROKER, null);
 
         RegisterBrokerInfo brokerInfo = new RegisterBrokerInfo();
         brokerInfo.setBrokerId(brokerId);
         brokerInfo.setServerAddr(brokerAddr);
         brokerInfo.setBrokerName(brokerName);
+
+        ConcurrentHashMap<String, TopicInfo> map = new ConcurrentHashMap<>();
+        map.put("default", topicInfo);
+        brokerInfo.setTopicConfigTable(map);
 
         request.setBody(brokerInfo.encode());
 

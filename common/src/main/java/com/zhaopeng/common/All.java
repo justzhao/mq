@@ -7,7 +7,7 @@ public class All {
 
     public static final String MQ_HOME_ENV = "MQ_HOME";
 
-    public static final String DEFAULT_TOPIC = "Hello_zp_world";
+    public static final String DEFAULT_TOPIC = "default";
 
 
     // 默认每个broker第一台brokerId=0
