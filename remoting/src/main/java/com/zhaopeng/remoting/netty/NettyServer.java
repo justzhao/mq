@@ -76,11 +76,9 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(//
                 nettyServerConfig.getServerWorkerThreads(), //
                 new ThreadFactory() {
-
                     public Thread newThread(Runnable r) {
                         return new Thread(r, "NettyServerCodecThread_" + this.threadIndex.incrementAndGet());
                     }
-
                     private AtomicInteger threadIndex = new AtomicInteger(0);
                 });
 

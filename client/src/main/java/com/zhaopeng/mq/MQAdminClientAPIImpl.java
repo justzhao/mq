@@ -18,6 +18,7 @@ import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.remoting.exception.RemotingException;
 import com.zhaopeng.remoting.netty.NettyClient;
+import com.zhaopeng.remoting.netty.NettyClientConfig;
 import com.zhaopeng.remoting.protocol.JsonSerializable;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import org.slf4j.Logger;
@@ -225,12 +226,29 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
 
     }
 
+    public static void main(String args[]) throws InterruptedException, RemotingException, MQClientException, MQBrokerException {
+        String topic="zhaopeng";
+
+        TopicInfo topicInfo=new TopicInfo(topic);
+        topicInfo.setReadQueueNums(1);
+        topicInfo.setWriteQueueNums(1);
+
+        NettyClientConfig clientConfig=new NettyClientConfig();
+
+        NettyClient nettyClient =new NettyClient(clientConfig);
+        String addr ="127.0.0.1";
+
+        MQAdminClientAPIImpl mqAdminClientAPI=new MQAdminClientAPIImpl(nettyClient,addr);
+        mqAdminClientAPI.createTopic(addr,topicInfo,3*1000);
+
+    }
+
     public void createTopic(final String addr, final String defaultTopic, final TopicInfo topicConfig, final long timeoutMillis)
             throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
 
         if (topicConfig == null) return;
 
-        RemotingCommand request = RemotingCommand.createResponseCommand(RequestCode.CREATE_TOPIC, null);
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.CREATE_TOPIC, null);
         topicConfig.setTopicName(defaultTopic);
         request.setBody(topicConfig.encode());
 
@@ -328,7 +346,7 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         sendMessage.setTopic(mq.getTopic());
         sendMessage.setBrokerAddr(brokerAddr);
         sendMessage.setMsg(msg);
-
+        request.setBody(sendMessage.encode());
         RemotingCommand response = this.nettyClient.invokeSync(brokerAddr, request, timeout);
         switch (response.getCode()) {
 

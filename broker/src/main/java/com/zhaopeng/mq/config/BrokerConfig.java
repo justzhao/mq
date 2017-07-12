@@ -1,5 +1,7 @@
 package com.zhaopeng.mq.config;
 
+import com.zhaopeng.common.All;
+
 /**
  * Created by zhaopeng on 2017/5/19.
  */
@@ -20,7 +22,7 @@ public class BrokerConfig {
 
     private String brokerName = "default";
 
-    private Long brokerId = 1l;
+    private Long brokerId = All.MASTER_ID;
 
     private int registerBrokerTimeoutMills = 500;
 

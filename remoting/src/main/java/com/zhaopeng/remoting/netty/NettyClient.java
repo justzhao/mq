@@ -235,8 +235,6 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
         if (channel == null) {
             try {
                 this.lockChannelTables.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS);
-                System.out.println(bootstrap);
-
                 if(bootstrap.group()==null){
                     setBootstrapGroup();
                 }

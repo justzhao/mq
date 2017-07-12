@@ -5,7 +5,7 @@ package com.zhaopeng.remoting.netty;
  */
 public class NettyServerConfig {
 
-    private int port = 9999;
+    private int port = 0;
     private int serverSocketSndBufSize = 65535;
     private int serverSocketRcvBufSize = 65535;
     private int serverWorkerThreads = 8;

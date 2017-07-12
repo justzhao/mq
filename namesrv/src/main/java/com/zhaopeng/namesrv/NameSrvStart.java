@@ -15,13 +15,10 @@ public class NameSrvStart {
 
     final Logger log = LoggerFactory.getLogger(NameSrvStart.class);
 
-
     public static void main(String args[]) {
         NameSrvStart srvStart = new NameSrvStart();
         srvStart.startUp();
     }
-
-
     public void startUp() {
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setPort(9876);

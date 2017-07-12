@@ -1,6 +1,8 @@
 package com.zhaopeng.mq.producer.impl;
 
 
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
 import com.zhaopeng.common.All;
 import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.Message;
@@ -22,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -48,7 +51,7 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
     private final Lock lockNamesrv = new ReentrantLock();
     private final static long LockTimeoutMillis = 3000;
 
-    protected MQProducerOperation(NettyClientConfig nettyClientConfig,String addr) {
+    protected MQProducerOperation(NettyClientConfig nettyClientConfig, String addr) {
         super(nettyClientConfig);
         this.mqAdminApi = new MQAdminClientAPIImpl(nettyClient, addr);
     }
@@ -58,7 +61,7 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
     public SendResult send(Message msg, long timeout) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
 
         TopicPublishInfo topicPublishInfo = findTopicPublishInfo(msg.getTopic());
-        if (topicPublishInfo != null && topicPublishInfo.isHaveTopicRouterInfo()) {
+        if (topicPublishInfo != null) {
 
             MessageQueue mq = topicPublishInfo.selectOneMessageQueue();
             for (int i = 0; i < times; i++) {
@@ -69,7 +72,7 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
                         findTopicPublishInfo(mq.getTopic());
                         brokerAddr = findBrokerAddressInPublish(mq.getBrokerName());
                     }
-                    SendResult result = mqAdminApi.send(brokerAddr,mq, msg, timeout);
+                    SendResult result = mqAdminApi.send(brokerAddr, mq, msg, timeout);
                     return result;
                 } catch (Exception e) {
 
@@ -91,14 +94,7 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
             updateTopicRouteInfoFromNameServer(topic, true);
             topicPublishInfo = this.topicPublishInfoTable.get(topic);
         }
-
-        if (topicPublishInfo.isHaveTopicRouterInfo()) {
-            return topicPublishInfo;
-        } else {
-            updateTopicRouteInfoFromNameServer(topic, false);
-            topicPublishInfo = this.topicPublishInfoTable.get(topic);
-            return topicPublishInfo;
-        }
+        return topicPublishInfo;
     }
 
     private boolean updateTopicRouteInfoFromNameServer(String topic, boolean isDefault) {
@@ -110,7 +106,7 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
                     if (isDefault) {
                         topicRouteData = mqAdminApi.getDefaultTopicRouteInfoFromNameServer(All.DEFAULT_TOPIC,
                                 1000 * 3);
-                        TopicInfo topicInfo=new TopicInfo();
+                        TopicInfo topicInfo = new TopicInfo();
                         if (topicRouteData != null) {
 
                             for (QueueData data : topicRouteData.getQueueDatas()) {
@@ -125,7 +121,7 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
                         }
                         // 然后再注册
                         topicInfo.setTopicName(topic);
-                        mqAdminApi.createTopic(topic,topicInfo,1000 * 3);
+                        mqAdminApi.createTopic(topic, topicInfo, 1000 * 3);
 
                     } else {
                         topicRouteData = this.mqAdminApi.getTopicRouteInfoFromNameServer(topic, 1000 * 3);
@@ -133,17 +129,14 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
                     if (topicRouteData != null) {
                         TopicRouteData old = this.topicRouteTable.get(topic);
                         boolean changed = topicRouteDataIsChange(old, topicRouteData);
-
                         if (changed) {
                             TopicRouteData cloneTopicRouteData = topicRouteData.cloneOne();
-
                             for (BrokerData bd : topicRouteData.getBrokerDatas()) {
                                 this.brokerAddrTable.put(bd.getBrokerName(), bd.getBrokerAddrs());
                             }
-
                             // Update Pub info
                             TopicPublishInfo publishInfo = topicRouteData2TopicPublishInfo(topic, topicRouteData);
-                            this.topicPublishInfoTable.putIfAbsent(topic, publishInfo);
+                            this.topicPublishInfoTable.put(topic, publishInfo);
 
                             logger.info("topicRouteTable.put TopicRouteData[{}]", cloneTopicRouteData);
                             this.topicRouteTable.put(topic, cloneTopicRouteData);
@@ -197,13 +190,25 @@ public class MQProducerOperation extends AbstractMQProducerOperation {
     public static TopicPublishInfo topicRouteData2TopicPublishInfo(final String topic, final TopicRouteData route) {
         TopicPublishInfo info = new TopicPublishInfo();
         info.setTopicRouteData(route);
-        if (route.getOrderTopicConf() != null && route.getOrderTopicConf().length() > 0) {
-            String[] brokers = route.getOrderTopicConf().split(";");
-            for (String broker : brokers) {
-                String[] item = broker.split(":");
-                int nums = Integer.parseInt(item[1]);
-                for (int i = 0; i < nums; i++) {
-                    MessageQueue mq = new MessageQueue(topic, item[0], i);
+        if (route != null) {
+
+            List<BrokerData> brokerDatas = route.getBrokerDatas();
+            List<QueueData> queueDatas = route.getQueueDatas();
+
+            Map<String, QueueData> map = Maps.uniqueIndex(queueDatas, new Function<QueueData, String>() {
+                @Override
+                public String apply(QueueData queueData) {
+                    if (queueData == null) {
+                        return null;
+                    }
+                    return queueData.getBrokerName();
+                }
+            });
+            for (BrokerData broker : brokerDatas) {
+                QueueData qData = map.get(broker.getBrokerName());
+
+                for (int i = 0; i < qData.getWriteQueueNums(); i++) {
+                    MessageQueue mq = new MessageQueue(topic, broker.getBrokerName(), i);
                     info.getMessageQueueList().add(mq);
                 }
             }

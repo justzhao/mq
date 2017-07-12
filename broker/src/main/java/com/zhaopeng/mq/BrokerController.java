@@ -51,7 +51,11 @@ public class BrokerController {
 
     public BrokerController(String namesrv) {
         nettyClientConfig = new NettyClientConfig();
+
         nettyServerConfig = new NettyServerConfig();
+
+        // broker Server端口
+        nettyServerConfig.setPort(9999);
 
         brokerConfig = new BrokerConfig();
         nettyClient = new NettyClient(nettyClientConfig);
@@ -104,13 +108,13 @@ public class BrokerController {
     private String getBrokerAddr() {
 
         try {
-            return InetAddress.getLocalHost().getHostAddress();
+            return InetAddress.getLocalHost().getHostAddress() + ":" + nettyServerConfig.getPort();
         } catch (UnknownHostException e) {
             e.printStackTrace();
 
         }
 
-        return "127.0.0.1";
+        return "127.0.0.1:9999";
     }
 
 }

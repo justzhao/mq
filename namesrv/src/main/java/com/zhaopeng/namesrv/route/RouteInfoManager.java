@@ -73,6 +73,7 @@ public class RouteInfoManager {
             queueDatas = new ArrayList<>();
         }
         QueueData queueData = new QueueData();
+        queueData.setBrokerName("default");
         queueData.setWriteQueueNums(topicInfo.getWriteQueueNums());
         queueData.setReadQueueNums(topicInfo.getReadQueueNums());
         queueDatas.add(queueData);
@@ -89,7 +90,6 @@ public class RouteInfoManager {
      * @param channel
      */
     public void onChannelDestroy(String remoteAddr, Channel channel) {
-
         // 根据要被关闭的Channel找到对应的broker的地址
         String brokerAddrFound = null;
         if (channel != null) {
