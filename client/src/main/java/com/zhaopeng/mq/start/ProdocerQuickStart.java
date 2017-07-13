@@ -20,7 +20,7 @@ public class ProdocerQuickStart {
         NettyClientConfig clientConfig=new NettyClientConfig();
 
 
-        String addr="127.0.0.1";
+        String addr="127.0.0.1:9876";
 
         DefaultMQProducer producer=new DefaultMQProducer(clientConfig,addr);
         producer.init();

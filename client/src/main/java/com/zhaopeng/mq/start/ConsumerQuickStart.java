@@ -12,7 +12,7 @@ public class ConsumerQuickStart {
     public static void main(String args[]){
 
         NettyClientConfig clientConfig=new NettyClientConfig();
-        String addr="127.0.0.1";
+        String addr="127.0.0.1:9876";
         DefaultMQPullConsumer consumer=new DefaultMQPullConsumer(clientConfig,addr);
         consumer.init();
 

@@ -238,7 +238,16 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                 if(bootstrap.group()==null){
                     setBootstrapGroup();
                 }
-                final ChannelFuture f = bootstrap.connect(addr, 9876);
+
+                String addrs[]=addr.split(":");
+
+                if(addrs.length!=2){
+                    return null;
+                }
+
+                //9876
+                int port=Integer.valueOf(addrs[1]);
+                final ChannelFuture f = bootstrap.connect(addrs[0], port);
                 //bootstrap.group()
                 logger.info("createChannel: begin to connect remote host[{}] asynchronously", addr);
                 if (f.awaitUninterruptibly(this.nettyClientConfig.getConnectTimeoutMillis())) {
