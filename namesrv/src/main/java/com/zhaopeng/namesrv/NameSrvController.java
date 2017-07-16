@@ -58,14 +58,10 @@ public class NameSrvController {
     public boolean init() {
         // netty
         this.nettyServer = new NettyServer(nettyServerConfig, brokerStatusListener);
-
-
         // 线程池
-
         this.executorService =
                 Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
         // 注册请求处理器
-
         this.registerProcessor();
         // 定时任务
 
@@ -98,14 +94,12 @@ public class NameSrvController {
 
     private void registerProcessor() {
         this.nettyServer.registerDefaultProcessor(new DefaultRequestProcessor(this), this.executorService);
-
     }
 
     public void shutdown() {
         nettyServer.shutdown();
         executorService.shutdown();
     }
-
 
     public RouteInfoManager getRouteInfoManager() {
         return routeInfoManager;

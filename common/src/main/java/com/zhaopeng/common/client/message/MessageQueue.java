@@ -45,6 +45,15 @@ public class MessageQueue implements Comparable<MessageQueue>, Serializable {
     }
 
     @Override
+    public String toString() {
+        return "MessageQueue{" +
+                "topic='" + topic + '\'' +
+                ", brokerName='" + brokerName + '\'' +
+                ", queueId=" + queueId +
+                '}';
+    }
+
+    @Override
     public int compareTo(MessageQueue o) {
 
         int result = this.topic.compareTo(o.topic);

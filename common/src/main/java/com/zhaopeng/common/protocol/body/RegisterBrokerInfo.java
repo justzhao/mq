@@ -66,4 +66,15 @@ public class RegisterBrokerInfo extends JsonSerializable  implements Serializabl
     public void setBrokerName(String brokerName) {
         this.brokerName = brokerName;
     }
+
+    @Override
+    public String toString() {
+        return "RegisterBrokerInfo{" +
+                "brokerId=" + brokerId +
+                ", brokerName='" + brokerName + '\'' +
+                ", serverAddr='" + serverAddr + '\'' +
+                ", dataVersion=" + dataVersion +
+                ", topicConfigTable=" + topicConfigTable +
+                '}';
+    }
 }

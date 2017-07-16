@@ -257,6 +257,7 @@ public class RouteInfoManager {
 
     public RegisterBrokerResult registerBroker(RegisterBrokerInfo brokerInfo, final Channel channel) {
         try {
+            logger.info("registerBroker Info {}", brokerInfo);
             lock.writeLock().lockInterruptibly();
             String brokerAddr = brokerInfo.getServerAddr();
             String brokerName = brokerInfo.getBrokerName();
