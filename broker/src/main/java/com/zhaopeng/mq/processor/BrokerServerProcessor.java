@@ -54,12 +54,13 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
         int code = request.getCode();
         switch (code) {
             case PULL_MESSAGE: {
-
-                // 把消息先保存在内存中。
+                // 从内存中拉取数据
                 return processGetMessage(channel ,request);
 
             }
             case SEND_MESSAGE: {
+
+                // 把消息先保存在内存中。
                 processPutMessage(channel,request);
 
                 SendResult result = new SendResult();
