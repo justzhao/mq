@@ -314,7 +314,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
         @Override
         public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
             final String remoteAddress = RemotingHelper.parseChannelRemoteAddr(ctx.channel());
-            logger.info("NETTY CLIENT PIPELINE: CLOSE {}", remoteAddress);
+            //logger.info("NETTY CLIENT PIPELINE: CLOSE {}", remoteAddress);
             ctx.channel().close();
             super.close(ctx, promise);
 

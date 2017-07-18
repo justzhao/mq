@@ -17,6 +17,9 @@ public class PullMesageInfo extends JsonSerializable {
 
     private Long commitOffset;
 
+    public PullMesageInfo() {
+    }
+
     /**
      *每一个消息队列里面还有偏移(commitOffset, offset)的区别，为什么有2个offset
      * offset 当前MessageQueue消费进度的偏移量

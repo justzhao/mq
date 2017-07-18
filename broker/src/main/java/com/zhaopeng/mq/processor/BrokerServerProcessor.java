@@ -15,6 +15,8 @@ import com.zhaopeng.remoting.protocol.JsonSerializable;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -27,6 +29,7 @@ import static com.zhaopeng.common.protocol.RequestCode.SEND_MESSAGE;
 public class BrokerServerProcessor implements NettyRequestProcessor {
 
 
+    private static final Logger logger = LoggerFactory.getLogger(BrokerServerProcessor.class);
     private final MessageHandler messageHandler;
 
     public BrokerServerProcessor() {
@@ -55,13 +58,13 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
         switch (code) {
             case PULL_MESSAGE: {
                 // 从内存中拉取数据
-                return processGetMessage(channel ,request);
+                return processGetMessage(channel, request);
 
             }
             case SEND_MESSAGE: {
 
                 // 把消息先保存在内存中。
-                processPutMessage(channel,request);
+                processPutMessage(channel, request);
 
                 SendResult result = new SendResult();
 
@@ -80,7 +83,9 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
         return null;
     }
 
-    private RemotingCommand processGetMessage(final Channel channel,RemotingCommand request) {
+    private RemotingCommand processGetMessage(final Channel channel, RemotingCommand request) {
+
+       // logger.info(" getMessage Request  request {}", request);
         RemotingCommand respone = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
         byte body[] = request.getBody();
         if (body != null) {
@@ -101,7 +106,7 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
 
     }
 
-    private void processPutMessage(final Channel channel,RemotingCommand request) {
+    private void processPutMessage(final Channel channel, RemotingCommand request) {
 
 
         byte[] body = request.getBody();

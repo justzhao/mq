@@ -32,13 +32,11 @@ public class ConsumerQuickStart {
         String topic = "zhaopeng";
 
         Set<MessageQueue> mqs = consumer.fetchSubscribeMessageQueues(topic);
-        log.info("the msq is  {}. ", mqs);
 
         while (true) {
             for (MessageQueue q : mqs) {
-
                 PullResult result = consumer.pull(q, "", 0, 10);
-                log.info("the result is {}", result.getMsgFoundList());
+                log.info("the result is {}", result.getMessages());
             }
         }
 

@@ -220,26 +220,26 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
     }
 
 
-    public void createTopic( final String topic, final TopicInfo topicConfig, final long timeoutMillis) throws InterruptedException, RemotingException, MQClientException, MQBrokerException {
+    public void createTopic(final String topic, final TopicInfo topicConfig, final long timeoutMillis) throws InterruptedException, RemotingException, MQClientException, MQBrokerException {
 
-        createTopic(namesrv,topic,topicConfig,timeoutMillis);
+        createTopic(namesrv, topic, topicConfig, timeoutMillis);
 
     }
 
     public static void main(String args[]) throws InterruptedException, RemotingException, MQClientException, MQBrokerException {
-        String topic="zhaopeng";
+        String topic = "zhaopeng";
 
-        TopicInfo topicInfo=new TopicInfo(topic);
+        TopicInfo topicInfo = new TopicInfo(topic);
         topicInfo.setReadQueueNums(1);
         topicInfo.setWriteQueueNums(1);
 
-        NettyClientConfig clientConfig=new NettyClientConfig();
+        NettyClientConfig clientConfig = new NettyClientConfig();
 
-        NettyClient nettyClient =new NettyClient(clientConfig);
-        String addr ="127.0.0.1";
+        NettyClient nettyClient = new NettyClient(clientConfig);
+        String addr = "127.0.0.1";
 
-        MQAdminClientAPIImpl mqAdminClientAPI=new MQAdminClientAPIImpl(nettyClient,addr);
-        mqAdminClientAPI.createTopic(addr,topicInfo,3*1000);
+        MQAdminClientAPIImpl mqAdminClientAPI = new MQAdminClientAPIImpl(nettyClient, addr);
+        mqAdminClientAPI.createTopic(addr, topicInfo, 3 * 1000);
 
     }
 
@@ -280,7 +280,7 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
             return null;
         }
 
-        RemotingCommand request = RemotingCommand.createResponseCommand(RequestCode.PULL_MESSAGE, null);
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.PULL_MESSAGE, null);
 
         PullMesageInfo pullMesageInfo = new PullMesageInfo(topic, mq.getQueueId(), offset, maxNums, 0l);
         request.setBody(pullMesageInfo.encode());
@@ -293,9 +293,9 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
                 return result;
 
             }
-        }else if(respone.getCode()==ResponseCode.FAIL){
+        } else if (respone.getCode() == ResponseCode.FAIL) {
 
-            PullResult result =new PullResult(PullStatus.FAIL);
+            PullResult result = new PullResult(PullStatus.FAIL);
 
             return result;
 

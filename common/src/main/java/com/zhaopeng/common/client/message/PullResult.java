@@ -9,14 +9,19 @@ import java.util.List;
  * Created by zhaopeng on 2017/4/25.
  */
 public class PullResult extends JsonSerializable {
-    private final PullStatus pullStatus;
+    private  PullStatus pullStatus;
     private final long nextBeginOffset;
     private final long minOffset;
     private final long maxOffset;
-    private List<MessageInfo> msgFoundList;
+    //private List<MessageInfo> msgFoundList;
 
     private List<Message> messages;
 
+    public PullResult() {
+        this.nextBeginOffset = 0;
+        this.minOffset = 0;
+        this.maxOffset = 0;
+    }
 
     public PullResult(PullStatus pullStatus) {
         this.pullStatus = pullStatus;
@@ -48,14 +53,14 @@ public class PullResult extends JsonSerializable {
         return maxOffset;
     }
 
-    public List<MessageInfo> getMsgFoundList() {
+ /*   public List<MessageInfo> getMsgFoundList() {
         return msgFoundList;
     }
 
     public void setMsgFoundList(List<MessageInfo> msgFoundList) {
         this.msgFoundList = msgFoundList;
     }
-
+*/
     public List<Message> getMessages() {
         return messages;
     }
