@@ -65,19 +65,11 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
 
                 // 把消息先保存在内存中。
                 processPutMessage(channel, request);
-
                 SendResult result = new SendResult();
-
                 result.setSendStatus(SendStatus.OK);
-
-
                 RemotingCommand resp = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
-
                 resp.setBody(JsonSerializable.encode(result));
-
                 return resp;
-
-
             }
         }
         return null;

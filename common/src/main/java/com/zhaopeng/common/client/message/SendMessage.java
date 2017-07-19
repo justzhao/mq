@@ -5,12 +5,11 @@ import com.zhaopeng.remoting.protocol.JsonSerializable;
 /**
  * Created by zhaopeng on 2017/5/13.
  */
-public class SendMessage extends JsonSerializable{
+public class SendMessage extends JsonSerializable {
     private String topic;
     private String brokerName;
     private String brokerAddr;
-
-
+    private int queueId;
     private Message msg;
 
     public String getTopic() {
@@ -43,5 +42,13 @@ public class SendMessage extends JsonSerializable{
 
     public void setMsg(Message msg) {
         this.msg = msg;
+    }
+
+    public int getQueueId() {
+        return queueId;
+    }
+
+    public void setQueueId(int queueId) {
+        this.queueId = queueId;
     }
 }
