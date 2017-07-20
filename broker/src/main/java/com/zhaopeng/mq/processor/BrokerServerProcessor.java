@@ -77,12 +77,12 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
 
     private RemotingCommand processGetMessage(final Channel channel, RemotingCommand request) {
 
-       // logger.info(" getMessage Request  request {}", request);
+
         RemotingCommand respone = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
         byte body[] = request.getBody();
         if (body != null) {
             PullMesageInfo pullMesageInfo = PullMesageInfo.decode(body, PullMesageInfo.class);
-            Message message = messageHandler.getMessageByTopic(pullMesageInfo.getTopic());
+            Message message = messageHandler.getMessage(pullMesageInfo);
             List<Message> msg = Lists.newArrayList();
             msg.add(message);
             PullResult result = null;
@@ -103,7 +103,7 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
 
         byte[] body = request.getBody();
         SendMessage sendMessage = SendMessage.decode(body, SendMessage.class);
-        messageHandler.addMessage(sendMessage.getTopic(), sendMessage.getMsg());
+        messageHandler.addMessage(sendMessage);
 
 
     }

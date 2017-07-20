@@ -6,8 +6,8 @@ import com.zhaopeng.remoting.protocol.JsonSerializable;
  * Created by zhaopeng on 2017/4/12.
  */
 public class TopicInfo extends JsonSerializable {
-    public static int defaultReadQueueNums = 16;
-    public static int defaultWriteQueueNums = 16;
+    public static int defaultReadQueueNums = 4;
+    public static int defaultWriteQueueNums = 4;
     private String topicName;
     private int readQueueNums = defaultReadQueueNums;
     private int writeQueueNums = defaultWriteQueueNums;

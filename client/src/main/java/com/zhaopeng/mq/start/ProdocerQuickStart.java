@@ -17,24 +17,21 @@ public class ProdocerQuickStart {
     public static void main(String args[]) throws UnsupportedEncodingException, InterruptedException, RemotingException, MQClientException, MQBrokerException {
 
 
-        NettyClientConfig clientConfig=new NettyClientConfig();
+        NettyClientConfig clientConfig = new NettyClientConfig();
 
 
-        String addr="127.0.0.1:9876";
+        String addr = "127.0.0.1:9876";
 
-        DefaultMQProducer producer=new DefaultMQProducer(clientConfig,addr);
+        DefaultMQProducer producer = new DefaultMQProducer(clientConfig, addr);
         producer.init();
 
-
-
-        Message message=new Message();
-
+        Message message = new Message();
         message.setTopic("zhaopeng");
+        for (int i = 0; i < 1000; i++) {
+            message.setBody(("hello world " + i).getBytes("utf-8"));
+            producer.send(message);
+        }
 
-        message.setBody("hello world".getBytes("utf-8"));
-
-
-       producer.send(message);
 
     }
 }

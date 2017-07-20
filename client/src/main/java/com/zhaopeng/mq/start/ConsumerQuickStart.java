@@ -1,5 +1,6 @@
 package com.zhaopeng.mq.start;
 
+import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.client.message.PullResult;
 import com.zhaopeng.mq.consumer.impl.DefaultMQPullConsumer;
@@ -10,6 +11,7 @@ import com.zhaopeng.remoting.netty.NettyClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -36,7 +38,19 @@ public class ConsumerQuickStart {
         while (true) {
             for (MessageQueue q : mqs) {
                 PullResult result = consumer.pull(q, "", 0, 10);
-                log.info("the result is {}", result.getMessages());
+                List<Message> msgs = result.getMessages();
+
+                if (msgs == null) {
+                    log.info("no message");
+                } else {
+                    for (Message m : msgs) {
+
+                        log.info("msg is {}, content is {}", m, new String(m.getBody()));
+
+                    }
+
+                }
+
             }
         }
 

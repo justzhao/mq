@@ -3,6 +3,7 @@ package com.zhaopeng.mq;
 import com.google.common.collect.Maps;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
+import com.zhaopeng.common.protocol.body.PullMesageInfo;
 import com.zhaopeng.mq.store.MessageStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +40,9 @@ public class MessageHandler {
         Queue<Message> queue = queueMap.get(queueId);
 
         if (queue == null) {
-
             queue = new LinkedList<>();
-
             queueMap.put(queueId, queue);
         }
-
         queue.offer(m);
 
     }
@@ -71,6 +69,17 @@ public class MessageHandler {
         Message m = store.getQueue().poll();
         logger.info("{} get   msg {}", topic, m);
         return m;
+    }
+
+    public Message getMessage(PullMesageInfo pull) {
+        int queueId = pull.getQueueId();
+        MessageStore store = topicStore.get(pull.getTopic());
+        if (store == null) {
+            return null;
+        }
+        Map<Integer, Queue<Message>> queueMap = store.getQueueMap();
+        Queue<Message> queue = queueMap.get(queueId);
+        return queue.poll();
     }
 
 

@@ -346,22 +346,19 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         sendMessage.setTopic(mq.getTopic());
         sendMessage.setBrokerAddr(brokerAddr);
         sendMessage.setMsg(msg);
+        sendMessage.setQueueId(mq.getQueueId());
         request.setBody(sendMessage.encode());
         RemotingCommand response = this.nettyClient.invokeSync(brokerAddr, request, timeout);
         switch (response.getCode()) {
-
             case ResponseCode.SUCCESS: {
                 if (response.getBody() != null) {
-
                     SendResult result = JsonSerializable.decode(response.getBody(), SendResult.class);
                     result.setSendStatus(SendStatus.OK);
                     return result;
                 }
-
             }
             case ResponseCode.FAIL: {
                 SendResult result = new SendResult();
-
                 result.setSendStatus(SendStatus.NOTOK);
                 return result;
             }
