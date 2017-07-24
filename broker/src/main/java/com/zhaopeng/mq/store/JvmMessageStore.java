@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by zhaopeng on 2017/6/28.
  */
-public class MessageStore {
+public class JvmMessageStore {
 
 
     // 计算总数

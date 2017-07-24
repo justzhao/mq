@@ -4,7 +4,7 @@ import com.google.common.collect.Maps;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
-import com.zhaopeng.mq.store.MessageStore;
+import com.zhaopeng.mq.store.JvmMessageStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,15 +23,15 @@ public class MessageHandler {
     /**
      * 用来存放topic对应的消息
      */
-    private Map<String, MessageStore> topicStore = Maps.newConcurrentMap();
+    private Map<String, JvmMessageStore> topicStore = Maps.newConcurrentMap();
 
     public void addMessage(SendMessage sendMessage) {
         String topic = sendMessage.getTopic();
         int queueId = sendMessage.getQueueId();
         Message m = sendMessage.getMsg();
-        MessageStore store = topicStore.get(topic);
+        JvmMessageStore store = topicStore.get(topic);
         if (store == null) {
-            store = new MessageStore();
+            store = new JvmMessageStore();
             topicStore.put(topic, store);
         }
 
@@ -49,9 +49,9 @@ public class MessageHandler {
 
     public void addMessage(String topic, Message message) {
 
-        MessageStore store = topicStore.get(topic);
+        JvmMessageStore store = topicStore.get(topic);
         if (store == null) {
-            store = new MessageStore();
+            store = new JvmMessageStore();
             topicStore.put(topic, store);
         }
 
@@ -62,7 +62,7 @@ public class MessageHandler {
     }
 
     public Message getMessageByTopic(String topic) {
-        MessageStore store = topicStore.get(topic);
+        JvmMessageStore store = topicStore.get(topic);
         if (store == null) {
             return null;
         }
@@ -73,7 +73,7 @@ public class MessageHandler {
 
     public Message getMessage(PullMesageInfo pull) {
         int queueId = pull.getQueueId();
-        MessageStore store = topicStore.get(pull.getTopic());
+        JvmMessageStore store = topicStore.get(pull.getTopic());
         if (store == null) {
             return null;
         }
