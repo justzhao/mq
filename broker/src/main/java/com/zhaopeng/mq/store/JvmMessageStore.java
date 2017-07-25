@@ -2,6 +2,8 @@ package com.zhaopeng.mq.store;
 
 import com.google.common.collect.Maps;
 import com.zhaopeng.common.client.message.Message;
+import com.zhaopeng.common.client.message.SendMessage;
+import com.zhaopeng.common.protocol.body.PullMesageInfo;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -11,25 +13,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by zhaopeng on 2017/6/28.
  */
-public class JvmMessageStore {
+public class JvmMessageStore implements MessageStore {
 
 
     // 计算总数
     AtomicInteger count = new AtomicInteger(0);
 
 
-    Map<Integer,Queue<Message>>  queueMap= Maps.newConcurrentMap();
+    Map<Integer, Queue<Message>> queueMap = Maps.newConcurrentMap();
 
-    Queue<Message> queue = new LinkedList<>();
-
-
-    public Queue<Message> getQueue() {
-        return queue;
-    }
-
-    public void setQueue(Queue<Message> queue) {
-        this.queue = queue;
-    }
 
     public AtomicInteger getCount() {
         return count;
@@ -49,5 +41,26 @@ public class JvmMessageStore {
 
     public void setQueueMap(Map<Integer, Queue<Message>> queueMap) {
         this.queueMap = queueMap;
+    }
+
+    @Override
+    public Message getMessage(PullMesageInfo pull) {
+        int queueId = pull.getQueueId();
+        Queue<Message> queue = queueMap.get(queueId);
+        return queue.poll();
+    }
+
+    @Override
+    public void addMessage(SendMessage sendMessage) {
+
+        int queueId = sendMessage.getQueueId();
+
+        Queue<Message> queue = queueMap.get(queueId);
+        if (queue == null) {
+            queue = new LinkedList<>();
+            queueMap.put(queueId, queue);
+        }
+        queue.offer(sendMessage.getMsg());
+
     }
 }
