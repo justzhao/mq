@@ -23,7 +23,6 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.zhaopeng.mq</groupId>
             <artifactId>common</artifactId>
