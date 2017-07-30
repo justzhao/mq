@@ -4,8 +4,8 @@ import com.google.common.collect.Maps;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
-import com.zhaopeng.mq.store.JvmMessageStore;
-import com.zhaopeng.mq.store.MessageStore;
+import com.zhaopeng.store.JvmMessageStore;
+import com.zhaopeng.store.MessageStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

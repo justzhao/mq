@@ -33,6 +33,11 @@
             <artifactId>common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.zhaopeng.mq</groupId>
+            <artifactId>store</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>ch.qos.logback</groupId>
