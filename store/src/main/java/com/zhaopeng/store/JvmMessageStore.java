@@ -4,6 +4,8 @@ import com.google.common.collect.Maps;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
+import com.zhaopeng.store.entity.PutMessageResult;
+import com.zhaopeng.store.entity.enums.PutMessageStatus;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -51,7 +53,7 @@ public class JvmMessageStore implements MessageStore {
     }
 
     @Override
-    public void addMessage(SendMessage sendMessage) {
+    public PutMessageResult addMessage(SendMessage sendMessage) {
 
         int queueId = sendMessage.getQueueId();
 
@@ -61,6 +63,18 @@ public class JvmMessageStore implements MessageStore {
             queueMap.put(queueId, queue);
         }
         queue.offer(sendMessage.getMsg());
+
+        return new PutMessageResult(PutMessageStatus.PUT_OK);
+
+    }
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void shutDown() {
 
     }
 }

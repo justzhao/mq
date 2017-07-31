@@ -14,5 +14,9 @@ public class MessageStoreConfig {
     private String storePathCommitLog = System.getProperty("user.home") + File.separator + "mqstore"
             + File.separator + "commitlog";
 
+    private long osPageCacheBusyTimeOutMills = 1000;
 
+    public long getOsPageCacheBusyTimeOutMills() {
+        return osPageCacheBusyTimeOutMills;
+    }
 }

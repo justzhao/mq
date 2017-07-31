@@ -4,6 +4,7 @@ package com.zhaopeng.store;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
 import com.zhaopeng.common.client.message.Message;
+import com.zhaopeng.store.entity.PutMessageResult;
 
 /**
  * Created by zhaopeng on 2017/7/24.
@@ -20,5 +21,15 @@ public interface MessageStore {
      * 添加消息
      * @param sendMessage
      */
-    public void  addMessage(SendMessage sendMessage);
+    public PutMessageResult addMessage(SendMessage sendMessage);
+
+    /**
+     * 启动服务
+     */
+    public void start();
+
+    /**
+     * 关闭服务
+     */
+    public void shutDown();
 }
