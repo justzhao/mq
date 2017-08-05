@@ -124,8 +124,8 @@ public class MapedFile {
         return mappedByteBuffer;
     }
 
-    public AtomicInteger getWrotePostion() {
-        return wrotePostion;
+    public int getWrotePostion() {
+        return wrotePostion.get();
     }
 
     public int getCommittedPosition() {
@@ -201,5 +201,24 @@ public class MapedFile {
             return;
 
     }
+
+
+    public long getLastModifiedTimestamp() {
+        return this.file.lastModified();
+
+    }
+
+
+    public void setWrotePostion(int pos) {
+        this.wrotePostion.set(pos);
+    }
+
+
+    public void setCommittedPosition(int pos) {
+        this.committedPosition.set(pos);
+    }
+
+
+
 
 }
