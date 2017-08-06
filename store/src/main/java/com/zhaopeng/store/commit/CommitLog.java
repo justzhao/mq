@@ -1,8 +1,12 @@
 package com.zhaopeng.store.commit;
 
 import com.zhaopeng.remoting.common.ServiceThread;
+import com.zhaopeng.store.config.MessageStoreConfig;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.entity.PutMessageResult;
+import com.zhaopeng.store.service.AllocateMapedFileService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,12 +17,20 @@ import java.util.concurrent.TimeUnit;
  * Created by zhaopeng on 2017/7/27.
  */
 public class CommitLog {
+
+    private static final Logger log = LoggerFactory.getLogger(CommitLog.class);
     private volatile long confirmOffset = -1L;
     private volatile long beginTimeInLock = 0;
 
+    private final MapedFileQueue mapedFileQueue;
+
+    private final MessageStoreConfig messageStoreConfig;
 
     private final FlushCommitLogService flushCommitLogService;
 
+    private final AllocateMapedFileService allocateMapedFileService;
+
+    private final StoreCheckpoint storeCheckpoint;
 
     public long getConfirmOffset() {
         return confirmOffset;
@@ -37,8 +49,14 @@ public class CommitLog {
     }
 
 
-    public CommitLog() {
+    public CommitLog(MessageStoreConfig config,AllocateMapedFileService allocateMapedFileService,
+                     StoreCheckpoint storeCheckpoint) {
+        this.messageStoreConfig = config;
+        this.storeCheckpoint=storeCheckpoint;
         this.flushCommitLogService = new GroupCommitService();
+        this.allocateMapedFileService=allocateMapedFileService;
+        this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
+                messageStoreConfig.getMapedFileSizeCommitLog(), this.allocateMapedFileService);
     }
 
     public PutMessageResult putMessage(final MessageExtBrokerInner msg) {
@@ -57,16 +75,17 @@ public class CommitLog {
 
 
         public void run() {
-/*            CommitLog.log.info(this.getServiceName() + " service started");
+            CommitLog.log.info(this.getServiceName() + " service started");
 
             while (!this.isStoped()) {
-                boolean flushCommitLogTimed = CommitLog.this.defaultMessageStore.getMessageStoreConfig().isFlushCommitLogTimed();
+                boolean flushCommitLogTimed = CommitLog.this.getMessageStoreConfig().isFlushCommitLogTimed();
 
-                int interval = CommitLog.this.defaultMessageStore.getMessageStoreConfig().getFlushIntervalCommitLog();
-                int flushPhysicQueueLeastPages = CommitLog.this.defaultMessageStore.getMessageStoreConfig().getFlushCommitLogLeastPages();
+                int interval = CommitLog.this.getMessageStoreConfig().getFlushIntervalCommitLog();
+                int flushPhysicQueueLeastPages = CommitLog.this.getMessageStoreConfig().getFlushCommitLogLeastPages();
 
                 int flushPhysicQueueThoroughInterval =
-                        CommitLog.this.defaultMessageStore.getMessageStoreConfig().getFlushCommitLogThoroughInterval();
+                        CommitLog.this.getMessageStoreConfig().getFlushCommitLogThoroughInterval();
+
 
                 boolean printFlushProgress = false;
 
@@ -92,7 +111,7 @@ public class CommitLog {
                     CommitLog.this.mapedFileQueue.commit(flushPhysicQueueLeastPages);
                     long storeTimestamp = CommitLog.this.mapedFileQueue.getStoreTimestamp();
                     if (storeTimestamp > 0) {
-                        CommitLog.this.defaultMessageStore.getStoreCheckpoint().setPhysicMsgTimestamp(storeTimestamp);
+                        CommitLog.this.getStoreCheckpoint().setPhysicMsgTimestamp(storeTimestamp);
                     }
                 } catch (Exception e) {
                     CommitLog.log.warn(this.getServiceName() + " service has exception. ", e);
@@ -109,7 +128,7 @@ public class CommitLog {
 
             this.printFlushProgress();
 
-            CommitLog.log.info(this.getServiceName() + " service end");*/
+            CommitLog.log.info(this.getServiceName() + " service end");
         }
 
 
@@ -190,5 +209,23 @@ public class CommitLog {
         }
     }
 
+    public MapedFileQueue getMapedFileQueue() {
+        return mapedFileQueue;
+    }
 
+    public MessageStoreConfig getMessageStoreConfig() {
+        return messageStoreConfig;
+    }
+
+    public FlushCommitLogService getFlushCommitLogService() {
+        return flushCommitLogService;
+    }
+
+    public AllocateMapedFileService getAllocateMapedFileService() {
+        return allocateMapedFileService;
+    }
+
+    public StoreCheckpoint getStoreCheckpoint() {
+        return storeCheckpoint;
+    }
 }
