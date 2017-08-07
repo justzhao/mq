@@ -1,5 +1,6 @@
 package com.zhaopeng.store.commit;
 
+import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +79,11 @@ public class MapedFile {
 
     }
 
+    public  AppendMessageResult appendMessage(final MessageExtBrokerInner msg){
+
+        return null;
+
+    }
     public void ensureDirOK(final String dirName) {
         if (dirName != null) {
             File f = new File(dirName);

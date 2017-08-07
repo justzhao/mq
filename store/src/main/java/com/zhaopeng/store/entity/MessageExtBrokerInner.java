@@ -9,11 +9,21 @@ public class MessageExtBrokerInner extends SendMessage {
 
     private long bodyLength;
 
+    private String host;
+
     public long getBodyLength() {
         return bodyLength;
     }
 
     public void setBodyLength(long bodyLength) {
         this.bodyLength = bodyLength;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
     }
 }

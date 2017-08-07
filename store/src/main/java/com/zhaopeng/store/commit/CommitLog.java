@@ -4,10 +4,12 @@ import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.store.config.MessageStoreConfig;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.entity.PutMessageResult;
+import com.zhaopeng.store.entity.enums.PutMessageStatus;
 import com.zhaopeng.store.service.AllocateMapedFileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -32,123 +34,87 @@ public class CommitLog {
 
     private final StoreCheckpoint storeCheckpoint;
 
-    public long getConfirmOffset() {
-        return confirmOffset;
-    }
+    public CommitLog() throws IOException {
 
-    public void setConfirmOffset(long confirmOffset) {
-        this.confirmOffset = confirmOffset;
-    }
-
-    public long getBeginTimeInLock() {
-        return beginTimeInLock;
-    }
-
-    public void setBeginTimeInLock(long beginTimeInLock) {
-        this.beginTimeInLock = beginTimeInLock;
+        this.messageStoreConfig = new MessageStoreConfig();
+        this.storeCheckpoint = new StoreCheckpoint("c://defaut");
+        this.flushCommitLogService = new GroupCommitService();
+        this.allocateMapedFileService = new AllocateMapedFileService();
+        this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
+                messageStoreConfig.getMapedFileSizeCommitLog(), this.allocateMapedFileService);
     }
 
 
-    public CommitLog(MessageStoreConfig config,AllocateMapedFileService allocateMapedFileService,
+    public CommitLog(MessageStoreConfig config, AllocateMapedFileService allocateMapedFileService,
                      StoreCheckpoint storeCheckpoint) {
         this.messageStoreConfig = config;
-        this.storeCheckpoint=storeCheckpoint;
+        this.storeCheckpoint = storeCheckpoint;
         this.flushCommitLogService = new GroupCommitService();
-        this.allocateMapedFileService=allocateMapedFileService;
+        this.allocateMapedFileService = allocateMapedFileService;
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
                 messageStoreConfig.getMapedFileSizeCommitLog(), this.allocateMapedFileService);
     }
 
     public PutMessageResult putMessage(final MessageExtBrokerInner msg) {
 
+        long eclipseTimeInLock = 0;
+        MapedFile unlockMapedFile = null;
+        MapedFile mapedFile = this.mapedFileQueue.getLastMapedFileWithLock();
+        AppendMessageResult result = null;
+        synchronized (this) {
+            long beginLockTimestamp = System.currentTimeMillis();
+            this.beginTimeInLock = beginLockTimestamp;
 
-        return null;
+
+           // msg.setStoreTimestamp(beginLockTimestamp);
+
+            if (null == mapedFile || mapedFile.isFull()) {
+                mapedFile = this.mapedFileQueue.getLastMapedFile();
+            }
+            if (null == mapedFile) {
+               log.error("create maped file1 error, topic: " + msg.getTopic() + " clientAddr: " + msg.getHost());
+                beginTimeInLock = 0;
+                return new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED);
+            }
+            result = mapedFile.appendMessage(msg);
+            switch (result.getStatus()) {
+                case PUT_OK:
+                    break;
+                case END_OF_FILE:
+                    unlockMapedFile = mapedFile;
+                    // Create a new file, re-write the message
+                    mapedFile = this.mapedFileQueue.getLastMapedFile();
+                    if (null == mapedFile) {
+                        // XXX: warn and notify me
+                        log.error("create maped file2 error, topic: " + msg.getTopic() + " clientAddr: " + msg.getHost());
+                        beginTimeInLock = 0;
+                        return new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED);
+                    }
+                    result = mapedFile.appendMessage(msg);
+                    break;
+                case MESSAGE_SIZE_EXCEEDED:
+                case PROPERTIES_SIZE_EXCEEDED:
+                    beginTimeInLock = 0;
+                    return new PutMessageResult(PutMessageStatus.MESSAGE_ILLEGAL);
+                case UNKNOWN_ERROR:
+                    beginTimeInLock = 0;
+                    return new PutMessageResult(PutMessageStatus.UNKNOWN_ERROR);
+                default:
+                    beginTimeInLock = 0;
+                    return new PutMessageResult(PutMessageStatus.UNKNOWN_ERROR );
+            }
+
+            eclipseTimeInLock = System.currentTimeMillis() - beginLockTimestamp;
+            beginTimeInLock = 0;
+        }
+
+        PutMessageResult putMessageResult = new PutMessageResult(PutMessageStatus.PUT_OK);
+        return putMessageResult;
     }
 
     abstract class FlushCommitLogService extends ServiceThread {
     }
 
-    class FlushRealTimeService extends FlushCommitLogService {
-        private static final int RetryTimesOver = 3;
-        private long lastFlushTimestamp = 0;
-        private long printTimes = 0;
-
-
-        public void run() {
-            CommitLog.log.info(this.getServiceName() + " service started");
-
-            while (!this.isStoped()) {
-                boolean flushCommitLogTimed = CommitLog.this.getMessageStoreConfig().isFlushCommitLogTimed();
-
-                int interval = CommitLog.this.getMessageStoreConfig().getFlushIntervalCommitLog();
-                int flushPhysicQueueLeastPages = CommitLog.this.getMessageStoreConfig().getFlushCommitLogLeastPages();
-
-                int flushPhysicQueueThoroughInterval =
-                        CommitLog.this.getMessageStoreConfig().getFlushCommitLogThoroughInterval();
-
-
-                boolean printFlushProgress = false;
-
-                // Print flush progress
-                long currentTimeMillis = System.currentTimeMillis();
-                if (currentTimeMillis >= (this.lastFlushTimestamp + flushPhysicQueueThoroughInterval)) {
-                    this.lastFlushTimestamp = currentTimeMillis;
-                    flushPhysicQueueLeastPages = 0;
-                    printFlushProgress = ((printTimes++ % 10) == 0);
-                }
-
-                try {
-                    if (flushCommitLogTimed) {
-                        Thread.sleep(interval);
-                    } else {
-                        this.waitForRunning(interval);
-                    }
-
-                    if (printFlushProgress) {
-                        this.printFlushProgress();
-                    }
-
-                    CommitLog.this.mapedFileQueue.commit(flushPhysicQueueLeastPages);
-                    long storeTimestamp = CommitLog.this.mapedFileQueue.getStoreTimestamp();
-                    if (storeTimestamp > 0) {
-                        CommitLog.this.getStoreCheckpoint().setPhysicMsgTimestamp(storeTimestamp);
-                    }
-                } catch (Exception e) {
-                    CommitLog.log.warn(this.getServiceName() + " service has exception. ", e);
-                    this.printFlushProgress();
-                }
-            }
-
-            // Normal shutdown, to ensure that all the flush before exit
-            boolean result = false;
-            for (int i = 0; i < RetryTimesOver && !result; i++) {
-                result = CommitLog.this.mapedFileQueue.commit(0);
-                CommitLog.log.info(this.getServiceName() + " service shutdown, retry " + (i + 1) + " times " + (result ? "OK" : "Not OK"));
-            }
-
-            this.printFlushProgress();
-
-            CommitLog.log.info(this.getServiceName() + " service end");
-        }
-
-
-        @Override
-        public String getServiceName() {
-            return FlushCommitLogService.class.getSimpleName();
-        }
-
-
-        private void printFlushProgress() {
-            // CommitLog.log.info("how much disk fall behind memory, "
-            // + CommitLog.this.mapedFileQueue.howMuchFallBehind());
-        }
-
-
-        @Override
-        public long getJointime() {
-            return 1000 * 60 * 5;
-        }
-    }
 
     public static class GroupCommitRequest {
         private final long nextOffset;
@@ -187,10 +153,85 @@ public class CommitLog {
         private volatile List<GroupCommitRequest> requestsWrite = new ArrayList<>();
         private volatile List<GroupCommitRequest> requestsRead = new ArrayList<>();
 
+        public void putRequest(final GroupCommitRequest request) {
+            synchronized (this) {
+                this.requestsWrite.add(request);
+                if (!this.hasNotified) {
+                    this.hasNotified = true;
+                    this.notify();
+                }
+            }
+        }
+
+
+        private void swapRequests() {
+            List<GroupCommitRequest> tmp = this.requestsWrite;
+            this.requestsWrite = this.requestsRead;
+            this.requestsRead = tmp;
+        }
+
+
+        private void doCommit() {
+            if (!this.requestsRead.isEmpty()) {
+                for (GroupCommitRequest req : this.requestsRead) {
+
+                    boolean flushOK = false;
+                    for (int i = 0; (i < 2) && !flushOK; i++) {
+                        flushOK = (CommitLog.this.mapedFileQueue.getCommittedWhere() >= req.getNextOffset());
+
+                        if (!flushOK) {
+                            CommitLog.this.mapedFileQueue.commit(0);
+                        }
+                    }
+
+                    req.wakeupCustomer(flushOK);
+                }
+
+                long storeTimestamp = CommitLog.this.mapedFileQueue.getStoreTimestamp();
+                if (storeTimestamp > 0) {
+                    getStoreCheckpoint().setPhysicMsgTimestamp(storeTimestamp);
+                }
+
+                this.requestsRead.clear();
+            } else {
+
+                CommitLog.this.mapedFileQueue.commit(0);
+            }
+        }
+
+
+        public void run() {
+            log.info(this.getServiceName() + " service started");
+
+            while (!this.isStoped()) {
+                try {
+                    this.waitForRunning(0);
+                    this.doCommit();
+                } catch (Exception e) {
+                    log.warn(this.getServiceName() + " service has exception. ", e);
+                }
+            }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                CommitLog.log.warn("GroupCommitService Exception, ", e);
+            }
+
+            synchronized (this) {
+                this.swapRequests();
+            }
+
+            this.doCommit();
+
+            log.info(this.getServiceName() + " service end");
+        }
+
+
         @Override
         protected void onWaitEnd() {
-
+            this.swapRequests();
         }
+
 
         @Override
         public String getServiceName() {
@@ -201,11 +242,6 @@ public class CommitLog {
         @Override
         public long getJointime() {
             return 1000 * 60 * 5;
-        }
-
-        @Override
-        public void run() {
-
         }
     }
 
@@ -228,4 +264,22 @@ public class CommitLog {
     public StoreCheckpoint getStoreCheckpoint() {
         return storeCheckpoint;
     }
+
+
+    public long getConfirmOffset() {
+        return confirmOffset;
+    }
+
+    public void setConfirmOffset(long confirmOffset) {
+        this.confirmOffset = confirmOffset;
+    }
+
+    public long getBeginTimeInLock() {
+        return beginTimeInLock;
+    }
+
+    public void setBeginTimeInLock(long beginTimeInLock) {
+        this.beginTimeInLock = beginTimeInLock;
+    }
+
 }
