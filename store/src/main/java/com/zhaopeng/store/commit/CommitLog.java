@@ -1,6 +1,7 @@
 package com.zhaopeng.store.commit;
 
 import com.zhaopeng.remoting.common.ServiceThread;
+import com.zhaopeng.store.UtilAll;
 import com.zhaopeng.store.config.MessageStoreConfig;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.entity.PutMessageResult;
@@ -57,22 +58,28 @@ public class CommitLog {
 
     public PutMessageResult putMessage(final MessageExtBrokerInner msg) {
 
+
+        msg.setStoreTimestamp(System.currentTimeMillis());
+
+
+        msg.setBodyCRC(UtilAll.crc32(msg.getBody()));
+
+        AppendMessageResult result = null;
+
+
         long eclipseTimeInLock = 0;
         MapedFile unlockMapedFile = null;
         MapedFile mapedFile = this.mapedFileQueue.getLastMapedFileWithLock();
-        AppendMessageResult result = null;
+
         synchronized (this) {
             long beginLockTimestamp = System.currentTimeMillis();
             this.beginTimeInLock = beginLockTimestamp;
-
-
-           // msg.setStoreTimestamp(beginLockTimestamp);
-
+            msg.setStoreTimestamp(beginLockTimestamp);
             if (null == mapedFile || mapedFile.isFull()) {
                 mapedFile = this.mapedFileQueue.getLastMapedFile();
             }
             if (null == mapedFile) {
-               log.error("create maped file1 error, topic: " + msg.getTopic() + " clientAddr: " + msg.getHost());
+                log.error("create maped file1 error, topic: " + msg.getTopic() + " clientAddr: " + msg.getHost());
                 beginTimeInLock = 0;
                 return new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED);
             }
@@ -82,10 +89,10 @@ public class CommitLog {
                     break;
                 case END_OF_FILE:
                     unlockMapedFile = mapedFile;
-                    // Create a new file, re-write the message
+
+                    // 创建一个新的文件
                     mapedFile = this.mapedFileQueue.getLastMapedFile();
                     if (null == mapedFile) {
-                        // XXX: warn and notify me
                         log.error("create maped file2 error, topic: " + msg.getTopic() + " clientAddr: " + msg.getHost());
                         beginTimeInLock = 0;
                         return new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED);
@@ -101,7 +108,7 @@ public class CommitLog {
                     return new PutMessageResult(PutMessageStatus.UNKNOWN_ERROR);
                 default:
                     beginTimeInLock = 0;
-                    return new PutMessageResult(PutMessageStatus.UNKNOWN_ERROR );
+                    return new PutMessageResult(PutMessageStatus.UNKNOWN_ERROR);
             }
 
             eclipseTimeInLock = System.currentTimeMillis() - beginLockTimestamp;

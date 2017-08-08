@@ -25,7 +25,7 @@ public class MapedFileQueue {
 
     private final int mapedFileSize;
 
-    private final List<MapedFile> mapedFiles = new ArrayList<MapedFile>();
+    private final List<MapedFile> mapedFiles = new ArrayList<>();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     private final AllocateMapedFileService allocateMapedFileService;
