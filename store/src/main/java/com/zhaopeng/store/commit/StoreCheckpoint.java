@@ -1,6 +1,6 @@
 package com.zhaopeng.store.commit;
 
-import com.zhaopeng.store.UtilAll;
+import com.zhaopeng.store.util.UtilAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

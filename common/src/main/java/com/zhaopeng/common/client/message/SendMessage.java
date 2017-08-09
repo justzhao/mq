@@ -51,4 +51,5 @@ public class SendMessage extends JsonSerializable {
     public void setQueueId(int queueId) {
         this.queueId = queueId;
     }
+
 }

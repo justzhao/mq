@@ -1,7 +1,7 @@
 package com.zhaopeng.store.commit;
 
 import com.zhaopeng.remoting.common.ServiceThread;
-import com.zhaopeng.store.UtilAll;
+import com.zhaopeng.store.util.UtilAll;
 import com.zhaopeng.store.config.MessageStoreConfig;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.entity.PutMessageResult;
@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -22,9 +23,13 @@ import java.util.concurrent.TimeUnit;
 public class CommitLog {
 
     private static final Logger log = LoggerFactory.getLogger(CommitLog.class);
+
+    public final static int MessageMagicCode = 0xAABBCCDD ^ 1880681586 + 8;
+
+    public final static int BlankMagicCode = 0xBBCCDDEE ^ 1880681586 + 8;
     private volatile long confirmOffset = -1L;
     private volatile long beginTimeInLock = 0;
-
+    private HashMap<String/* topic-queueid */, Long/* offset */> topicQueueTable = new HashMap<String, Long>(1024);
     private final MapedFileQueue mapedFileQueue;
 
     private final MessageStoreConfig messageStoreConfig;
@@ -289,4 +294,11 @@ public class CommitLog {
         this.beginTimeInLock = beginTimeInLock;
     }
 
+    public HashMap<String, Long> getTopicQueueTable() {
+        return topicQueueTable;
+    }
+
+    public void setTopicQueueTable(HashMap<String, Long> topicQueueTable) {
+        this.topicQueueTable = topicQueueTable;
+    }
 }

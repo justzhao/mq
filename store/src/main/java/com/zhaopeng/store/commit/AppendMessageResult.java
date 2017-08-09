@@ -20,6 +20,20 @@ public class AppendMessageResult {
     private long logicsOffset;
     private long pagecacheRT = 0;
 
+    public AppendMessageResult(AppendMessageStatus status) {
+        this.status = status;
+    }
+    public AppendMessageResult(AppendMessageStatus status, long wroteOffset, int wroteBytes, String msgId,
+                               long storeTimestamp, long logicsOffset, long pagecacheRT) {
+        this.status = status;
+        this.wroteOffset = wroteOffset;
+        this.wroteBytes = wroteBytes;
+        this.msgId = msgId;
+        this.storeTimestamp = storeTimestamp;
+        this.logicsOffset = logicsOffset;
+        this.pagecacheRT = pagecacheRT;
+    }
+
     public AppendMessageStatus getStatus() {
         return status;
     }

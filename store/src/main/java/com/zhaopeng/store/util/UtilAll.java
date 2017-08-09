@@ -1,5 +1,5 @@
 
-package com.zhaopeng.store;
+package com.zhaopeng.store.util;
 
 
 import java.io.ByteArrayInputStream;
@@ -20,18 +20,14 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 
-/**
- * @author shijia.wxr
- */
+
 public class UtilAll {
-    public static final String yyyy_MM_dd_HH_mm_ss = "yyyy-MM-dd HH:mm:ss";
-    public static final String yyyy_MM_dd_HH_mm_ss_SSS = "yyyy-MM-dd#HH:mm:ss:SSS";
-    public static final String yyyyMMddHHmmss = "yyyyMMddHHmmss";
+
 
 
     public static int getPid() {
         RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
-        String name = runtime.getName(); // format: "pid@hostname"
+        String name = runtime.getName();
         try {
             return Integer.parseInt(name.substring(0, name.indexOf('@')));
         } catch (Exception e) {

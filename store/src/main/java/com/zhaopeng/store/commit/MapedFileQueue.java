@@ -1,6 +1,6 @@
 package com.zhaopeng.store.commit;
 
-import com.zhaopeng.store.UtilAll;
+import com.zhaopeng.store.util.UtilAll;
 import com.zhaopeng.store.service.AllocateMapedFileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +161,7 @@ public class MapedFileQueue {
 
 
                 try {
-                    MapedFile mapedFile = new MapedFile(file.getPath(), mapedFileSize);
+                    MapedFile mapedFile = new MapedFile(file.getPath(), mapedFileSize, commitLog, msgStoreItemMemory);
 
                     mapedFile.setWrotePostion(this.mapedFileSize);
                     mapedFile.setCommittedPosition(this.mapedFileSize);
@@ -222,7 +222,7 @@ public class MapedFileQueue {
                // mapedFile = this.allocateMapedFileService.putRequestAndReturnMapedFile(nextFilePath,nextNextFilePath, this.mapedFileSize);
             } else {
                 try {
-                    mapedFile = new MapedFile(nextFilePath, this.mapedFileSize);
+                    mapedFile = new MapedFile(nextFilePath, this.mapedFileSize, commitLog, msgStoreItemMemory);
                 } catch (IOException e) {
                     log.error("create mapedfile exception", e);
                 }
