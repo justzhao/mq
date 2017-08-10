@@ -48,6 +48,8 @@ public class CommitLog {
         this.allocateMapedFileService = new AllocateMapedFileService();
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
                 messageStoreConfig.getMapedFileSizeCommitLog(), this.allocateMapedFileService);
+
+
     }
 
 
@@ -118,6 +120,22 @@ public class CommitLog {
 
             eclipseTimeInLock = System.currentTimeMillis() - beginLockTimestamp;
             beginTimeInLock = 0;
+        }
+
+        GroupCommitService service = (GroupCommitService) this.flushCommitLogService;
+        if (msg.isWaitStoreMsgOK()) {
+            GroupCommitRequest request = new GroupCommitRequest(result.getWroteOffset() + result.getWroteBytes());
+            service.putRequest(request);
+            boolean flushOK = request.waitForFlush(messageStoreConfig.getSyncFlushTimeout());
+            if (!flushOK) {
+                log.error("do groupcommit, wait for flush failed, topic: " + msg.getTopic()
+                        + " client address: " + msg.getHost());
+                PutMessageResult putMessageResult = new PutMessageResult(PutMessageStatus.FLUSH_DISK_TIMEOUT);
+
+                return putMessageResult;
+            }
+        } else {
+            service.wakeup();
         }
 
         PutMessageResult putMessageResult = new PutMessageResult(PutMessageStatus.PUT_OK);

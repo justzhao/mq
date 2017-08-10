@@ -38,6 +38,8 @@ public class MessageStoreConfig {
 
     private int flushCommitLogThoroughInterval = 1000 * 10;
 
+    private int syncFlushTimeout=500;
+
     public long getOsPageCacheBusyTimeOutMills() {
         return osPageCacheBusyTimeOutMills;
     }
@@ -148,5 +150,13 @@ public class MessageStoreConfig {
 
     public void setFlushCommitLogThoroughInterval(int flushCommitLogThoroughInterval) {
         this.flushCommitLogThoroughInterval = flushCommitLogThoroughInterval;
+    }
+
+    public int getSyncFlushTimeout() {
+        return syncFlushTimeout;
+    }
+
+    public void setSyncFlushTimeout(int syncFlushTimeout) {
+        this.syncFlushTimeout = syncFlushTimeout;
     }
 }

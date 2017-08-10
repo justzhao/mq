@@ -1,9 +1,12 @@
 package com.zhaopeng.store.entity;
 
 import com.zhaopeng.common.client.message.Message;
+import com.zhaopeng.common.message.MessageConst;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by zhaopeng on 2017/7/31.
@@ -137,6 +140,27 @@ public class MessageExtBrokerInner extends Message {
         }
         return byteBuffer;
     }
+
+    public boolean isWaitStoreMsgOK() {
+        String result = getPropertier(MessageConst.PROPERTY_WAIT_STORE_MSG_OK);
+        if (null == result)
+            return true;
+
+        return Boolean.parseBoolean(result);
+    }
+
+
+    private String getPropertier(String key){
+
+        Map<String,String> map=this.getProperties();
+        if(map==null){
+            map=new HashMap<String,String>();
+            setProperties(map);
+        }
+
+        return map.get(key);
+    }
+
 
     @Override
     public String toString() {

@@ -15,6 +15,7 @@ import com.zhaopeng.store.entity.enums.PutMessageStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -48,7 +49,7 @@ public class DiskMessageStore implements MessageStore {
 
     }
 
-    public DiskMessageStore(final MessageStoreConfig messageStoreConfig) {
+    public DiskMessageStore(final MessageStoreConfig messageStoreConfig) throws IOException {
         this.messageStoreConfig = messageStoreConfig;
         commitLog = new CommitLog();
         consumeQueueTable = new ConcurrentHashMap<>();
