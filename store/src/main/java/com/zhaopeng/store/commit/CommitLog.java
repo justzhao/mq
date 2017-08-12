@@ -1,6 +1,8 @@
 package com.zhaopeng.store.commit;
 
 import com.zhaopeng.remoting.common.ServiceThread;
+import com.zhaopeng.store.entity.enums.AppendMessageStatus;
+import com.zhaopeng.store.util.MessageUtil;
 import com.zhaopeng.store.util.UtilAll;
 import com.zhaopeng.store.config.MessageStoreConfig;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
@@ -11,11 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static com.zhaopeng.store.util.MessageUtil.MSG_ID_LENGTH;
 
 /**
  * Created by zhaopeng on 2017/7/27.
@@ -40,6 +45,8 @@ public class CommitLog {
 
     private final StoreCheckpoint storeCheckpoint;
 
+    private final AppendMessageCallback appendMessageCallback;
+
     public CommitLog() throws IOException {
 
         this.messageStoreConfig = new MessageStoreConfig();
@@ -50,6 +57,7 @@ public class CommitLog {
                 messageStoreConfig.getMapedFileSizeCommitLog(), this.allocateMapedFileService);
 
 
+        this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
     }
 
 
@@ -61,23 +69,16 @@ public class CommitLog {
         this.allocateMapedFileService = allocateMapedFileService;
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
                 messageStoreConfig.getMapedFileSizeCommitLog(), this.allocateMapedFileService);
+        this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
     }
 
     public PutMessageResult putMessage(final MessageExtBrokerInner msg) {
-
-
         msg.setStoreTimestamp(System.currentTimeMillis());
-
-
         msg.setBodyCRC(UtilAll.crc32(msg.getBody()));
-
         AppendMessageResult result = null;
-
-
         long eclipseTimeInLock = 0;
         MapedFile unlockMapedFile = null;
         MapedFile mapedFile = this.mapedFileQueue.getLastMapedFileWithLock();
-
         synchronized (this) {
             long beginLockTimestamp = System.currentTimeMillis();
             this.beginTimeInLock = beginLockTimestamp;
@@ -90,13 +91,12 @@ public class CommitLog {
                 beginTimeInLock = 0;
                 return new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED);
             }
-            result = mapedFile.appendMessage(msg);
+            result = mapedFile.appendMessage(msg, this.appendMessageCallback);
             switch (result.getStatus()) {
                 case PUT_OK:
                     break;
                 case END_OF_FILE:
                     unlockMapedFile = mapedFile;
-
                     // 创建一个新的文件
                     mapedFile = this.mapedFileQueue.getLastMapedFile();
                     if (null == mapedFile) {
@@ -104,7 +104,7 @@ public class CommitLog {
                         beginTimeInLock = 0;
                         return new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED);
                     }
-                    result = mapedFile.appendMessage(msg);
+                    result = mapedFile.appendMessage(msg, this.appendMessageCallback);
                     break;
                 case MESSAGE_SIZE_EXCEEDED:
                 case PROPERTIES_SIZE_EXCEEDED:
@@ -141,6 +141,13 @@ public class CommitLog {
         PutMessageResult putMessageResult = new PutMessageResult(PutMessageStatus.PUT_OK);
         return putMessageResult;
     }
+
+
+    public int deleteExpiredFile(final long expiredTime, final int deleteFilesInterval, final long intervalForcibly, //
+                                 final boolean cleanImmediately) {
+        return this.mapedFileQueue.deleteExpiredFileByTime(expiredTime, deleteFilesInterval, intervalForcibly, cleanImmediately);
+    }
+
 
     abstract class FlushCommitLogService extends ServiceThread {
     }
@@ -318,5 +325,159 @@ public class CommitLog {
 
     public void setTopicQueueTable(HashMap<String, Long> topicQueueTable) {
         this.topicQueueTable = topicQueueTable;
+    }
+
+    class DefaultAppendMessageCallback implements AppendMessageCallback {
+
+        // File at the end of the minimum fixed length empty
+        private static final int END_FILE_MIN_BLANK_LENGTH = 4 + 4;
+        private final ByteBuffer msgIdMemory;
+        // Store the message content
+        private final ByteBuffer msgStoreItemMemory;
+        // The maximum length of the message
+        private final int maxMessageSize;
+
+
+        DefaultAppendMessageCallback(final int size) {
+            this.msgIdMemory = ByteBuffer.allocate(MSG_ID_LENGTH);
+            this.msgStoreItemMemory = ByteBuffer.allocate(size + END_FILE_MIN_BLANK_LENGTH);
+            this.maxMessageSize = size;
+        }
+
+        private void resetMsgStoreItemMemory(final int length) {
+            this.msgStoreItemMemory.flip();
+            this.msgStoreItemMemory.limit(length);
+        }
+
+
+        public String getMessageId(final MessageExtBrokerInner msg, long wroteOffset) {
+
+            String msgId = MessageUtil.createMessageId(msgIdMemory, msg.getBornHostBytes(), wroteOffset);
+
+            return msgId;
+        }
+
+
+        private int calMsgLength(int bodyLength, int topicLength) {
+            final int msgLen = 4 // 1 TOTALSIZE
+                    + 4 // 2 MAGICCODE
+                    + 4 // 3 BODYCRC
+                    + 4 // 4 QUEUEID
+                    + 4 // 5 FLAG
+                    + 8 // 6 QUEUEOFFSET
+                    + 8 // 7 PHYSICALOFFSET
+                    //  + 4 // 8 SYSFLAG
+                    + 8 // 9 BORNTIMESTAMP
+                    + 8 // 10 BORNHOST
+                    + 8 // 11 STORETIMESTAMP
+                    + 8 // 12 STOREHOSTADDRESS
+                    + 4 // 13 RECONSUMETIMES
+                    //  + 8 // 14 Prepared Transaction Offset
+                    + 4 + (bodyLength > 0 ? bodyLength : 0) // 14 BODY
+                    + 1 + topicLength // 15 TOPIC
+                    // propertiesLength
+                    + 0;
+            return msgLen;
+        }
+
+        @Override
+        public AppendMessageResult doAppend(long fileFromOffset, ByteBuffer byteBuffer, int maxBlank, MessageExtBrokerInner msg) {
+            MessageExtBrokerInner msgInner = msg;
+            //  物理偏移量
+            long wroteOffset = fileFromOffset + byteBuffer.position();
+
+            String msgId = getMessageId(msg, wroteOffset);
+
+
+            String key = msgInner.getTopic() + "-" + msgInner.getQueueId();
+            Long queueOffset = CommitLog.this.getTopicQueueTable().get(key);
+            if (null == queueOffset) {
+                queueOffset = 0L;
+                CommitLog.this.getTopicQueueTable().put(key, queueOffset);
+            }
+
+
+            final byte[] topicData = msgInner.getTopic().getBytes(MessageUtil.CHARSET_UTF8);
+            final int topicLength = topicData == null ? 0 : topicData.length;
+
+            final int bodyLength = msgInner.getBody() == null ? 0 : msgInner.getBody().length;
+
+            final int msgLen = calMsgLength(bodyLength, topicLength);
+
+            // Exceeds the maximum message
+            if (msgLen > this.maxMessageSize) {
+                log.warn("message size exceeded, msg total size: " + msgLen + ", msg body size: " + bodyLength
+                        + ", maxMessageSize: " + this.maxMessageSize);
+                return new AppendMessageResult(AppendMessageStatus.MESSAGE_SIZE_EXCEEDED);
+            }
+
+
+            if ((msgLen + END_FILE_MIN_BLANK_LENGTH) > maxBlank) {
+
+
+                this.resetMsgStoreItemMemory(maxBlank);
+                // 1 TOTALSIZE
+                this.msgStoreItemMemory.putInt(maxBlank);
+                // 2 MAGICCODE
+                this.msgStoreItemMemory.putInt(CommitLog.BlankMagicCode);
+                // 3 The remaining space may be any value
+                //
+                final long beginTimeMills = System.currentTimeMillis();
+                byteBuffer.put(this.msgStoreItemMemory.array(), 0, maxBlank);
+                return new AppendMessageResult(AppendMessageStatus.END_OF_FILE, wroteOffset, maxBlank, msgId, msgInner.getStoreTimestamp(),
+                        queueOffset, System.currentTimeMillis() - beginTimeMills);
+            }
+
+            // Initialization of storage space
+            this.resetMsgStoreItemMemory(msgLen);
+            // 1 TOTALSIZE
+            this.msgStoreItemMemory.putInt(msgLen);
+            // 2 MAGICCODE
+            this.msgStoreItemMemory.putInt(CommitLog.MessageMagicCode);
+            // 3 BODYCRC
+            this.msgStoreItemMemory.putInt(msgInner.getBodyCRC());
+            // 4 QUEUEID
+            this.msgStoreItemMemory.putInt(msgInner.getQueueId());
+            // 5 FLAG
+            this.msgStoreItemMemory.putInt(msgInner.getFlag());
+            // 6 QUEUEOFFSET
+            this.msgStoreItemMemory.putLong(queueOffset);
+            // 7 PHYSICALOFFSET
+            this.msgStoreItemMemory.putLong(fileFromOffset + byteBuffer.position());
+            // 8 SYSFLAG
+            //  this.msgStoreItemMemory.putInt(msgInner.getSysFlag());
+            // 9 BORNTIMESTAMP
+            this.msgStoreItemMemory.putLong(msgInner.getBornTimestamp());
+            // 10 BORNHOST
+            this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
+            // 11 STORETIMESTAMP
+            this.msgStoreItemMemory.putLong(msgInner.getStoreTimestamp());
+            // 12 STOREHOSTADDRESS
+            this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
+            // 13 RECONSUMETIMES
+            this.msgStoreItemMemory.putInt(msgInner.getReconsumeTimes());
+            // 14 Prepared Transaction Offset
+            //  this.msgStoreItemMemory.putLong(msgInner.getPreparedTransactionOffset());
+            // 15 BODY
+            this.msgStoreItemMemory.putInt(bodyLength);
+            if (bodyLength > 0)
+                this.msgStoreItemMemory.put(msgInner.getBody());
+            // 16 TOPIC
+            this.msgStoreItemMemory.put((byte) topicLength);
+            this.msgStoreItemMemory.put(topicData);
+            // 17 PROPERTIES
+
+
+            final long beginTimeMills = System.currentTimeMillis();
+
+            byteBuffer.put(this.msgStoreItemMemory.array(), 0, msgLen);
+
+            AppendMessageResult result = new AppendMessageResult(AppendMessageStatus.PUT_OK, wroteOffset, msgLen, msgId,
+                    msgInner.getStoreTimestamp(), queueOffset, System.currentTimeMillis() - beginTimeMills);
+
+
+            return result;
+
+        }
     }
 }

@@ -161,7 +161,7 @@ public class MapedFileQueue {
 
 
                 try {
-                    MapedFile mapedFile = new MapedFile(file.getPath(), mapedFileSize, commitLog, msgStoreItemMemory);
+                    MapedFile mapedFile = new MapedFile(file.getPath(), mapedFileSize);
 
                     mapedFile.setWrotePostion(this.mapedFileSize);
                     mapedFile.setCommittedPosition(this.mapedFileSize);
@@ -222,7 +222,7 @@ public class MapedFileQueue {
                // mapedFile = this.allocateMapedFileService.putRequestAndReturnMapedFile(nextFilePath,nextNextFilePath, this.mapedFileSize);
             } else {
                 try {
-                    mapedFile = new MapedFile(nextFilePath, this.mapedFileSize, commitLog, msgStoreItemMemory);
+                    mapedFile = new MapedFile(nextFilePath, this.mapedFileSize);
                 } catch (IOException e) {
                     log.error("create mapedfile exception", e);
                 }
@@ -334,15 +334,44 @@ public class MapedFileQueue {
         }
     }
 
-    public int deleteExpiredFileByTime(//
-                                       final long expiredTime, //
-                                       final int deleteFilesInterval, //
-                                       final long intervalForcibly,//
-                                       final boolean cleanImmediately//
-    ) {
+    public int deleteExpiredFileByTime(final long expiredTime,
+                                       final int deleteFilesInterval,
+                                       final long intervalForcibly,
+                                       final boolean cleanImmediately) {
+        Object[] mfs = this.copyMapedFiles(0);
+        if (null == mfs)
+            return 0;
+        int mfsLength = mfs.length - 1;
+        int deleteCount = 0;
+        List<MapedFile> files = new ArrayList<MapedFile>();
+        if (null != mfs) {
+            for (int i = 0; i < mfsLength; i++) {
+                MapedFile mapedFile = (MapedFile) mfs[i];
+                long liveMaxTimestamp = mapedFile.getLastModifiedTimestamp() + expiredTime;
+                if (System.currentTimeMillis() >= liveMaxTimestamp//
+                        || cleanImmediately) {
+                    if (mapedFile.destroy(intervalForcibly)) {
+                        files.add(mapedFile);
+                        deleteCount++;
 
+                        if (files.size() >= DeleteFilesBatchMax) {
+                            break;
+                        }
 
-        return 0;
+                        if (deleteFilesInterval > 0 && (i + 1) < mfsLength) {
+                            try {
+                                Thread.sleep(deleteFilesInterval);
+                            } catch (InterruptedException e) {
+                            }
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        deleteExpiredFile(files);
+        return deleteCount;
     }
 
 

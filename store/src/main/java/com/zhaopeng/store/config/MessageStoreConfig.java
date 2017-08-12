@@ -40,6 +40,9 @@ public class MessageStoreConfig {
 
     private int syncFlushTimeout=500;
 
+    // The maximum size of a single log file，default is 512K
+    private int maxMessageSize = 1024 * 1024 * 4;
+
     public long getOsPageCacheBusyTimeOutMills() {
         return osPageCacheBusyTimeOutMills;
     }
@@ -158,5 +161,13 @@ public class MessageStoreConfig {
 
     public void setSyncFlushTimeout(int syncFlushTimeout) {
         this.syncFlushTimeout = syncFlushTimeout;
+    }
+
+    public int getMaxMessageSize() {
+        return maxMessageSize;
+    }
+
+    public void setMaxMessageSize(int maxMessageSize) {
+        this.maxMessageSize = maxMessageSize;
     }
 }
