@@ -26,27 +26,18 @@ import static com.zhaopeng.store.util.MessageUtil.MSG_ID_LENGTH;
  * Created by zhaopeng on 2017/7/27.
  */
 public class CommitLog {
-
     private static final Logger log = LoggerFactory.getLogger(CommitLog.class);
-
     public final static int MessageMagicCode = 0xAABBCCDD ^ 1880681586 + 8;
-
     public final static int BlankMagicCode = 0xBBCCDDEE ^ 1880681586 + 8;
     private volatile long confirmOffset = -1L;
     private volatile long beginTimeInLock = 0;
     private HashMap<String/* topic-queueid */, Long/* offset */> topicQueueTable = new HashMap<String, Long>(1024);
     private final MapedFileQueue mapedFileQueue;
-
     private final MessageStoreConfig messageStoreConfig;
-
     private final FlushCommitLogService flushCommitLogService;
-
     private final AllocateMapedFileService allocateMapedFileService;
-
     private final StoreCheckpoint storeCheckpoint;
-
     private final AppendMessageCallback appendMessageCallback;
-
     public CommitLog() throws IOException {
 
         this.messageStoreConfig = new MessageStoreConfig();
@@ -55,12 +46,8 @@ public class CommitLog {
         this.allocateMapedFileService = new AllocateMapedFileService();
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
                 messageStoreConfig.getMapedFileSizeCommitLog(), this.allocateMapedFileService);
-
-
         this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
     }
-
-
     public CommitLog(MessageStoreConfig config, AllocateMapedFileService allocateMapedFileService,
                      StoreCheckpoint storeCheckpoint) {
         this.messageStoreConfig = config;
@@ -131,7 +118,6 @@ public class CommitLog {
                 log.error("do groupcommit, wait for flush failed, topic: " + msg.getTopic()
                         + " client address: " + msg.getHost());
                 PutMessageResult putMessageResult = new PutMessageResult(PutMessageStatus.FLUSH_DISK_TIMEOUT);
-
                 return putMessageResult;
             }
         } else {
@@ -151,8 +137,6 @@ public class CommitLog {
 
     abstract class FlushCommitLogService extends ServiceThread {
     }
-
-
     public static class GroupCommitRequest {
         private final long nextOffset;
         private final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -480,4 +464,9 @@ public class CommitLog {
 
         }
     }
+
+    public long getMaxOffset() {
+        return this.mapedFileQueue.getMaxOffset();
+    }
+
 }

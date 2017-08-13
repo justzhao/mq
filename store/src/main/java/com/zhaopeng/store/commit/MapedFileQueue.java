@@ -152,17 +152,13 @@ public class MapedFileQueue {
             // ascending order
             Arrays.sort(files);
             for (File file : files) {
-
                 if (file.length() != this.mapedFileSize) {
                     log.warn(file + "\t" + file.length()
                             + " length not matched message store config value, ignore it");
                     return true;
                 }
-
-
                 try {
                     MapedFile mapedFile = new MapedFile(file.getPath(), mapedFileSize);
-
                     mapedFile.setWrotePostion(this.mapedFileSize);
                     mapedFile.setCommittedPosition(this.mapedFileSize);
                     this.mapedFiles.add(mapedFile);

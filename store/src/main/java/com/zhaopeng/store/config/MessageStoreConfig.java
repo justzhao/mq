@@ -1,5 +1,7 @@
 package com.zhaopeng.store.config;
 
+import com.zhaopeng.store.ConsumeQueue;
+
 import java.io.File;
 
 /**
@@ -14,6 +16,8 @@ public class MessageStoreConfig {
     private String storePathCommitLog = System.getProperty("user.home") + File.separator + "mqstore"
             + File.separator + "commitlog";
 
+    // ConsumeQueue file size, default is 30W
+    private int mapedFileSizeConsumeQueue = 300000 * ConsumeQueue.CQStoreUnitSize;
     private long osPageCacheBusyTimeOutMills = 1000;
 
     private int mapedFileSizeCommitLog = 1024 * 1024 * 1024;
@@ -169,5 +173,11 @@ public class MessageStoreConfig {
 
     public void setMaxMessageSize(int maxMessageSize) {
         this.maxMessageSize = maxMessageSize;
+    }
+
+    public int getMapedFileSizeConsumeQueue() {
+
+        int factor = (int) Math.ceil(this.mapedFileSizeConsumeQueue / (ConsumeQueue.CQStoreUnitSize * 1.0));
+        return (int) (factor * ConsumeQueue.CQStoreUnitSize);
     }
 }
