@@ -112,7 +112,6 @@ public class DiskMessageStore implements MessageStore {
     }
 
 
-
     @Override
     public PutMessageResult addMessage(SendMessage sendMessage) {
 
@@ -153,9 +152,6 @@ public class DiskMessageStore implements MessageStore {
             logger.warn("message store has shutdown, so getMessage is forbidden");
             return null;
         }
-
-
-        long beginTime = this.getSystemClock().now();
 
 
         GetMessageStatus status = GetMessageStatus.NO_MESSAGE_IN_QUEUE;
@@ -200,68 +196,30 @@ public class DiskMessageStore implements MessageStore {
 
                         int i = 0;
                         final int MaxFilterMessageCount = 16000;
-                        final boolean diskFallRecorded = this.messageStoreConfig.isDiskFallRecorded();
+
                         for (; i < bufferConsumeQueue.getSize() && i < MaxFilterMessageCount; i += ConsumeQueue.CQStoreUnitSize) {
                             long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();
-                            long tagsCode = bufferConsumeQueue.getByteBuffer().getLong();
 
-                            maxPhyOffsetPulling = offsetPy;
-
-
-                            if (nextPhyFileStartOffset != Long.MIN_VALUE) {
-                                if (offsetPy < nextPhyFileStartOffset)
-                                    continue;
-                            }
+                            SelectMapedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
+                            if (selectResult != null) {
+                                //  this.storeStatsService.getGetMessageTransferedMsgCount().incrementAndGet();
+                                getResult.addMessage(selectResult);
+                                status = GetMessageStatus.FOUND;
+                                nextPhyFileStartOffset = Long.MIN_VALUE;
 
 
-                            boolean isInDisk = checkInDiskByCommitOffset(offsetPy, maxOffsetPy);
-
-                            if (this.isTheBatchFull(sizePy, maxMsgNums, getResult.getBufferTotalSize(), getResult.getMessageCount(),
-                                    isInDisk)) {
-                                break;
-                            }
-
-
-                            if (this.messageFilter.isMessageMatched(subscriptionData, tagsCode)) {
-                                SelectMapedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
-                                if (selectResult != null) {
-                                    this.storeStatsService.getGetMessageTransferedMsgCount().incrementAndGet();
-                                    getResult.addMessage(selectResult);
-                                    status = GetMessageStatus.FOUND;
-                                    nextPhyFileStartOffset = Long.MIN_VALUE;
-                                } else {
-                                    if (getResult.getBufferTotalSize() == 0) {
-                                        status = GetMessageStatus.MESSAGE_WAS_REMOVING;
-                                    }
-
-
-                                    nextPhyFileStartOffset = this.commitLog.rollNextFile(offsetPy);
-                                }
-                            } else {
-                                if (getResult.getBufferTotalSize() == 0) {
-                                    status = GetMessageStatus.NO_MATCHED_MESSAGE;
+                                if (nextPhyFileStartOffset != Long.MIN_VALUE) {
+                                    if (offsetPy < nextPhyFileStartOffset)
+                                        continue;
                                 }
 
-                                if (log.isDebugEnabled()) {
-                                    log.debug("message type not matched, client: " + subscriptionData + " server: " + tagsCode);
-                                }
                             }
+
+                            nextBeginOffset = offset + (i / ConsumeQueue.CQStoreUnitSize);
+
                         }
 
-
-                        if (diskFallRecorded) {
-                            long fallBehind = maxOffsetPy - maxPhyOffsetPulling;
-                            brokerStatsManager.recordDiskFallBehindSize(group, topic, queueId, fallBehind);
-                        }
-
-                        nextBeginOffset = offset + (i / ConsumeQueue.CQStoreUnitSize);
-
-
-                        long diff = maxOffsetPy - maxPhyOffsetPulling;
-                        long memory = (long) (StoreUtil.TotalPhysicalMemorySize
-                                * (this.messageStoreConfig.getAccessMessageInMemoryMaxRatio() / 100.0));
-                        getResult.setSuggestPullingFromSlave(diff > memory);
                     } finally {
 
                         bufferConsumeQueue.release();
@@ -269,30 +227,28 @@ public class DiskMessageStore implements MessageStore {
                 } else {
                     status = GetMessageStatus.OFFSET_FOUND_NULL;
                     nextBeginOffset = nextOffsetCorrection(offset, consumeQueue.rollNextFile(offset));
-                    log.warn("consumer request topic: " + topic + "offset: " + offset + " minOffset: " + minOffset + " maxOffset: "
+                    logger.warn("consumer request topic: " + topic + "offset: " + offset + " minOffset: " + minOffset + " maxOffset: "
                             + maxOffset + ", but access logic queue failed.");
                 }
             }
-        }
-
-        else {
+        } else {
             status = GetMessageStatus.NO_MATCHED_LOGIC_QUEUE;
             nextBeginOffset = nextOffsetCorrection(offset, 0);
         }
 
-        if (GetMessageStatus.FOUND == status) {
-            this.storeStatsService.getGetMessageTimesTotalFound().incrementAndGet();
-        } else {
-            this.storeStatsService.getGetMessageTimesTotalMiss().incrementAndGet();
-        }
-        long eclipseTime = this.getSystemClock().now() - beginTime;
-        this.storeStatsService.setGetMessageEntireTimeMax(eclipseTime);
 
         getResult.setStatus(status);
         getResult.setNextBeginOffset(nextBeginOffset);
         getResult.setMaxOffset(maxOffset);
         getResult.setMinOffset(minOffset);
         return getResult;
+    }
+
+
+    private long nextOffsetCorrection(long oldOffset, long newOffset) {
+        long nextOffset = oldOffset;
+
+        return nextOffset;
     }
 
 

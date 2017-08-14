@@ -1,14 +1,15 @@
 package com.zhaopeng.store.commit;
 
 import com.zhaopeng.remoting.common.ServiceThread;
-import com.zhaopeng.store.entity.enums.AppendMessageStatus;
-import com.zhaopeng.store.util.MessageUtil;
-import com.zhaopeng.store.util.UtilAll;
 import com.zhaopeng.store.config.MessageStoreConfig;
+import com.zhaopeng.store.disk.SelectMapedBufferResult;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.entity.PutMessageResult;
+import com.zhaopeng.store.entity.enums.AppendMessageStatus;
 import com.zhaopeng.store.entity.enums.PutMessageStatus;
 import com.zhaopeng.store.service.AllocateMapedFileService;
+import com.zhaopeng.store.util.MessageUtil;
+import com.zhaopeng.store.util.UtilAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +60,18 @@ public class CommitLog {
         this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
     }
 
+
+    public SelectMapedBufferResult getMessage(final long offset, final int size) {
+        int mapedFileSize = this.messageStoreConfig.getMapedFileSizeCommitLog();
+        MapedFile mapedFile = this.mapedFileQueue.findMapedFileByOffset(offset, (0 == offset ? true : false));
+        if (mapedFile != null) {
+            int pos = (int) (offset % mapedFileSize);
+            SelectMapedBufferResult result = mapedFile.selectMapedBuffer(pos, size);
+            return result;
+        }
+
+        return null;
+    }
     public PutMessageResult putMessage(final MessageExtBrokerInner msg) {
         msg.setStoreTimestamp(System.currentTimeMillis());
         msg.setBodyCRC(UtilAll.crc32(msg.getBody()));
@@ -468,5 +481,8 @@ public class CommitLog {
     public long getMaxOffset() {
         return this.mapedFileQueue.getMaxOffset();
     }
+
+
+
 
 }

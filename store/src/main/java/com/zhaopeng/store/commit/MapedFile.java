@@ -1,5 +1,6 @@
 package com.zhaopeng.store.commit;
 
+import com.zhaopeng.store.disk.SelectMapedBufferResult;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.util.MessageUtil;
 import com.zhaopeng.store.util.UtilAll;
@@ -284,4 +285,45 @@ public class MapedFile extends ReferenceResource {
     }
 
 
+    public SelectMapedBufferResult selectMapedBuffer(int pos) {
+        if (pos < this.wrotePostion.get() && pos >= 0) {
+            if (this.hold()) {
+                ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
+                byteBuffer.position(pos);
+                int size = this.wrotePostion.get() - pos;
+                ByteBuffer byteBufferNew = byteBuffer.slice();
+                byteBufferNew.limit(size);
+                return new SelectMapedBufferResult(this.fileFromOffset + pos, byteBufferNew, size, this);
+            }
+        }
+
+
+        return null;
+    }
+
+
+    public SelectMapedBufferResult selectMapedBuffer(int pos, int size) {
+
+        if ((pos + size) <= this.wrotePostion.get()) {
+
+            if (this.hold()) {
+                ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
+                byteBuffer.position(pos);
+                ByteBuffer byteBufferNew = byteBuffer.slice();
+                byteBufferNew.limit(size);
+                return new SelectMapedBufferResult(this.fileFromOffset + pos, byteBufferNew, size, this);
+            } else {
+                log.warn("matched, but hold failed, request pos: " + pos + ", fileFromOffset: "
+                        + this.fileFromOffset);
+            }
+        }
+
+        else {
+            log.warn("selectMapedBuffer request pos invalid, request pos: " + pos + ", size: " + size
+                    + ", fileFromOffset: " + this.fileFromOffset);
+        }
+
+
+        return null;
+    }
 }

@@ -1,6 +1,8 @@
 package com.zhaopeng.store;
 
+import com.zhaopeng.store.commit.MapedFile;
 import com.zhaopeng.store.commit.MapedFileQueue;
+import com.zhaopeng.store.disk.SelectMapedBufferResult;
 import com.zhaopeng.store.entity.enums.DiskMessageStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,84 @@ public class ConsumeQueue {
         this.byteBufferIndex = ByteBuffer.allocate(CQStoreUnitSize);
     }
 
+    public static int getCQStoreUnitSize() {
+        return CQStoreUnitSize;
+    }
+
+    public static Logger getLogger() {
+        return logger;
+    }
+
+    public DiskMessageStore getDefaultMessageStore() {
+        return defaultMessageStore;
+    }
+
+    public MapedFileQueue getMapedFileQueue() {
+        return mapedFileQueue;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public int getQueueId() {
+        return queueId;
+    }
+
+    public ByteBuffer getByteBufferIndex() {
+        return byteBufferIndex;
+    }
+
+    public String getStorePath() {
+        return storePath;
+    }
+
+    public int getMapedFileSize() {
+        return mapedFileSize;
+    }
+
+    public long getMaxPhysicOffset() {
+        return maxPhysicOffset;
+    }
+
+    public void setMaxPhysicOffset(long maxPhysicOffset) {
+        this.maxPhysicOffset = maxPhysicOffset;
+    }
+
+    public long getMinLogicOffset() {
+        return minLogicOffset;
+    }
+
+    public void setMinLogicOffset(long minLogicOffset) {
+        this.minLogicOffset = minLogicOffset;
+    }
+
+    public long getMaxOffsetInQuque() {
+        return this.mapedFileQueue.getMaxOffset() / CQStoreUnitSize;
+    }
+
+    public long getMinOffsetInQuque() {
+        return this.minLogicOffset / CQStoreUnitSize;
+    }
+
+    public SelectMapedBufferResult getIndexBuffer(final long startIndex) {
+        int mapedFileSize = this.mapedFileSize;
+        long offset = startIndex * CQStoreUnitSize;
+        if (offset >= this.getMinLogicOffset()) {
+            MapedFile mapedFile = this.mapedFileQueue.findMapedFileByOffset(offset);
+            if (mapedFile != null) {
+                SelectMapedBufferResult result = mapedFile.selectMapedBuffer((int) (offset % mapedFileSize));
+                return result;
+            }
+        }
+        return null;
+    }
+
+    public long rollNextFile(final long index) {
+        int mapedFileSize = this.mapedFileSize;
+        int totalUnitsInFile = mapedFileSize / CQStoreUnitSize;
+        return (index + totalUnitsInFile - index % totalUnitsInFile);
+    }
 }
 
 
