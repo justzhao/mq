@@ -297,15 +297,12 @@ public class MapedFile extends ReferenceResource {
             }
         }
 
-
         return null;
     }
 
 
     public SelectMapedBufferResult selectMapedBuffer(int pos, int size) {
-
         if ((pos + size) <= this.wrotePostion.get()) {
-
             if (this.hold()) {
                 ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
                 byteBuffer.position(pos);
@@ -325,5 +322,23 @@ public class MapedFile extends ReferenceResource {
 
 
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "MapedFile{" +
+                "refCount=" + refCount +
+                ", fileName='" + fileName + '\'' +
+                ", fileFromOffset=" + fileFromOffset +
+                ", fileSize=" + fileSize +
+                ", file=" + file +
+                ", mappedByteBuffer=" + mappedByteBuffer +
+                ", wrotePostion=" + wrotePostion +
+                ", committedPosition=" + committedPosition +
+                ", fileChannel=" + fileChannel +
+                ", msgIdMemory=" + msgIdMemory +
+                ", storeTimestamp=" + storeTimestamp +
+                ", firstCreateInQueue=" + firstCreateInQueue +
+                '}';
     }
 }
