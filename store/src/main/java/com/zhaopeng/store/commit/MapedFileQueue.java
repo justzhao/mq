@@ -1,7 +1,6 @@
 package com.zhaopeng.store.commit;
 
 import com.zhaopeng.store.util.UtilAll;
-import com.zhaopeng.store.service.AllocateMapedFileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,18 +27,17 @@ public class MapedFileQueue {
     private final List<MapedFile> mapedFiles = new ArrayList<>();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    private final AllocateMapedFileService allocateMapedFileService;
+    // private final AllocateMapedFileService allocateMapedFileService;
 
     private long committedWhere = 0;
 
     private volatile long storeTimestamp = 0;
 
 
-    public MapedFileQueue(final String storePath, int mapedFileSize,
-                          AllocateMapedFileService allocateMapedFileService) {
+    public MapedFileQueue(final String storePath, int mapedFileSize) {
         this.storePath = storePath;
         this.mapedFileSize = mapedFileSize;
-        this.allocateMapedFileService = allocateMapedFileService;
+        //      this.allocateMapedFileService = allocateMapedFileService;
     }
 
 
@@ -214,21 +212,15 @@ public class MapedFileQueue {
                             + UtilAll.offset2FileName(createOffset + this.mapedFileSize);
             MapedFile mapedFile = null;
 
-            if (this.allocateMapedFileService != null) {
-               // mapedFile = this.allocateMapedFileService.putRequestAndReturnMapedFile(nextFilePath,nextNextFilePath, this.mapedFileSize);
-            } else {
-                try {
-                    mapedFile = new MapedFile(nextFilePath, this.mapedFileSize);
-                } catch (IOException e) {
-                    log.error("create mapedfile exception", e);
-                }
+            try {
+                mapedFile = new MapedFile(nextFilePath, this.mapedFileSize);
+            } catch (IOException e) {
+                log.error("create mapedfile exception", e);
             }
+
 
             if (mapedFile != null) {
                 this.readWriteLock.writeLock().lock();
-                if (this.mapedFiles.isEmpty()) {
-                 //   mapedFile.setFirstCreateInQueue(true);
-                }
                 this.mapedFiles.add(mapedFile);
                 this.readWriteLock.writeLock().unlock();
             }
@@ -324,7 +316,7 @@ public class MapedFileQueue {
         if (!this.mapedFiles.isEmpty()) {
             int lastIndex = this.mapedFiles.size() - 1;
             MapedFile mapedFile = this.mapedFiles.get(lastIndex);
-          //  mapedFile.destroy(1000);
+            //  mapedFile.destroy(1000);
             this.mapedFiles.remove(mapedFile);
             log.info("on recover, destroy a logic maped file " + mapedFile.getFileName());
         }

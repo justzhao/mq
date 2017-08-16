@@ -1,9 +1,11 @@
-package com.zhaopeng.store;
+package com.zhaopeng.store.jvm;
 
 import com.google.common.collect.Maps;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
+import com.zhaopeng.store.MessageStore;
+import com.zhaopeng.store.disk.GetMessageResult;
 import com.zhaopeng.store.entity.PutMessageResult;
 import com.zhaopeng.store.entity.enums.PutMessageStatus;
 
@@ -66,6 +68,11 @@ public class JvmMessageStore implements MessageStore {
 
         return new PutMessageResult(PutMessageStatus.PUT_OK);
 
+    }
+
+    @Override
+    public GetMessageResult getMessage(String group, String topic, int queueId, long offset, int maxMsgNums) {
+        return null;
     }
 
     @Override

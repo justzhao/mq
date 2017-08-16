@@ -3,7 +3,7 @@ package com.zhaopeng.store;
 import com.zhaopeng.store.commit.MapedFile;
 import com.zhaopeng.store.commit.MapedFileQueue;
 import com.zhaopeng.store.disk.SelectMapedBufferResult;
-import com.zhaopeng.store.entity.enums.DiskMessageStore;
+import com.zhaopeng.store.disk.DiskMessageStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ public class ConsumeQueue {
                 + File.separator + topic//
                 + File.separator + queueId;//
 
-        this.mapedFileQueue = new MapedFileQueue(queueDir, mapedFileSize, null);
+        this.mapedFileQueue = new MapedFileQueue(queueDir, mapedFileSize);
 
         this.byteBufferIndex = ByteBuffer.allocate(CQStoreUnitSize);
     }

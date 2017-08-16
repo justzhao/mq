@@ -1,4 +1,4 @@
-package com.zhaopeng.store.entity.enums;
+package com.zhaopeng.store.disk;
 
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
@@ -10,11 +10,9 @@ import com.zhaopeng.store.MessageStore;
 import com.zhaopeng.store.commit.CommitLog;
 import com.zhaopeng.store.config.MessageStoreConfig;
 import com.zhaopeng.store.config.StorePathConfigHelper;
-import com.zhaopeng.store.disk.GetMessageResult;
-import com.zhaopeng.store.disk.GetMessageStatus;
-import com.zhaopeng.store.disk.SelectMapedBufferResult;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.entity.PutMessageResult;
+import com.zhaopeng.store.entity.enums.PutMessageStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,36 +112,41 @@ public class DiskMessageStore implements MessageStore {
 
     @Override
     public PutMessageResult addMessage(SendMessage sendMessage) {
-
         if (this.shutdown) {
             logger.warn("message store has shutdown, so putMessage is forbidden");
             return new PutMessageResult(PutMessageStatus.SERVICE_NOT_AVAILABLE);
         }
-
-
         if (sendMessage.getTopic().length() > Byte.MAX_VALUE) {
             logger.warn("putMessage message topic length too long " + sendMessage.getTopic().length());
             return new PutMessageResult(PutMessageStatus.MESSAGE_ILLEGAL);
         }
-
-
         if (this.isOSPageCacheBusy()) {
             return new PutMessageResult(PutMessageStatus.OS_PAGECACHE_BUSY);
         }
-
         long beginTime = this.getSystemClock().now();
         MessageExtBrokerInner msg = new MessageExtBrokerInner();
+
+        ConcurrentHashMap<Integer/* queueId */, ConsumeQueue> queueMap = consumeQueueTable.get(sendMessage.getTopic());
+        if (queueMap == null) {
+            queueMap = new ConcurrentHashMap<>();
+            consumeQueueTable.put(sendMessage.getTopic(), queueMap);
+        }
+        ConsumeQueue consumeQueue = queueMap.get(sendMessage.getQueueId());
+        if (consumeQueue == null) {
+            consumeQueue = new ConsumeQueue(//
+                    sendMessage.getTopic(), //
+                    sendMessage.getQueueId(), //
+                    StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()), //
+                    this.getMessageStoreConfig().getMapedFileSizeConsumeQueue(), this);
+            queueMap.put(sendMessage.getQueueId(), consumeQueue);
+        }
+
         PutMessageResult result = this.commitLog.putMessage(msg);
-
-
         long eclipseTime = this.getSystemClock().now() - beginTime;
         if (eclipseTime > 1000) {
             logger.info("putMessage not in lock eclipse time(ms)={}, bodyLength={}", eclipseTime, msg.getBodyLength());
         }
-
-
         return result;
-
     }
 
     @Override
@@ -152,18 +155,12 @@ public class DiskMessageStore implements MessageStore {
             logger.warn("message store has shutdown, so getMessage is forbidden");
             return null;
         }
-
-
         GetMessageStatus status = GetMessageStatus.NO_MESSAGE_IN_QUEUE;
         long nextBeginOffset = offset;
         long minOffset = 0;
         long maxOffset = 0;
 
         GetMessageResult getResult = new GetMessageResult();
-
-
-        final long maxOffsetPy = this.commitLog.getMaxOffset();
-
         ConsumeQueue consumeQueue = findConsumeQueue(topic, queueId);
         if (consumeQueue != null) {
             minOffset = consumeQueue.getMinOffsetInQuque();
@@ -331,7 +328,7 @@ public class DiskMessageStore implements MessageStore {
     public ConsumeQueue findConsumeQueue(String topic, int queueId) {
         ConcurrentHashMap<Integer, ConsumeQueue> map = consumeQueueTable.get(topic);
         if (null == map) {
-            ConcurrentHashMap<Integer, ConsumeQueue> newMap = new ConcurrentHashMap<Integer, ConsumeQueue>(128);
+            ConcurrentHashMap<Integer, ConsumeQueue> newMap = new ConcurrentHashMap<>(128);
             ConcurrentHashMap<Integer, ConsumeQueue> oldMap = consumeQueueTable.putIfAbsent(topic, newMap);
             if (oldMap != null) {
                 map = oldMap;

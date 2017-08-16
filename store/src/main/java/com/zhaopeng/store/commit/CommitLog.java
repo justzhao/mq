@@ -7,7 +7,6 @@ import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.entity.PutMessageResult;
 import com.zhaopeng.store.entity.enums.AppendMessageStatus;
 import com.zhaopeng.store.entity.enums.PutMessageStatus;
-import com.zhaopeng.store.service.AllocateMapedFileService;
 import com.zhaopeng.store.util.MessageUtil;
 import com.zhaopeng.store.util.UtilAll;
 import org.slf4j.Logger;
@@ -36,7 +35,7 @@ public class CommitLog {
     private final MapedFileQueue mapedFileQueue;
     private final MessageStoreConfig messageStoreConfig;
     private final FlushCommitLogService flushCommitLogService;
-    private final AllocateMapedFileService allocateMapedFileService;
+    //private final AllocateMapedFileService allocateMapedFileService;
     private final StoreCheckpoint storeCheckpoint;
     private final AppendMessageCallback appendMessageCallback;
     public CommitLog() throws IOException {
@@ -44,19 +43,19 @@ public class CommitLog {
         this.messageStoreConfig = new MessageStoreConfig();
         this.storeCheckpoint = new StoreCheckpoint("c://defaut");
         this.flushCommitLogService = new GroupCommitService();
-        this.allocateMapedFileService = new AllocateMapedFileService();
+       // this.allocateMapedFileService = new AllocateMapedFileService();
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
-                messageStoreConfig.getMapedFileSizeCommitLog(), this.allocateMapedFileService);
+                messageStoreConfig.getMapedFileSizeCommitLog());
         this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
     }
-    public CommitLog(MessageStoreConfig config, AllocateMapedFileService allocateMapedFileService,
+    public CommitLog(MessageStoreConfig config,
                      StoreCheckpoint storeCheckpoint) {
         this.messageStoreConfig = config;
         this.storeCheckpoint = storeCheckpoint;
         this.flushCommitLogService = new GroupCommitService();
-        this.allocateMapedFileService = allocateMapedFileService;
+
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
-                messageStoreConfig.getMapedFileSizeCommitLog(), this.allocateMapedFileService);
+                messageStoreConfig.getMapedFileSizeCommitLog());
         this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
     }
 
@@ -291,9 +290,7 @@ public class CommitLog {
         return flushCommitLogService;
     }
 
-    public AllocateMapedFileService getAllocateMapedFileService() {
-        return allocateMapedFileService;
-    }
+
 
     public StoreCheckpoint getStoreCheckpoint() {
         return storeCheckpoint;
