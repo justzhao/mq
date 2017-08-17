@@ -4,7 +4,6 @@ package com.zhaopeng.store;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
-import com.zhaopeng.store.disk.GetMessageResult;
 import com.zhaopeng.store.entity.PutMessageResult;
 
 /**
@@ -24,17 +23,6 @@ public interface MessageStore {
      */
     public PutMessageResult addMessage(SendMessage sendMessage);
 
-    /**
-     * 获取消息
-     * @param group
-     * @param topic
-     * @param queueId
-     * @param offset
-     * @param maxMsgNums
-     * @return
-     */
-    GetMessageResult getMessage(final String group, final String topic, final int queueId,
-                                final long offset, final int maxMsgNums);
 
     /**
      * 启动服务

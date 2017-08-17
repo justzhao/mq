@@ -17,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -104,9 +106,40 @@ public class DiskMessageStore implements MessageStore {
         return systemClock;
     }
 
+    /**
+     * 这里设计有问题，添加进去就是二进制，取出来也是二进制，
+     * 附加信息放在head中，比如下一次拉取的offset
+     * @param pull
+     * @return
+     */
     @Override
     public Message getMessage(PullMesageInfo pull) {
-        return null;
+        GetMessageResult getMessageResult = this.getMessage(pull.getTopic(), pull.getQueueId(), pull.getQueueOffset(), pull.getMaxMsgNums());
+
+        final byte[] r = this.readGetMessageResult(getMessageResult);
+
+        Message message = new Message();
+        message.setBody(r);
+
+        message.setTopic(pull.getTopic());
+
+        message.setCommitLogOffset(pull.getCommitOffset());
+
+        return message;
+    }
+
+    private byte[] readGetMessageResult(final GetMessageResult getMessageResult) {
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(getMessageResult.getBufferTotalSize());
+
+        try {
+            List<ByteBuffer> messageBufferList = getMessageResult.getMessageBufferList();
+            for (ByteBuffer bb : messageBufferList) {
+                byteBuffer.put(bb);
+            }
+        } finally {
+            getMessageResult.release();
+        }
+        return byteBuffer.array();
     }
 
 
@@ -149,8 +182,8 @@ public class DiskMessageStore implements MessageStore {
         return result;
     }
 
-    @Override
-    public GetMessageResult getMessage(String group, String topic, int queueId, long offset, int maxMsgNums) {
+
+    public GetMessageResult getMessage(String topic, int queueId, long offset, int maxMsgNums) {
         if (this.shutdown) {
             logger.warn("message store has shutdown, so getMessage is forbidden");
             return null;

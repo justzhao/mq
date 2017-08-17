@@ -16,6 +16,12 @@ public class Message implements Serializable {
     private Map<String, String> properties;
     private byte[] body;
 
+    private String msgId;
+
+    private long commitLogOffset;
+
+    private long queueOffset;
+
 
     public String getTopic() {
         return topic;
@@ -49,6 +55,29 @@ public class Message implements Serializable {
         this.body = body;
     }
 
+    public String getMsgId() {
+        return msgId;
+    }
+
+    public void setMsgId(String msgId) {
+        this.msgId = msgId;
+    }
+
+    public long getCommitLogOffset() {
+        return commitLogOffset;
+    }
+
+    public void setCommitLogOffset(long commitLogOffset) {
+        this.commitLogOffset = commitLogOffset;
+    }
+
+    public long getQueueOffset() {
+        return queueOffset;
+    }
+
+    public void setQueueOffset(long queueOffset) {
+        this.queueOffset = queueOffset;
+    }
 
     @Override
     public String toString() {

@@ -97,5 +97,10 @@ public class GetMessageResult {
     //    this.msgCount4Commercial += (int) Math.ceil(
            //     mapedBuffer.getSize() / BrokerStatsManager.SIZE_PER_COUNT);
     }
+    public void release() {
+        for (SelectMapedBufferResult select : this.messageMapedList) {
+            select.release();
+        }
+    }
 
 }

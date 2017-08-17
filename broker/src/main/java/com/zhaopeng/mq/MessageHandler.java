@@ -17,11 +17,6 @@ import java.util.Map;
 public class MessageHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageHandler.class);
-    private final MessageStore messageStore;
-
-    public MessageHandler() {
-        messageStore = new JvmMessageStore();
-    }
 
 
     /**
