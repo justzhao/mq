@@ -3,7 +3,9 @@ package com.zhaopeng.mq;
 import com.google.common.collect.Maps;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
+import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
+import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.store.jvm.JvmMessageStore;
 import com.zhaopeng.store.MessageStore;
 import org.slf4j.Logger;
@@ -44,6 +46,16 @@ public class MessageHandler {
             return null;
         }
         return store.getMessage(pull);
+    }
+
+
+    public RemotingCommand getRespone(){
+
+        RemotingCommand respone = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
+
+
+
+        return respone;
     }
 
 

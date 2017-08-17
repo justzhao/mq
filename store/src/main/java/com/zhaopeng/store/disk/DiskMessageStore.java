@@ -5,6 +5,7 @@ import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.remoting.common.SystemClock;
+import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.store.ConsumeQueue;
 import com.zhaopeng.store.MessageStore;
 import com.zhaopeng.store.commit.CommitLog;
@@ -127,6 +128,12 @@ public class DiskMessageStore implements MessageStore {
 
         return message;
     }
+
+    @Override
+    public RemotingCommand getMessageContent(PullMesageInfo pull) {
+        return null;
+    }
+
 
     private byte[] readGetMessageResult(final GetMessageResult getMessageResult) {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(getMessageResult.getBufferTotalSize());
