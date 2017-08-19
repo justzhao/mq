@@ -2,6 +2,7 @@ package com.zhaopeng.store.disk;
 
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
+import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.remoting.common.SystemClock;
@@ -131,7 +132,9 @@ public class DiskMessageStore implements MessageStore {
 
     @Override
     public RemotingCommand getMessageContent(PullMesageInfo pull) {
-        return null;
+
+        RemotingCommand respone = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
+        return respone;
     }
 
 
