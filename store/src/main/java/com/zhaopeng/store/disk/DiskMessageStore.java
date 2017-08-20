@@ -4,6 +4,7 @@ import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
+import com.zhaopeng.common.store.MessageOffsetConstant;
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.remoting.common.SystemClock;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
@@ -111,6 +112,7 @@ public class DiskMessageStore implements MessageStore {
     /**
      * 这里设计有问题，添加进去就是二进制，取出来也是二进制，
      * 附加信息放在head中，比如下一次拉取的offset
+     *
      * @param pull
      * @return
      */
@@ -133,8 +135,18 @@ public class DiskMessageStore implements MessageStore {
     @Override
     public RemotingCommand getMessageContent(PullMesageInfo pull) {
 
-        RemotingCommand respone = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
-        return respone;
+
+        RemotingCommand response = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
+
+        GetMessageResult result = getMessage(pull.getTopic(), pull.getQueueId(), pull.getCommitOffset(), pull.getMaxMsgNums());
+        byte[] bytes = readGetMessageResult(result);
+        response.getExtFields().put(MessageOffsetConstant.MINOFFSET, result.getMinOffset());
+        response.getExtFields().put(MessageOffsetConstant.MAXOFFSET, result.getMaxOffset());
+        response.getExtFields().put(MessageOffsetConstant.NEXTBEGINOFFSET, result.getNextBeginOffset());
+
+
+        response.setBody(bytes);
+        return response;
     }
 
 
@@ -232,7 +244,7 @@ public class DiskMessageStore implements MessageStore {
                         status = GetMessageStatus.NO_MATCHED_MESSAGE;
 
                         long nextPhyFileStartOffset = Long.MIN_VALUE;
-                        long maxPhyOffsetPulling = 0;
+                      //  long maxPhyOffsetPulling = 0;
 
                         int i = 0;
                         final int MaxFilterMessageCount = 16000;
@@ -243,19 +255,15 @@ public class DiskMessageStore implements MessageStore {
 
                             SelectMapedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
                             if (selectResult != null) {
-                                //  this.storeStatsService.getGetMessageTransferedMsgCount().incrementAndGet();
                                 getResult.addMessage(selectResult);
                                 status = GetMessageStatus.FOUND;
                                 nextPhyFileStartOffset = Long.MIN_VALUE;
-
 
                                 if (nextPhyFileStartOffset != Long.MIN_VALUE) {
                                     if (offsetPy < nextPhyFileStartOffset)
                                         continue;
                                 }
-
                             }
-
                             nextBeginOffset = offset + (i / ConsumeQueue.CQStoreUnitSize);
 
                         }
@@ -282,6 +290,7 @@ public class DiskMessageStore implements MessageStore {
         getResult.setMaxOffset(maxOffset);
         getResult.setMinOffset(minOffset);
         return getResult;
+
     }
 
 

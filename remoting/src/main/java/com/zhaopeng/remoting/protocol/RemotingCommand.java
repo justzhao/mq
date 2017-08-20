@@ -1,6 +1,7 @@
 package com.zhaopeng.remoting.protocol;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.google.common.collect.Maps;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public class RemotingCommand {
     /**
      * 扩展字段
      */
-    private HashMap<String, String> extFields;
+    private HashMap<String, Object> extFields = Maps.newHashMap();
 
     /**
      * 用来临时保存 requestId
@@ -268,14 +269,14 @@ public class RemotingCommand {
         this.opaque = opaque;
     }
 
-    public HashMap<String, String> getExtFields() {
+
+    public HashMap<String, Object> getExtFields() {
         return extFields;
     }
 
-    public void setExtFields(HashMap<String, String> extFields) {
+    public void setExtFields(HashMap<String, Object> extFields) {
         this.extFields = extFields;
     }
-
 
     public int getFlag() {
         return flag;
