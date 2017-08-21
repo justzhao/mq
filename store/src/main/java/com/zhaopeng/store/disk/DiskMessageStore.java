@@ -244,7 +244,7 @@ public class DiskMessageStore implements MessageStore {
                         status = GetMessageStatus.NO_MATCHED_MESSAGE;
 
                         long nextPhyFileStartOffset = Long.MIN_VALUE;
-                      //  long maxPhyOffsetPulling = 0;
+                        //  long maxPhyOffsetPulling = 0;
 
                         int i = 0;
                         final int MaxFilterMessageCount = 16000;
@@ -296,6 +296,7 @@ public class DiskMessageStore implements MessageStore {
 
     private long nextOffsetCorrection(long oldOffset, long newOffset) {
         long nextOffset = oldOffset;
+        nextOffset = newOffset;
 
         return nextOffset;
     }

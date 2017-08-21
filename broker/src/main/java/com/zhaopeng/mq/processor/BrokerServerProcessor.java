@@ -28,6 +28,14 @@ import static com.zhaopeng.common.protocol.RequestCode.SEND_MESSAGE;
  */
 public class BrokerServerProcessor implements NettyRequestProcessor {
 
+    /**
+      关于取消息，  会记录本次 拉取的消息 中的nextOffset (下一次 Messagequeue获取消息的偏移量) 当成下一次 Queue 的offset (队列的偏移量)，offset 信息放在 放在head。
+
+     保存信息。
+
+
+     */
+
 
     private static final Logger logger = LoggerFactory.getLogger(BrokerServerProcessor.class);
     private final MessageHandler messageHandler;
