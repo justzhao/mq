@@ -12,7 +12,9 @@ import java.nio.ByteBuffer;
 
 /**
  * Created by zhaopeng on 2017/7/30.
+ * consumerQueue 会保存消息的offset和长度
  */
+
 public class ConsumeQueue {
 
     public static final int CQStoreUnitSize = 20;

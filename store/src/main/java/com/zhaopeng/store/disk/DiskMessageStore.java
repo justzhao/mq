@@ -216,6 +216,7 @@ public class DiskMessageStore implements MessageStore {
         long maxOffset = 0;
 
         GetMessageResult getResult = new GetMessageResult();
+        // 每次请求都会去先获取consumerQueue，consumerQueue 保存着消息在messageLog的物理位置信息
         ConsumeQueue consumeQueue = findConsumeQueue(topic, queueId);
         if (consumeQueue != null) {
             minOffset = consumeQueue.getMinOffsetInQuque();
@@ -238,6 +239,8 @@ public class DiskMessageStore implements MessageStore {
                     nextBeginOffset = nextOffsetCorrection(offset, maxOffset);
                 }
             } else {
+                // 根据consumerQueue的offset获取 所有消息的位置信息
+
                 SelectMapedBufferResult bufferConsumeQueue = consumeQueue.getIndexBuffer(offset);
                 if (bufferConsumeQueue != null) {
                     try {
@@ -250,6 +253,8 @@ public class DiskMessageStore implements MessageStore {
                         final int MaxFilterMessageCount = 16000;
 
                         for (; i < bufferConsumeQueue.getSize() && i < MaxFilterMessageCount; i += ConsumeQueue.CQStoreUnitSize) {
+
+                            // messgeQueue  使用20个字节存取消息的物理位置信息和长度信息
                             long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();
 
