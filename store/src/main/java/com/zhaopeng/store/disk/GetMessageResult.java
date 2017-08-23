@@ -103,4 +103,8 @@ public class GetMessageResult {
         }
     }
 
+    public int getMessageCount() {
+        return this.messageMapedList.size();
+    }
+
 }

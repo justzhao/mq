@@ -247,8 +247,6 @@ public class DiskMessageStore implements MessageStore {
                         status = GetMessageStatus.NO_MATCHED_MESSAGE;
 
                         long nextPhyFileStartOffset = Long.MIN_VALUE;
-                        //  long maxPhyOffsetPulling = 0;
-
                         int i = 0;
                         final int MaxFilterMessageCount = 16000;
 
@@ -267,6 +265,10 @@ public class DiskMessageStore implements MessageStore {
                                 if (nextPhyFileStartOffset != Long.MIN_VALUE) {
                                     if (offsetPy < nextPhyFileStartOffset)
                                         continue;
+                                }
+
+                                if (this.isTheBatchFull(sizePy, maxMsgNums, getResult.getBufferTotalSize(), getResult.getMessageCount(), true)) {
+                                    break;
                                 }
                             }
                             nextBeginOffset = offset + (i / ConsumeQueue.CQStoreUnitSize);
@@ -413,5 +415,21 @@ public class DiskMessageStore implements MessageStore {
 
         return logic;
     }
+
+
+    private boolean isTheBatchFull(int sizePy, int maxMsgNums, int bufferTotal, int messageTotal, boolean isInDisk) {
+
+        if (0 == bufferTotal || 0 == messageTotal) {
+            return false;
+        }
+
+        if ((messageTotal + 1) >= maxMsgNums) {
+            return true;
+        }
+
+
+        return false;
+    }
+
 
 }
