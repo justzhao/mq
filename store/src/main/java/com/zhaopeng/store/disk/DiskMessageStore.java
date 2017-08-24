@@ -432,4 +432,80 @@ public class DiskMessageStore implements MessageStore {
     }
 
 
+    public void putMessagePostionInfo(String topic, int queueId, long offset, int size, long tagsCode, long storeTimestamp,
+                                      long logicOffset) {
+        ConsumeQueue cq = this.findConsumeQueue(topic, queueId);
+        cq.putMessagePostionInfoWrapper(offset, size, tagsCode, storeTimestamp, logicOffset);
+    }
+
+
+
+    class ReputMessageService extends ServiceThread {
+
+        private volatile long reputFromOffset = 0;
+
+        public long getReputFromOffset() {
+            return reputFromOffset;
+        }
+
+        @Override
+        public void shutdown() {
+            for (int i = 0; i < 50 && this.isCommitLogAvailable(); i++) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+
+            if (this.isCommitLogAvailable()) {
+                logger.warn("shutdown ReputMessageService, but commitlog have not finish to be dispatched, CL: {} reputFromOffset: {}",
+                        DiskMessageStore.this.commitLog.getMaxOffset(), this.reputFromOffset);
+            }
+
+            super.shutdown();
+        }
+
+        public void setReputFromOffset(long reputFromOffset) {
+            this.reputFromOffset = reputFromOffset;
+        }
+
+        public long behind() {
+            return DiskMessageStore.this.commitLog.getMaxOffset() - this.reputFromOffset;
+        }
+
+
+        private boolean isCommitLogAvailable() {
+            return this.reputFromOffset < DiskMessageStore.this.commitLog.getMaxOffset();
+        }
+
+
+        private void doReput() {
+
+        }
+
+
+        @Override
+        public void run() {
+            DiskMessageStore.logger.info(this.getServiceName() + " service started");
+
+            while (!this.isStoped()) {
+                try {
+                    Thread.sleep(1);
+                    this.doReput();
+                } catch (Exception e) {
+                    DiskMessageStore.logger.warn(this.getServiceName() + " service has exception. ", e);
+                }
+            }
+
+            DiskMessageStore.logger.info(this.getServiceName() + " service end");
+        }
+
+
+        @Override
+        public String getServiceName() {
+            return ReputMessageService.class.getSimpleName();
+        }
+
+
+    }
 }
