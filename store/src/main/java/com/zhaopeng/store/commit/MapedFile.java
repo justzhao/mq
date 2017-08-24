@@ -139,6 +139,22 @@ public class MapedFile extends ReferenceResource {
 
     }
 
+    public boolean appendMessage(final byte[] data) {
+        int currentPos = this.wrotePostion.get();
+
+
+        if ((currentPos + data.length) <= this.fileSize) {
+            ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
+            byteBuffer.position(currentPos);
+            byteBuffer.put(data);
+            this.wrotePostion.addAndGet(data.length);
+            return true;
+        }
+
+        return false;
+    }
+
+
     public void ensureDirOK(final String dirName) {
         if (dirName != null) {
             File f = new File(dirName);
