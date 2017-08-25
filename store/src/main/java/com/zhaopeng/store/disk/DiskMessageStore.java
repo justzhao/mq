@@ -15,12 +15,14 @@ import com.zhaopeng.store.config.MessageStoreConfig;
 import com.zhaopeng.store.config.StorePathConfigHelper;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.entity.PutMessageResult;
+import com.zhaopeng.store.entity.QueueRequest;
 import com.zhaopeng.store.entity.enums.PutMessageStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,6 +47,8 @@ public class DiskMessageStore implements MessageStore {
 
     private final CleanConsumeQueueService cleanConsumeQueueService;
 
+    private final ReputMessageService reputMessageService;
+
     private final IndexService indexService;
 
     private final SystemClock systemClock;
@@ -63,6 +67,7 @@ public class DiskMessageStore implements MessageStore {
         cleanConsumeQueueService = new CleanConsumeQueueService();
         cleanCommitLogService = new CleanCommitLogService();
         flushConsumeQueueService = new FlushConsumeQueueService();
+        reputMessageService = new ReputMessageService();
         systemClock = new SystemClock(1);
 
 
@@ -432,21 +437,54 @@ public class DiskMessageStore implements MessageStore {
     }
 
 
-    public void putMessagePostionInfo(String topic, int queueId, long offset, int size, long tagsCode, long storeTimestamp,
+    public void putMessagePostionInfo(String topic, int queueId, long offset, int size, long storeTimestamp,
                                       long logicOffset) {
         ConsumeQueue cq = this.findConsumeQueue(topic, queueId);
-        cq.putMessagePostionInfoWrapper(offset, size, tagsCode, storeTimestamp, logicOffset);
+        cq.putMessagePostionInfoWrapper(offset, size, storeTimestamp, logicOffset);
     }
 
+    public void doDispatch(QueueRequest req) {
+
+        DiskMessageStore.this.putMessagePostionInfo(req.getTopic(), req.getQueueId(), req.getCommitLogOffset(), req.getMsgSize(),
+                req.getStoreTimestamp(), req.getConsumeQueueOffset());
+
+    }
 
 
     class ReputMessageService extends ServiceThread {
 
         private volatile long reputFromOffset = 0;
 
+        private volatile List<QueueRequest> request = new ArrayList<>();
+
+        public void putRequest(final QueueRequest request) {
+            synchronized (this) {
+                this.request.add(request);
+                if (!this.hasNotified) {
+                    this.hasNotified = true;
+                    this.notify();
+                }
+            }
+        }
+
+
+        private void docommitRequest() {
+            if (this.hasNotified && !this.request.isEmpty()) {
+                for (QueueRequest r : request) {
+
+                }
+            }
+
+        }
+
         public long getReputFromOffset() {
             return reputFromOffset;
         }
+
+        public void setReputFromOffset(long reputFromOffset) {
+            this.reputFromOffset = reputFromOffset;
+        }
+
 
         @Override
         public void shutdown() {
@@ -465,9 +503,6 @@ public class DiskMessageStore implements MessageStore {
             super.shutdown();
         }
 
-        public void setReputFromOffset(long reputFromOffset) {
-            this.reputFromOffset = reputFromOffset;
-        }
 
         public long behind() {
             return DiskMessageStore.this.commitLog.getMaxOffset() - this.reputFromOffset;
@@ -479,11 +514,6 @@ public class DiskMessageStore implements MessageStore {
         }
 
 
-        private void doReput() {
-
-        }
-
-
         @Override
         public void run() {
             DiskMessageStore.logger.info(this.getServiceName() + " service started");
@@ -491,7 +521,7 @@ public class DiskMessageStore implements MessageStore {
             while (!this.isStoped()) {
                 try {
                     Thread.sleep(1);
-                    this.doReput();
+                    this.docommitRequest();
                 } catch (Exception e) {
                     DiskMessageStore.logger.warn(this.getServiceName() + " service has exception. ", e);
                 }

@@ -480,6 +480,22 @@ public class CommitLog {
     }
 
 
+    public SelectMapedBufferResult getData(final long offset) {
+        return this.getData(offset, (0 == offset ? true : false));
+    }
+
+
+    public SelectMapedBufferResult getData(final long offset, final boolean returnFirstOnNotFound) {
+        int mapedFileSize = this.messageStoreConfig.getMapedFileSizeCommitLog();
+        MapedFile mapedFile = this.mapedFileQueue.findMapedFileByOffset(offset, returnFirstOnNotFound);
+        if (mapedFile != null) {
+            int pos = (int) (offset % mapedFileSize);
+            SelectMapedBufferResult result = mapedFile.selectMapedBuffer(pos);
+            return result;
+        }
+
+        return null;
+    }
 
 
 }

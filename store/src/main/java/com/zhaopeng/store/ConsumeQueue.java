@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 
 public class ConsumeQueue {
 
-    public static final int CQStoreUnitSize = 20;
+    public static final int CQStoreUnitSize = 12;
     private static final Logger logger = LoggerFactory.getLogger(ConsumeQueue.class);
 
 
@@ -142,12 +142,12 @@ public class ConsumeQueue {
     }
 
 
-    public void putMessagePostionInfoWrapper(long offset, int size, long tagsCode, long storeTimestamp,
+    public void putMessagePostionInfoWrapper(long offset, int size, long storeTimestamp,
                                              long logicOffset) {
         final int MaxRetries = 30;
 
         for (int i = 0; i < MaxRetries ; i++) {
-            boolean result = this.putMessagePostionInfo(offset, size, tagsCode, logicOffset);
+            boolean result = this.putMessagePostionInfo(offset, size, logicOffset);
             if (result) {
 
                 return;
@@ -169,7 +169,7 @@ public class ConsumeQueue {
     }
 
 
-    private boolean putMessagePostionInfo(final long offset, final int size, final long tagsCode,
+    private boolean putMessagePostionInfo(final long offset, final int size,
                                           final long cqOffset) {
 
         if (offset <= this.maxPhysicOffset) {
@@ -180,7 +180,7 @@ public class ConsumeQueue {
         this.byteBufferIndex.limit(CQStoreUnitSize);
         this.byteBufferIndex.putLong(offset);
         this.byteBufferIndex.putInt(size);
-        this.byteBufferIndex.putLong(tagsCode);
+//        this.byteBufferIndex.putLong(tagsCode);
 
         final long expectLogicOffset = cqOffset * CQStoreUnitSize;
 
