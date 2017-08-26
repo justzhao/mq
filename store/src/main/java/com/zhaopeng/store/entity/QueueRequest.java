@@ -13,14 +13,14 @@ public class QueueRequest {
     private final long storeTimestamp;
     private final long consumeQueueOffset;
 
-    public QueueRequest(String topic, int queueId, long commitLogOffset, int msgSize, long storeTimestamp, long consumeQueueOffset, boolean success) {
+    public QueueRequest(String topic, int queueId, long commitLogOffset, int msgSize, long storeTimestamp, long consumeQueueOffset) {
         this.topic = topic;
         this.queueId = queueId;
         this.commitLogOffset = commitLogOffset;
         this.msgSize = msgSize;
         this.storeTimestamp = storeTimestamp;
         this.consumeQueueOffset = consumeQueueOffset;
-        this.success = success;
+        this.success = true;
     }
 
     private final boolean success;

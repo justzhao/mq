@@ -2,9 +2,11 @@ package com.zhaopeng.store.commit;
 
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.store.config.MessageStoreConfig;
+import com.zhaopeng.store.disk.DiskMessageStore;
 import com.zhaopeng.store.disk.SelectMapedBufferResult;
 import com.zhaopeng.store.entity.MessageExtBrokerInner;
 import com.zhaopeng.store.entity.PutMessageResult;
+import com.zhaopeng.store.entity.QueueRequest;
 import com.zhaopeng.store.entity.enums.AppendMessageStatus;
 import com.zhaopeng.store.entity.enums.PutMessageStatus;
 import com.zhaopeng.store.util.MessageUtil;
@@ -38,8 +40,10 @@ public class CommitLog {
     //private final AllocateMapedFileService allocateMapedFileService;
     private final StoreCheckpoint storeCheckpoint;
     private final AppendMessageCallback appendMessageCallback;
-    public CommitLog() throws IOException {
+    private final DiskMessageStore defaultMessageStore;
+    public CommitLog(DiskMessageStore messageStore) throws IOException {
 
+        this.defaultMessageStore=messageStore;
         this.messageStoreConfig = new MessageStoreConfig();
         this.storeCheckpoint = new StoreCheckpoint("c://defaut");
         this.flushCommitLogService = new GroupCommitService();
@@ -49,10 +53,11 @@ public class CommitLog {
         this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
     }
     public CommitLog(MessageStoreConfig config,
-                     StoreCheckpoint storeCheckpoint) {
+                     StoreCheckpoint storeCheckpoint,DiskMessageStore messageStore) {
         this.messageStoreConfig = config;
         this.storeCheckpoint = storeCheckpoint;
         this.flushCommitLogService = new GroupCommitService();
+        this.defaultMessageStore=messageStore;
 
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
                 messageStoreConfig.getMapedFileSizeCommitLog());
@@ -470,6 +475,15 @@ public class CommitLog {
                     msgInner.getStoreTimestamp(), queueOffset, System.currentTimeMillis() - beginTimeMills);
 
 
+            /**
+             * 更新MessageQueue
+             */
+            QueueRequest request=new QueueRequest(msgInner.getTopic(),msgInner.getQueueId(),fileFromOffset + byteBuffer.position()
+                    ,msgLen,System.currentTimeMillis(),queueOffset);
+
+            defaultMessageStore.doDispatch(request);
+
+
             return result;
 
         }
@@ -496,6 +510,13 @@ public class CommitLog {
 
         return null;
     }
+
+    public boolean load() {
+        boolean result = this.mapedFileQueue.load();
+        log.info("load commit log " + (result ? "OK" : "Failed"));
+        return result;
+    }
+
 
 
 }

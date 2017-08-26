@@ -20,6 +20,7 @@ import com.zhaopeng.store.entity.enums.PutMessageStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -57,11 +58,22 @@ public class DiskMessageStore implements MessageStore {
 
     public void DiskMessageStore() {
 
+
+    }
+
+    public void load() {
+
+
+        this.commitLog.load();
+
+        this.loadConsumeQueue();
+
+
     }
 
     public DiskMessageStore(final MessageStoreConfig messageStoreConfig) throws IOException {
         this.messageStoreConfig = messageStoreConfig;
-        commitLog = new CommitLog();
+
         consumeQueueTable = new ConcurrentHashMap<>();
         indexService = new IndexService();
         cleanConsumeQueueService = new CleanConsumeQueueService();
@@ -69,7 +81,7 @@ public class DiskMessageStore implements MessageStore {
         flushConsumeQueueService = new FlushConsumeQueueService();
         reputMessageService = new ReputMessageService();
         systemClock = new SystemClock(1);
-
+        commitLog = new CommitLog(this);
 
     }
 
@@ -202,10 +214,7 @@ public class DiskMessageStore implements MessageStore {
         }
 
         PutMessageResult result = this.commitLog.putMessage(msg);
-        long eclipseTime = this.getSystemClock().now() - beginTime;
-        if (eclipseTime > 1000) {
-            logger.info("putMessage not in lock eclipse time(ms)={}, bodyLength={}", eclipseTime, msg.getBodyLength());
-        }
+
         return result;
     }
 
@@ -329,6 +338,14 @@ public class DiskMessageStore implements MessageStore {
     @Override
     public void start() {
 
+
+        flushConsumeQueueService.start();
+
+        cleanCommitLogService.start();
+
+        reputMessageService.start();
+
+
         shutdown = false;
     }
 
@@ -336,6 +353,55 @@ public class DiskMessageStore implements MessageStore {
     public void shutDown() {
 
         shutdown = true;
+    }
+
+
+    private boolean loadConsumeQueue() {
+        File dirLogic = new File(StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()));
+        File[] fileTopicList = dirLogic.listFiles();
+        if (fileTopicList != null) {
+
+            for (File fileTopic : fileTopicList) {
+                String topic = fileTopic.getName();
+
+                File[] fileQueueIdList = fileTopic.listFiles();
+                if (fileQueueIdList != null) {
+                    for (File fileQueueId : fileQueueIdList) {
+                        int queueId;
+                        try {
+                            queueId = Integer.parseInt(fileQueueId.getName());
+                        } catch (NumberFormatException e) {
+                            continue;
+                        }
+                        ConsumeQueue logic = new ConsumeQueue(//
+                                topic, //
+                                queueId, //
+                                StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()), //
+                                this.getMessageStoreConfig().getMapedFileSizeConsumeQueue(), //
+                                this);
+                        this.putConsumeQueue(topic, queueId, logic);
+                        if (!logic.load()) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        logger.info("load logics queue all over, OK");
+
+        return true;
+    }
+
+    private void putConsumeQueue(final String topic, final int queueId, final ConsumeQueue consumeQueue) {
+        ConcurrentHashMap<Integer/* queueId */, ConsumeQueue> map = this.consumeQueueTable.get(topic);
+        if (null == map) {
+            map = new ConcurrentHashMap();
+            map.put(queueId, consumeQueue);
+            this.consumeQueueTable.put(topic, map);
+        } else {
+            map.put(queueId, consumeQueue);
+        }
     }
 
 
@@ -471,7 +537,7 @@ public class DiskMessageStore implements MessageStore {
         private void docommitRequest() {
             if (this.hasNotified && !this.request.isEmpty()) {
                 for (QueueRequest r : request) {
-
+                    DiskMessageStore.this.doDispatch(r);
                 }
             }
 

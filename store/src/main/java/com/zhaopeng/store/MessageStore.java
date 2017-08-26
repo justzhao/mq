@@ -42,4 +42,9 @@ public interface MessageStore {
      * 关闭服务
      */
     public void shutDown();
+
+    /**
+     * 初始化加载
+     */
+    public void load();
 }
