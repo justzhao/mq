@@ -198,7 +198,7 @@ public class DiskMessageStore implements MessageStore {
         long beginTime = this.getSystemClock().now();
         MessageExtBrokerInner msg = new MessageExtBrokerInner();
 
-        ConcurrentHashMap<Integer/* queueId */, ConsumeQueue> queueMap = consumeQueueTable.get(sendMessage.getTopic());
+   /*     ConcurrentHashMap<Integer*//* queueId *//*, ConsumeQueue> queueMap = consumeQueueTable.get(sendMessage.getTopic());
         if (queueMap == null) {
             queueMap = new ConcurrentHashMap<>();
             consumeQueueTable.put(sendMessage.getTopic(), queueMap);
@@ -211,7 +211,7 @@ public class DiskMessageStore implements MessageStore {
                     StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()), //
                     this.getMessageStoreConfig().getMapedFileSizeConsumeQueue(), this);
             queueMap.put(sendMessage.getQueueId(), consumeQueue);
-        }
+        }*/
 
         PutMessageResult result = this.commitLog.putMessage(msg);
 
@@ -509,17 +509,22 @@ public class DiskMessageStore implements MessageStore {
         cq.putMessagePostionInfoWrapper(offset, size, storeTimestamp, logicOffset);
     }
 
+    public void doAddConsumeQueueRequest(QueueRequest req){
+        reputMessageService.putRequest(req);
+    }
     public void doDispatch(QueueRequest req) {
 
-        DiskMessageStore.this.putMessagePostionInfo(req.getTopic(), req.getQueueId(), req.getCommitLogOffset(), req.getMsgSize(),
-                req.getStoreTimestamp(), req.getConsumeQueueOffset());
+      //
+
+       DiskMessageStore.this.putMessagePostionInfo(req.getTopic(), req.getQueueId(), req.getCommitLogOffset(), req.getMsgSize(),
+               req.getStoreTimestamp(), req.getConsumeQueueOffset());
 
     }
 
 
     class ReputMessageService extends ServiceThread {
 
-        private volatile long reputFromOffset = 0;
+
 
         private volatile List<QueueRequest> request = new ArrayList<>();
 
@@ -543,41 +548,25 @@ public class DiskMessageStore implements MessageStore {
 
         }
 
-        public long getReputFromOffset() {
-            return reputFromOffset;
-        }
-
-        public void setReputFromOffset(long reputFromOffset) {
-            this.reputFromOffset = reputFromOffset;
-        }
 
 
         @Override
         public void shutdown() {
-            for (int i = 0; i < 50 && this.isCommitLogAvailable(); i++) {
+            for (int i = 0; i < 50 ; i++) {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
                 }
             }
 
-            if (this.isCommitLogAvailable()) {
-                logger.warn("shutdown ReputMessageService, but commitlog have not finish to be dispatched, CL: {} reputFromOffset: {}",
-                        DiskMessageStore.this.commitLog.getMaxOffset(), this.reputFromOffset);
-            }
+
 
             super.shutdown();
         }
 
 
-        public long behind() {
-            return DiskMessageStore.this.commitLog.getMaxOffset() - this.reputFromOffset;
-        }
 
 
-        private boolean isCommitLogAvailable() {
-            return this.reputFromOffset < DiskMessageStore.this.commitLog.getMaxOffset();
-        }
 
 
         @Override

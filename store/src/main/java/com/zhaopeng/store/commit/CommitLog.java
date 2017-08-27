@@ -481,7 +481,7 @@ public class CommitLog {
             QueueRequest request=new QueueRequest(msgInner.getTopic(),msgInner.getQueueId(),fileFromOffset + byteBuffer.position()
                     ,msgLen,System.currentTimeMillis(),queueOffset);
 
-            defaultMessageStore.doDispatch(request);
+            defaultMessageStore.doAddConsumeQueueRequest(request);
 
 
             return result;
