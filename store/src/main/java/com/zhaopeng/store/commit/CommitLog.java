@@ -80,7 +80,7 @@ public class CommitLog {
         msg.setStoreTimestamp(System.currentTimeMillis());
         msg.setBodyCRC(UtilAll.crc32(msg.getBody()));
         AppendMessageResult result = null;
-        long eclipseTimeInLock = 0;
+
         MapedFile unlockMapedFile = null;
         MapedFile mapedFile = this.mapedFileQueue.getLastMapedFileWithLock();
         synchronized (this) {
@@ -122,7 +122,7 @@ public class CommitLog {
                     return new PutMessageResult(PutMessageStatus.UNKNOWN_ERROR);
             }
 
-            eclipseTimeInLock = System.currentTimeMillis() - beginLockTimestamp;
+
             beginTimeInLock = 0;
         }
 
@@ -384,10 +384,7 @@ public class CommitLog {
             MessageExtBrokerInner msgInner = msg;
             //  物理偏移量
             long wroteOffset = fileFromOffset + byteBuffer.position();
-
             String msgId = getMessageId(msg, wroteOffset);
-
-
             String key = msgInner.getTopic() + "-" + msgInner.getQueueId();
             Long queueOffset = CommitLog.this.getTopicQueueTable().get(key);
             if (null == queueOffset) {
@@ -395,15 +392,11 @@ public class CommitLog {
                 CommitLog.this.getTopicQueueTable().put(key, queueOffset);
             }
 
-
             final byte[] topicData = msgInner.getTopic().getBytes(MessageUtil.CHARSET_UTF8);
             final int topicLength = topicData == null ? 0 : topicData.length;
-
             final int bodyLength = msgInner.getBody() == null ? 0 : msgInner.getBody().length;
-
             final int msgLen = calMsgLength(bodyLength, topicLength);
 
-            // Exceeds the maximum message
             if (msgLen > this.maxMessageSize) {
                 log.warn("message size exceeded, msg total size: " + msgLen + ", msg body size: " + bodyLength
                         + ", maxMessageSize: " + this.maxMessageSize);
@@ -438,7 +431,7 @@ public class CommitLog {
             // 4 QUEUEID
             this.msgStoreItemMemory.putInt(msgInner.getQueueId());
             // 5 FLAG
-            this.msgStoreItemMemory.putInt(msgInner.getFlag());
+          //  this.msgStoreItemMemory.putInt(msgInner.getFlag());
             // 6 QUEUEOFFSET
             this.msgStoreItemMemory.putLong(queueOffset);
             // 7 PHYSICALOFFSET
@@ -452,9 +445,9 @@ public class CommitLog {
             // 11 STORETIMESTAMP
             this.msgStoreItemMemory.putLong(msgInner.getStoreTimestamp());
             // 12 STOREHOSTADDRESS
-            this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
+         //   this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
             // 13 RECONSUMETIMES
-            this.msgStoreItemMemory.putInt(msgInner.getReconsumeTimes());
+       //     this.msgStoreItemMemory.putInt(msgInner.getReconsumeTimes());
             // 14 Prepared Transaction Offset
             //  this.msgStoreItemMemory.putLong(msgInner.getPreparedTransactionOffset());
             // 15 BODY

@@ -121,11 +121,7 @@ public class MapedFile extends ReferenceResource {
 
 
     public AppendMessageResult appendMessage(final MessageExtBrokerInner msg, AppendMessageCallback callback) {
-
-
         int currentPos = this.wrotePostion.get();
-
-
         if (currentPos < this.fileSize) {
             ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
             byteBuffer.position(currentPos);

@@ -195,23 +195,13 @@ public class DiskMessageStore implements MessageStore {
         if (this.isOSPageCacheBusy()) {
             return new PutMessageResult(PutMessageStatus.OS_PAGECACHE_BUSY);
         }
-        long beginTime = this.getSystemClock().now();
         MessageExtBrokerInner msg = new MessageExtBrokerInner();
 
-   /*     ConcurrentHashMap<Integer*//* queueId *//*, ConsumeQueue> queueMap = consumeQueueTable.get(sendMessage.getTopic());
-        if (queueMap == null) {
-            queueMap = new ConcurrentHashMap<>();
-            consumeQueueTable.put(sendMessage.getTopic(), queueMap);
-        }
-        ConsumeQueue consumeQueue = queueMap.get(sendMessage.getQueueId());
-        if (consumeQueue == null) {
-            consumeQueue = new ConsumeQueue(//
-                    sendMessage.getTopic(), //
-                    sendMessage.getQueueId(), //
-                    StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()), //
-                    this.getMessageStoreConfig().getMapedFileSizeConsumeQueue(), this);
-            queueMap.put(sendMessage.getQueueId(), consumeQueue);
-        }*/
+        msg.setBody(sendMessage.getMsg().getBody());
+        msg.setTopic(sendMessage.getTopic());
+        msg.setQueueId(sendMessage.getQueueId());
+        msg.setProperties(sendMessage.getMsg().getProperties());
+
 
         PutMessageResult result = this.commitLog.putMessage(msg);
 
