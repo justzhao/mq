@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * Created by zhaopeng on 2017/7/30.
@@ -229,6 +230,90 @@ public class ConsumeQueue {
         }
     }
 
+
+    public void correctMinOffset(long phyMinOffset) {
+        MapedFile mapedFile = this.mapedFileQueue.getFirstMapedFileOnLock();
+        if (mapedFile != null) {
+            SelectMapedBufferResult result = mapedFile.selectMapedBuffer(0);
+            if (result != null) {
+                try {
+
+                    for (int i = 0; i < result.getSize(); i += ConsumeQueue.CQStoreUnitSize) {
+                        long offsetPy = result.getByteBuffer().getLong();
+                        result.getByteBuffer().getInt();
+                        result.getByteBuffer().getLong();
+
+                        if (offsetPy >= phyMinOffset) {
+                            this.minLogicOffset = result.getMapedFile().getFileFromOffset() + i;
+                            logger.info("compute logics min offset: " + this.getMinOffsetInQuque() + ", topic: "
+                                    + this.topic + ", queueId: " + this.queueId);
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    result.release();
+                }
+            }
+        }
+    }
+
+    public void recover() {
+        final List<MapedFile> mapedFiles = this.mapedFileQueue.getMapedFiles();
+        if (!mapedFiles.isEmpty()) {
+
+            int index = mapedFiles.size() - 3;
+            if (index < 0)
+                index = 0;
+
+            int mapedFileSizeLogics = this.mapedFileSize;
+            MapedFile mapedFile = mapedFiles.get(index);
+            ByteBuffer byteBuffer = mapedFile.sliceByteBuffer();
+            long processOffset = mapedFile.getFileFromOffset();
+            long mapedFileOffset = 0;
+            while (true) {
+                for (int i = 0; i < mapedFileSizeLogics; i += CQStoreUnitSize) {
+                    long offset = byteBuffer.getLong();
+                    int size = byteBuffer.getInt();
+                    long tagsCode = byteBuffer.getLong();
+
+                    if (offset >= 0 && size > 0) {
+                        mapedFileOffset = i + CQStoreUnitSize;
+                        this.maxPhysicOffset = offset;
+                    } else {
+                        logger.info("recover current consume queue file over,  " + mapedFile.getFileName() + " "
+                                + offset + " " + size + " " + tagsCode);
+                        break;
+                    }
+                }
+
+
+                if (mapedFileOffset == mapedFileSizeLogics) {
+                    index++;
+                    if (index >= mapedFiles.size()) {
+
+                        logger.info("recover last consume queue file over, last maped file "
+                                + mapedFile.getFileName());
+                        break;
+                    } else {
+                        mapedFile = mapedFiles.get(index);
+                        byteBuffer = mapedFile.sliceByteBuffer();
+                        processOffset = mapedFile.getFileFromOffset();
+                        mapedFileOffset = 0;
+                        logger.info("recover next consume queue file, " + mapedFile.getFileName());
+                    }
+                } else {
+                    logger.info("recover current consume queue queue over " + mapedFile.getFileName() + " "
+                            + (processOffset + mapedFileOffset));
+                    break;
+                }
+            }
+
+            processOffset += mapedFileOffset;
+            this.mapedFileQueue.truncateDirtyFiles(processOffset);
+        }
+    }
 
 }
 

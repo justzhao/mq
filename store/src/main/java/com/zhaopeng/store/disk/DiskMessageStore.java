@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -68,7 +69,28 @@ public class DiskMessageStore implements MessageStore {
 
         this.loadConsumeQueue();
 
+        this.recover();
 
+
+
+
+    }
+
+    public void recover(){
+
+        this.recoverConsumeQueue();
+
+        this.commitLog.recoverNormally();
+
+        this.recoverTopicQueueTable();
+    }
+
+    public void recoverConsumeQueue(){
+        for (ConcurrentHashMap<Integer, ConsumeQueue> maps : this.consumeQueueTable.values()) {
+            for (ConsumeQueue logic : maps.values()) {
+                logic.recover();
+            }
+        }
     }
 
     public DiskMessageStore(final MessageStoreConfig messageStoreConfig) throws IOException {
@@ -160,7 +182,6 @@ public class DiskMessageStore implements MessageStore {
         response.getExtFields().put(MessageOffsetConstant.MINOFFSET, result.getMinOffset());
         response.getExtFields().put(MessageOffsetConstant.MAXOFFSET, result.getMaxOffset());
         response.getExtFields().put(MessageOffsetConstant.NEXTBEGINOFFSET, result.getNextBeginOffset());
-
 
         response.setBody(bytes);
         return response;
@@ -255,22 +276,18 @@ public class DiskMessageStore implements MessageStore {
                         final int MaxFilterMessageCount = 16000;
 
                         for (; i < bufferConsumeQueue.getSize() && i < MaxFilterMessageCount; i += ConsumeQueue.CQStoreUnitSize) {
-
                             // messgeQueue  使用20个字节存取消息的物理位置信息和长度信息
                             long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();
-
                             SelectMapedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
                             if (selectResult != null) {
                                 getResult.addMessage(selectResult);
                                 status = GetMessageStatus.FOUND;
                                 nextPhyFileStartOffset = Long.MIN_VALUE;
-
                                 if (nextPhyFileStartOffset != Long.MIN_VALUE) {
                                     if (offsetPy < nextPhyFileStartOffset)
                                         continue;
                                 }
-
                                 if (this.isTheBatchFull(sizePy, maxMsgNums, getResult.getBufferTotalSize(), getResult.getMessageCount(), true)) {
                                     break;
                                 }
@@ -395,6 +412,20 @@ public class DiskMessageStore implements MessageStore {
     }
 
 
+    private void recoverTopicQueueTable() {
+        HashMap<String/* topic-queueid */, Long/* offset */> table = new HashMap<String, Long>(1024);
+        long minPhyOffset = this.commitLog.getMinOffset();
+        for (ConcurrentHashMap<Integer, ConsumeQueue> maps : this.consumeQueueTable.values()) {
+            for (ConsumeQueue logic : maps.values()) {
+                String key = logic.getTopic() + "-" + logic.getQueueId();
+                table.put(key, logic.getMaxOffsetInQuque());
+                logic.correctMinOffset(minPhyOffset);
+            }
+        }
+
+        this.commitLog.setTopicQueueTable(table);
+    }
+
     class FlushConsumeQueueService extends ServiceThread {
         @Override
         public String getServiceName() {
@@ -499,21 +530,21 @@ public class DiskMessageStore implements MessageStore {
         cq.putMessagePostionInfoWrapper(offset, size, storeTimestamp, logicOffset);
     }
 
-    public void doAddConsumeQueueRequest(QueueRequest req){
+    public void doAddConsumeQueueRequest(QueueRequest req) {
         reputMessageService.putRequest(req);
     }
+
     public void doDispatch(QueueRequest req) {
 
-      //
+        //
 
-       DiskMessageStore.this.putMessagePostionInfo(req.getTopic(), req.getQueueId(), req.getCommitLogOffset(), req.getMsgSize(),
-               req.getStoreTimestamp(), req.getConsumeQueueOffset());
+        DiskMessageStore.this.putMessagePostionInfo(req.getTopic(), req.getQueueId(), req.getCommitLogOffset(), req.getMsgSize(),
+                req.getStoreTimestamp(), req.getConsumeQueueOffset());
 
     }
 
 
     class ReputMessageService extends ServiceThread {
-
 
 
         private volatile List<QueueRequest> request = new ArrayList<>();
@@ -539,10 +570,9 @@ public class DiskMessageStore implements MessageStore {
         }
 
 
-
         @Override
         public void shutdown() {
-            for (int i = 0; i < 50 ; i++) {
+            for (int i = 0; i < 50; i++) {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -550,13 +580,8 @@ public class DiskMessageStore implements MessageStore {
             }
 
 
-
             super.shutdown();
         }
-
-
-
-
 
 
         @Override

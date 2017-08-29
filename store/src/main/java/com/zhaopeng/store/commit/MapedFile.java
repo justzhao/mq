@@ -89,6 +89,9 @@ public class MapedFile extends ReferenceResource {
         }
     }
 
+    public ByteBuffer sliceByteBuffer() {
+        return this.mappedByteBuffer.slice();
+    }
 
     public boolean destroy(final long intervalForcibly) {
         this.shutdown(intervalForcibly);

@@ -362,15 +362,15 @@ public class CommitLog {
                     + 4 // 2 MAGICCODE
                     + 4 // 3 BODYCRC
                     + 4 // 4 QUEUEID
-                    + 4 // 5 FLAG
+                  //  + 4 // 5 FLAG
                     + 8 // 6 QUEUEOFFSET
                     + 8 // 7 PHYSICALOFFSET
                     //  + 4 // 8 SYSFLAG
                     + 8 // 9 BORNTIMESTAMP
                     + 8 // 10 BORNHOST
                     + 8 // 11 STORETIMESTAMP
-                    + 8 // 12 STOREHOSTADDRESS
-                    + 4 // 13 RECONSUMETIMES
+                    //+ 8 // 12 STOREHOSTADDRESS
+                    //+ 4 // 13 RECONSUMETIMES
                     //  + 8 // 14 Prepared Transaction Offset
                     + 4 + (bodyLength > 0 ? bodyLength : 0) // 14 BODY
                     + 1 + topicLength // 15 TOPIC
@@ -402,11 +402,7 @@ public class CommitLog {
                         + ", maxMessageSize: " + this.maxMessageSize);
                 return new AppendMessageResult(AppendMessageStatus.MESSAGE_SIZE_EXCEEDED);
             }
-
-
             if ((msgLen + END_FILE_MIN_BLANK_LENGTH) > maxBlank) {
-
-
                 this.resetMsgStoreItemMemory(maxBlank);
                 // 1 TOTALSIZE
                 this.msgStoreItemMemory.putInt(maxBlank);
@@ -419,7 +415,6 @@ public class CommitLog {
                 return new AppendMessageResult(AppendMessageStatus.END_OF_FILE, wroteOffset, maxBlank, msgId, msgInner.getStoreTimestamp(),
                         queueOffset, System.currentTimeMillis() - beginTimeMills);
             }
-
             // Initialization of storage space
             this.resetMsgStoreItemMemory(msgLen);
             // 1 TOTALSIZE
@@ -475,7 +470,7 @@ public class CommitLog {
                     ,msgLen,System.currentTimeMillis(),queueOffset);
 
             defaultMessageStore.doAddConsumeQueueRequest(request);
-
+            CommitLog.this.topicQueueTable.put(key, ++queueOffset);
 
             return result;
 
@@ -508,6 +503,80 @@ public class CommitLog {
         boolean result = this.mapedFileQueue.load();
         log.info("load commit log " + (result ? "OK" : "Failed"));
         return result;
+    }
+
+
+    public long getMinOffset() {
+        MapedFile mapedFile = this.mapedFileQueue.getFirstMapedFileOnLock();
+        if (mapedFile != null) {
+            if (mapedFile.isAvailable()) {
+                return mapedFile.getFileFromOffset();
+            } else {
+                return this.rollNextFile(mapedFile.getFileFromOffset());
+            }
+        }
+
+        return -1;
+    }
+    public long rollNextFile(final long offset) {
+        int mapedFileSize = this.defaultMessageStore.getMessageStoreConfig().getMapedFileSizeCommitLog();
+        return (offset + mapedFileSize - offset % mapedFileSize);
+    }
+
+    public void recoverNormally() {
+
+        final List<MapedFile> mapedFiles = this.mapedFileQueue.getMapedFiles();
+        if (!mapedFiles.isEmpty()) {
+            // Began to recover from the last third file
+            int index = mapedFiles.size() - 3;
+            if (index < 0)
+                index = 0;
+
+            MapedFile mapedFile = mapedFiles.get(index);
+            ByteBuffer byteBuffer = mapedFile.sliceByteBuffer();
+            long processOffset = mapedFile.getFileFromOffset();
+            long mapedFileOffset = 0;
+            while (true) {
+                QueueRequest dispatchRequest = this.checkMessageAndReturnSize(byteBuffer,true);
+                int size = dispatchRequest.getMsgSize();
+                // Normal data
+                if (dispatchRequest.isSuccess() && size > 0) {
+                    mapedFileOffset += size;
+                }
+                // Come the end of the file, switch to the next file Since the
+                // return 0 representatives met last hole,
+                // this can not be included in truncate offset
+                else if (dispatchRequest.isSuccess() && size == 0) {
+                    index++;
+                    if (index >= mapedFiles.size()) {
+                        // Current branch can not happen
+                        log.info("recover last 3 physics file over, last maped file " + mapedFile.getFileName());
+                        break;
+                    } else {
+                        mapedFile = mapedFiles.get(index);
+                        byteBuffer = mapedFile.sliceByteBuffer();
+                        processOffset = mapedFile.getFileFromOffset();
+                        mapedFileOffset = 0;
+                        log.info("recover next physics file, " + mapedFile.getFileName());
+                    }
+                }
+                // Intermediate file read error
+                else if (!dispatchRequest.isSuccess()) {
+                    log.info("recover physics file end, " + mapedFile.getFileName());
+                    break;
+                }
+            }
+
+            processOffset += mapedFileOffset;
+            this.mapedFileQueue.setCommittedWhere(processOffset);
+            this.mapedFileQueue.truncateDirtyFiles(processOffset);
+        }
+    }
+
+
+    public QueueRequest checkMessageAndReturnSize(java.nio.ByteBuffer byteBuffer,  final boolean readBody) {
+
+        return null;
     }
 
 
