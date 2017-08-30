@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.zhaopeng.store.util.MessageUtil.CHARSET_UTF8;
 import static com.zhaopeng.store.util.MessageUtil.MSG_ID_LENGTH;
 
 /**
@@ -392,7 +393,7 @@ public class CommitLog {
                 CommitLog.this.getTopicQueueTable().put(key, queueOffset);
             }
 
-            final byte[] topicData = msgInner.getTopic().getBytes(MessageUtil.CHARSET_UTF8);
+            final byte[] topicData = msgInner.getTopic().getBytes(CHARSET_UTF8);
             final int topicLength = topicData == null ? 0 : topicData.length;
             final int bodyLength = msgInner.getBody() == null ? 0 : msgInner.getBody().length;
             final int msgLen = calMsgLength(bodyLength, topicLength);
@@ -543,13 +544,11 @@ public class CommitLog {
                 if (dispatchRequest.isSuccess() && size > 0) {
                     mapedFileOffset += size;
                 }
-                // Come the end of the file, switch to the next file Since the
-                // return 0 representatives met last hole,
-                // this can not be included in truncate offset
+
                 else if (dispatchRequest.isSuccess() && size == 0) {
                     index++;
                     if (index >= mapedFiles.size()) {
-                        // Current branch can not happen
+
                         log.info("recover last 3 physics file over, last maped file " + mapedFile.getFileName());
                         break;
                     } else {
@@ -575,6 +574,65 @@ public class CommitLog {
 
 
     public QueueRequest checkMessageAndReturnSize(java.nio.ByteBuffer byteBuffer,  final boolean readBody) {
+
+        int totalSize = byteBuffer.getInt();
+
+        byte[] bytesContent = new byte[totalSize];
+        int magicCode = byteBuffer.getInt();
+
+        int bodyCRC = byteBuffer.getInt();
+
+        // 4 QUEUEID
+        int queueId = byteBuffer.getInt();
+
+        // 5 FLAG
+        int flag = byteBuffer.getInt();
+
+        // 6 QUEUEOFFSET
+        long queueOffset = byteBuffer.getLong();
+
+        // 7 PHYSICALOFFSET
+        long physicOffset = byteBuffer.getLong();
+
+        // 8 SYSFLAG
+        int sysFlag = byteBuffer.getInt();
+
+        // 9 BORNTIMESTAMP
+        long bornTimeStamp = byteBuffer.getLong();
+
+        // 10
+        ByteBuffer byteBuffer1 = byteBuffer.get(bytesContent, 0, 8);
+
+        // 11 STORETIMESTAMP
+        long storeTimestamp = byteBuffer.getLong();
+
+        // 12
+        ByteBuffer byteBuffer2 = byteBuffer.get(bytesContent, 0, 8);
+
+        // 13 RECONSUMETIMES
+        int reconsumeTimes = byteBuffer.getInt();
+
+        // 14 Prepared Transaction Offset
+        long preparedTransactionOffset = byteBuffer.getLong();
+
+        // 15 BODY
+        int bodyLen = byteBuffer.getInt();
+        if (bodyLen > 0) {
+            if (readBody) {
+                byteBuffer.get(bytesContent, 0, bodyLen);
+            } else {
+                byteBuffer.position(byteBuffer.position() + bodyLen);
+            }
+        }
+
+        // 16 TOPIC
+        byte topicLen = byteBuffer.get();
+        byteBuffer.get(bytesContent, 0, topicLen);
+        String topic = new String(bytesContent, 0, topicLen, CHARSET_UTF8);
+
+        long tagsCode = 0;
+        String keys = "";
+        String uniqKey = null;
 
         return null;
     }

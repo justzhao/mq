@@ -58,30 +58,19 @@ public class DiskMessageStore implements MessageStore {
     private volatile boolean shutdown = true;
 
     public void DiskMessageStore() {
-
-
     }
 
     public void load() {
 
-
         this.commitLog.load();
-
         this.loadConsumeQueue();
-
         this.recover();
-
-
-
 
     }
 
     public void recover(){
-
         this.recoverConsumeQueue();
-
         this.commitLog.recoverNormally();
-
         this.recoverTopicQueueTable();
     }
 

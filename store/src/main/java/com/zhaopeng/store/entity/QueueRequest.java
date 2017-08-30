@@ -25,6 +25,26 @@ public class QueueRequest {
 
     private final boolean success;
 
+    public QueueRequest(int size, boolean success) {
+        // 1
+        this.topic = "";
+        // 2
+        this.queueId = 0;
+        // 3
+        this.commitLogOffset = 0;
+        // 4
+        this.msgSize = size;
+        // 5
+
+        // 6
+        this.storeTimestamp = 0;
+        // 7
+        this.consumeQueueOffset = 0;
+        // 8
+
+        this.success = success;
+    }
+
 
     public String getTopic() {
         return topic;
