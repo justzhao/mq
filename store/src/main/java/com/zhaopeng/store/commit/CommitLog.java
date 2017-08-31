@@ -426,26 +426,18 @@ public class CommitLog {
             this.msgStoreItemMemory.putInt(msgInner.getBodyCRC());
             // 4 QUEUEID
             this.msgStoreItemMemory.putInt(msgInner.getQueueId());
-            // 5 FLAG
-          //  this.msgStoreItemMemory.putInt(msgInner.getFlag());
+
             // 6 QUEUEOFFSET
             this.msgStoreItemMemory.putLong(queueOffset);
             // 7 PHYSICALOFFSET
             this.msgStoreItemMemory.putLong(fileFromOffset + byteBuffer.position());
-            // 8 SYSFLAG
-            //  this.msgStoreItemMemory.putInt(msgInner.getSysFlag());
+
             // 9 BORNTIMESTAMP
             this.msgStoreItemMemory.putLong(msgInner.getBornTimestamp());
             // 10 BORNHOST
             this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
             // 11 STORETIMESTAMP
             this.msgStoreItemMemory.putLong(msgInner.getStoreTimestamp());
-            // 12 STOREHOSTADDRESS
-         //   this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
-            // 13 RECONSUMETIMES
-       //     this.msgStoreItemMemory.putInt(msgInner.getReconsumeTimes());
-            // 14 Prepared Transaction Offset
-            //  this.msgStoreItemMemory.putLong(msgInner.getPreparedTransactionOffset());
             // 15 BODY
             this.msgStoreItemMemory.putInt(bodyLength);
             if (bodyLength > 0)
@@ -453,7 +445,7 @@ public class CommitLog {
             // 16 TOPIC
             this.msgStoreItemMemory.put((byte) topicLength);
             this.msgStoreItemMemory.put(topicData);
-            // 17 PROPERTIES
+
 
 
             final long beginTimeMills = System.currentTimeMillis();
@@ -544,11 +536,9 @@ public class CommitLog {
                 if (dispatchRequest.isSuccess() && size > 0) {
                     mapedFileOffset += size;
                 }
-
                 else if (dispatchRequest.isSuccess() && size == 0) {
                     index++;
                     if (index >= mapedFiles.size()) {
-
                         log.info("recover last 3 physics file over, last maped file " + mapedFile.getFileName());
                         break;
                     } else {
@@ -575,6 +565,39 @@ public class CommitLog {
 
     public QueueRequest checkMessageAndReturnSize(java.nio.ByteBuffer byteBuffer,  final boolean readBody) {
 
+        /**
+         *
+         // 1 TOTALSIZE
+         this.msgStoreItemMemory.putInt(msgLen);
+         // 2 MAGICCODE
+         this.msgStoreItemMemory.putInt(CommitLog.MessageMagicCode);
+         // 3 BODYCRC
+         this.msgStoreItemMemory.putInt(msgInner.getBodyCRC());
+         // 4 QUEUEID
+         this.msgStoreItemMemory.putInt(msgInner.getQueueId());
+
+         // 6 QUEUEOFFSET
+         this.msgStoreItemMemory.putLong(queueOffset);
+         // 7 PHYSICALOFFSET
+         this.msgStoreItemMemory.putLong(fileFromOffset + byteBuffer.position());
+
+         // 9 BORNTIMESTAMP
+         this.msgStoreItemMemory.putLong(msgInner.getBornTimestamp());
+         // 10 BORNHOST
+         this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
+         // 11 STORETIMESTAMP
+         this.msgStoreItemMemory.putLong(msgInner.getStoreTimestamp());
+         // 15 BODY
+         this.msgStoreItemMemory.putInt(bodyLength);
+         if (bodyLength > 0)
+         this.msgStoreItemMemory.put(msgInner.getBody());
+         // 16 TOPIC
+         this.msgStoreItemMemory.put((byte) topicLength);
+         this.msgStoreItemMemory.put(topicData);
+
+
+         */
+
         int totalSize = byteBuffer.getInt();
 
         byte[] bytesContent = new byte[totalSize];
@@ -585,35 +608,20 @@ public class CommitLog {
         // 4 QUEUEID
         int queueId = byteBuffer.getInt();
 
-        // 5 FLAG
-        int flag = byteBuffer.getInt();
-
         // 6 QUEUEOFFSET
         long queueOffset = byteBuffer.getLong();
 
         // 7 PHYSICALOFFSET
         long physicOffset = byteBuffer.getLong();
 
-        // 8 SYSFLAG
-        int sysFlag = byteBuffer.getInt();
-
         // 9 BORNTIMESTAMP
         long bornTimeStamp = byteBuffer.getLong();
 
-        // 10
+        // 10 BORNHOST
         ByteBuffer byteBuffer1 = byteBuffer.get(bytesContent, 0, 8);
 
         // 11 STORETIMESTAMP
         long storeTimestamp = byteBuffer.getLong();
-
-        // 12
-        ByteBuffer byteBuffer2 = byteBuffer.get(bytesContent, 0, 8);
-
-        // 13 RECONSUMETIMES
-        int reconsumeTimes = byteBuffer.getInt();
-
-        // 14 Prepared Transaction Offset
-        long preparedTransactionOffset = byteBuffer.getLong();
 
         // 15 BODY
         int bodyLen = byteBuffer.getInt();
@@ -624,17 +632,21 @@ public class CommitLog {
                 byteBuffer.position(byteBuffer.position() + bodyLen);
             }
         }
-
         // 16 TOPIC
         byte topicLen = byteBuffer.get();
         byteBuffer.get(bytesContent, 0, topicLen);
         String topic = new String(bytesContent, 0, topicLen, CHARSET_UTF8);
 
-        long tagsCode = 0;
-        String keys = "";
-        String uniqKey = null;
 
-        return null;
+
+        return new QueueRequest(//
+                topic, // 1
+                queueId, // 2
+                physicOffset, // 3
+                totalSize, // 4
+                storeTimestamp, // 5
+                queueOffset// 7
+        );
     }
 
 

@@ -265,7 +265,7 @@ public class DiskMessageStore implements MessageStore {
                         final int MaxFilterMessageCount = 16000;
 
                         for (; i < bufferConsumeQueue.getSize() && i < MaxFilterMessageCount; i += ConsumeQueue.CQStoreUnitSize) {
-                            // messgeQueue  使用20个字节存取消息的物理位置信息和长度信息
+                            // messgeQueue  使用12个字节存取消息的物理位置信息和长度信息
                             long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();
                             SelectMapedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
@@ -300,8 +300,6 @@ public class DiskMessageStore implements MessageStore {
             status = GetMessageStatus.NO_MATCHED_LOGIC_QUEUE;
             nextBeginOffset = nextOffsetCorrection(offset, 0);
         }
-
-
         getResult.setStatus(status);
         getResult.setNextBeginOffset(nextBeginOffset);
         getResult.setMaxOffset(maxOffset);
