@@ -37,7 +37,6 @@ public class DiskMessageStore implements MessageStore {
 
 
     private final MessageStoreConfig messageStoreConfig;
-    // CommitLog
     private final CommitLog commitLog;
 
     private final ConcurrentHashMap<String/* topic */, ConcurrentHashMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
@@ -92,7 +91,7 @@ public class DiskMessageStore implements MessageStore {
         flushConsumeQueueService = new FlushConsumeQueueService();
         reputMessageService = new ReputMessageService();
         systemClock = new SystemClock(1);
-        commitLog = new CommitLog(this);
+        commitLog = new CommitLog(messageStoreConfig,this);
 
     }
 
@@ -211,6 +210,7 @@ public class DiskMessageStore implements MessageStore {
         msg.setTopic(sendMessage.getTopic());
         msg.setQueueId(sendMessage.getQueueId());
         msg.setProperties(sendMessage.getMsg().getProperties());
+        msg.setQueueOffset(sendMessage.getQueueOffset());
 
 
         PutMessageResult result = this.commitLog.putMessage(msg);

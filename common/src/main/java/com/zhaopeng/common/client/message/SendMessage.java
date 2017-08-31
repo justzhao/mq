@@ -9,6 +9,7 @@ public class SendMessage extends JsonSerializable {
     private String topic;
     private String brokerName;
     private String brokerAddr;
+    private int queueOffset;
     private int queueId;
     private Message msg;
 
@@ -52,4 +53,11 @@ public class SendMessage extends JsonSerializable {
         this.queueId = queueId;
     }
 
+    public int getQueueOffset() {
+        return queueOffset;
+    }
+
+    public void setQueueOffset(int queueOffset) {
+        this.queueOffset = queueOffset;
+    }
 }

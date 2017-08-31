@@ -39,24 +39,23 @@ public class CommitLog {
     private final MessageStoreConfig messageStoreConfig;
     private final FlushCommitLogService flushCommitLogService;
     //private final AllocateMapedFileService allocateMapedFileService;
-    private final StoreCheckpoint storeCheckpoint;
+//    private final StoreCheckpoint storeCheckpoint;
     private final AppendMessageCallback appendMessageCallback;
     private final DiskMessageStore defaultMessageStore;
     public CommitLog(DiskMessageStore messageStore) throws IOException {
 
         this.defaultMessageStore=messageStore;
         this.messageStoreConfig = new MessageStoreConfig();
-        this.storeCheckpoint = new StoreCheckpoint("c://defaut");
+       // this.storeCheckpoint = new StoreCheckpoint("c://defaut");
         this.flushCommitLogService = new GroupCommitService();
        // this.allocateMapedFileService = new AllocateMapedFileService();
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
                 messageStoreConfig.getMapedFileSizeCommitLog());
         this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
     }
-    public CommitLog(MessageStoreConfig config,
-                     StoreCheckpoint storeCheckpoint,DiskMessageStore messageStore) {
+    public CommitLog(MessageStoreConfig config, DiskMessageStore messageStore) {
         this.messageStoreConfig = config;
-        this.storeCheckpoint = storeCheckpoint;
+       // this.storeCheckpoint = storeCheckpoint;
         this.flushCommitLogService = new GroupCommitService();
         this.defaultMessageStore=messageStore;
 
@@ -226,10 +225,6 @@ public class CommitLog {
                     req.wakeupCustomer(flushOK);
                 }
 
-                long storeTimestamp = CommitLog.this.mapedFileQueue.getStoreTimestamp();
-                if (storeTimestamp > 0) {
-                    getStoreCheckpoint().setPhysicMsgTimestamp(storeTimestamp);
-                }
 
                 this.requestsRead.clear();
             } else {
@@ -298,9 +293,7 @@ public class CommitLog {
 
 
 
-    public StoreCheckpoint getStoreCheckpoint() {
-        return storeCheckpoint;
-    }
+
 
 
     public long getConfirmOffset() {
