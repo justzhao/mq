@@ -10,5 +10,7 @@ public class ResponseCode {
 
     public static final int TOPIC_NOT_EXIST = 10007;
 
+    public static final int SYSTEM_ERROR = 1;
+
 
 }

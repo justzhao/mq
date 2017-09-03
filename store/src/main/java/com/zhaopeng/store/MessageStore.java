@@ -4,7 +4,7 @@ package com.zhaopeng.store;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
-import com.zhaopeng.remoting.protocol.RemotingCommand;
+import com.zhaopeng.store.disk.GetMessageResult;
 import com.zhaopeng.store.entity.PutMessageResult;
 
 /**
@@ -24,7 +24,7 @@ public interface MessageStore {
      * @param pull
      * @return
      */
-    public RemotingCommand getMessageContent(PullMesageInfo pull);
+    public GetMessageResult getMessageContent(PullMesageInfo pull);
 
     /**
      * 添加消息

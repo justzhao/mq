@@ -40,6 +40,9 @@ public class GetMessageResult {
     }
 
 
+    public GetMessageStatus getStatus() {
+        return status;
+    }
 
     public long getNextBeginOffset() {
         return nextBeginOffset;

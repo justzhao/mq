@@ -1,10 +1,6 @@
 package com.zhaopeng.mq.processor;
 
-import com.google.common.collect.Lists;
-import com.zhaopeng.common.client.enums.PullStatus;
 import com.zhaopeng.common.client.enums.SendStatus;
-import com.zhaopeng.common.client.message.Message;
-import com.zhaopeng.common.client.message.PullResult;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.client.message.SendResult;
 import com.zhaopeng.common.protocol.ResponseCode;
@@ -18,8 +14,6 @@ import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 import static com.zhaopeng.common.protocol.RequestCode.PULL_MESSAGE;
 import static com.zhaopeng.common.protocol.RequestCode.SEND_MESSAGE;
 
@@ -29,11 +23,9 @@ import static com.zhaopeng.common.protocol.RequestCode.SEND_MESSAGE;
 public class BrokerServerProcessor implements NettyRequestProcessor {
 
     /**
-      关于取消息，  会记录本次 拉取的消息 中的nextOffset (下一次 Messagequeue获取消息的偏移量) 当成下一次 Queue 的offset (队列的偏移量)，offset 信息放在 放在head。
-
-     保存信息。
-
-
+     * 关于取消息，  会记录本次 拉取的消息 中的nextOffset (下一次 Messagequeue获取消息的偏移量) 当成下一次 Queue 的offset (队列的偏移量)，offset 信息放在 放在head。
+     * <p>
+     * 保存信息。
      */
 
 
@@ -88,17 +80,7 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
         byte body[] = request.getBody();
         if (body != null) {
             PullMesageInfo pullMesageInfo = PullMesageInfo.decode(body, PullMesageInfo.class);
-            Message message = messageHandler.getMessage(pullMesageInfo);
-            List<Message> msg = Lists.newArrayList();
-            msg.add(message);
-            PullResult result = null;
-            if (message != null) {
-                result = new PullResult(PullStatus.FOUND);
-                result.setMessages(msg);
-            } else {
-                result = new PullResult(PullStatus.NO_NEW_MSG);
-            }
-            respone.setBody(result.encode());
+            respone = messageHandler.getRespone(pullMesageInfo);
         }
         return respone;
 

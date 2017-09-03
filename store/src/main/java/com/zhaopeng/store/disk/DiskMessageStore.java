@@ -2,12 +2,9 @@ package com.zhaopeng.store.disk;
 
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
-import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
-import com.zhaopeng.common.store.MessageOffsetConstant;
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.remoting.common.SystemClock;
-import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.store.ConsumeQueue;
 import com.zhaopeng.store.MessageStore;
 import com.zhaopeng.store.commit.CommitLog;
@@ -21,8 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,8 +76,8 @@ public class DiskMessageStore implements MessageStore {
         }
     }
 
-    public DiskMessageStore(final MessageStoreConfig messageStoreConfig) throws IOException {
-        this.messageStoreConfig = messageStoreConfig;
+    public DiskMessageStore()  {
+        this.messageStoreConfig = new MessageStoreConfig();
 
         consumeQueueTable = new ConcurrentHashMap<>();
         indexService = new IndexService();
@@ -147,10 +142,10 @@ public class DiskMessageStore implements MessageStore {
     public Message getMessage(PullMesageInfo pull) {
         GetMessageResult getMessageResult = this.getMessage(pull.getTopic(), pull.getQueueId(), pull.getQueueOffset(), pull.getMaxMsgNums());
 
-        final byte[] r = this.readGetMessageResult(getMessageResult);
+       // final byte[] r = this.readGetMessageResult(getMessageResult);
 
         Message message = new Message();
-        message.setBody(r);
+      //  message.setBody(r);
 
         message.setTopic(pull.getTopic());
 
@@ -160,35 +155,14 @@ public class DiskMessageStore implements MessageStore {
     }
 
     @Override
-    public RemotingCommand getMessageContent(PullMesageInfo pull) {
+    public GetMessageResult getMessageContent(PullMesageInfo pull) {
 
 
-        RemotingCommand response = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
+        return getMessage(pull.getTopic(), pull.getQueueId(), pull.getCommitOffset(), pull.getMaxMsgNums());
 
-        GetMessageResult result = getMessage(pull.getTopic(), pull.getQueueId(), pull.getCommitOffset(), pull.getMaxMsgNums());
-        byte[] bytes = readGetMessageResult(result);
-        response.getExtFields().put(MessageOffsetConstant.MINOFFSET, result.getMinOffset());
-        response.getExtFields().put(MessageOffsetConstant.MAXOFFSET, result.getMaxOffset());
-        response.getExtFields().put(MessageOffsetConstant.NEXTBEGINOFFSET, result.getNextBeginOffset());
-
-        response.setBody(bytes);
-        return response;
     }
 
 
-    private byte[] readGetMessageResult(final GetMessageResult getMessageResult) {
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(getMessageResult.getBufferTotalSize());
-
-        try {
-            List<ByteBuffer> messageBufferList = getMessageResult.getMessageBufferList();
-            for (ByteBuffer bb : messageBufferList) {
-                byteBuffer.put(bb);
-            }
-        } finally {
-            getMessageResult.release();
-        }
-        return byteBuffer.array();
-    }
 
 
     @Override
