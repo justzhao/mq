@@ -5,7 +5,6 @@ import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
-import com.zhaopeng.common.store.MessageOffsetConstant;
 import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.store.MessageStore;
 import com.zhaopeng.store.disk.DiskMessageStore;
@@ -27,7 +26,12 @@ public class MessageHandler {
 
 
 
-    MessageStore store=new DiskMessageStore();
+    private final MessageStore store;
+
+    public MessageHandler(){
+        store=new DiskMessageStore();
+        store.load();
+    }
 
     public void addMessage(SendMessage sendMessage) {
      /*   String topic = sendMessage.getTopic();
@@ -74,10 +78,10 @@ public class MessageHandler {
 
 
             byte[] bytes = readGetMessageResult(result);
-            response.getExtFields().put(MessageOffsetConstant.MINOFFSET, result.getMinOffset());
-            response.getExtFields().put(MessageOffsetConstant.MAXOFFSET, result.getMaxOffset());
-            response.getExtFields().put(MessageOffsetConstant.NEXTBEGINOFFSET, result.getNextBeginOffset());
 
+            response.setMinOffset(result.getMinOffset());
+            response.setMaxOffset(result.getMaxOffset());
+            response.setNextBeginOffset(result.getNextBeginOffset());
             response.setBody(bytes);
 
         }else{

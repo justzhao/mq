@@ -20,6 +20,16 @@ public class RemotingCommand {
     private static final int RPC_TYPE = 0; // 0 是req 1 是 rep
     private static final int RPC_ONEWAY = 1; // 0  rpc 需要返回结果, 1 ,不需要返回结果
     /**
+     *  消息的个数信息等
+     *
+     */
+
+    private Long nextBeginOffset;
+
+    private Long minOffset;
+
+    private Long maxOffset;
+    /**
      * 静态变量用来唯一保存 请求id
      */
     private static AtomicInteger requestId = new AtomicInteger(0);
@@ -40,7 +50,7 @@ public class RemotingCommand {
     /**
      * 扩展字段
      */
-    private HashMap<String, Object> extFields = Maps.newHashMap();
+    private HashMap<String, String> extFields = Maps.newHashMap();
 
     /**
      * 用来临时保存 requestId
@@ -197,6 +207,30 @@ public class RemotingCommand {
         return cmd;
     }
 
+    public Long getNextBeginOffset() {
+        return nextBeginOffset;
+    }
+
+    public void setNextBeginOffset(Long nextBeginOffset) {
+        this.nextBeginOffset = nextBeginOffset;
+    }
+
+    public Long getMinOffset() {
+        return minOffset;
+    }
+
+    public void setMinOffset(Long minOffset) {
+        this.minOffset = minOffset;
+    }
+
+    public Long getMaxOffset() {
+        return maxOffset;
+    }
+
+    public void setMaxOffset(Long maxOffset) {
+        this.maxOffset = maxOffset;
+    }
+
     /**
      * 一共4 个byte。 最高的byte存放序列化的方式
      *
@@ -270,11 +304,11 @@ public class RemotingCommand {
     }
 
 
-    public HashMap<String, Object> getExtFields() {
+    public HashMap<String, String> getExtFields() {
         return extFields;
     }
 
-    public void setExtFields(HashMap<String, Object> extFields) {
+    public void setExtFields(HashMap<String, String> extFields) {
         this.extFields = extFields;
     }
 

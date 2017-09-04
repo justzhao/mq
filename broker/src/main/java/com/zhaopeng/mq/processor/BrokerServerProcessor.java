@@ -91,6 +91,7 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
 
         byte[] body = request.getBody();
         SendMessage sendMessage = SendMessage.decode(body, SendMessage.class);
+        // 这里换成 MessageExtBrokerInner
         messageHandler.addMessage(sendMessage);
 
 

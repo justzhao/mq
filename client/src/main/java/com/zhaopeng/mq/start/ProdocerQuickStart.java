@@ -27,7 +27,7 @@ public class ProdocerQuickStart {
 
         Message message = new Message();
         message.setTopic("zhaopeng");
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 1; i++) {
             message.setBody(("hello world " + i).getBytes("utf-8"));
             producer.send(message);
         }

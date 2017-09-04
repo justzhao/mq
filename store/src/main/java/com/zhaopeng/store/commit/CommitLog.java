@@ -360,8 +360,8 @@ public class CommitLog {
                     + 8 // 6 QUEUEOFFSET
                     + 8 // 7 PHYSICALOFFSET
                     //  + 4 // 8 SYSFLAG
-                    + 8 // 9 BORNTIMESTAMP
-                    + 8 // 10 BORNHOST
+                  //  + 8 // 9 BORNTIMESTAMP
+              //      + 8 // 10 BORNHOST
                     + 8 // 11 STORETIMESTAMP
                     //+ 8 // 12 STOREHOSTADDRESS
                     //+ 4 // 13 RECONSUMETIMES
@@ -426,9 +426,9 @@ public class CommitLog {
             this.msgStoreItemMemory.putLong(fileFromOffset + byteBuffer.position());
 
             // 9 BORNTIMESTAMP
-            this.msgStoreItemMemory.putLong(msgInner.getBornTimestamp());
+         //   this.msgStoreItemMemory.putLong(msgInner.getBornTimestamp());
             // 10 BORNHOST
-            this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
+        //    this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
             // 11 STORETIMESTAMP
             this.msgStoreItemMemory.putLong(msgInner.getStoreTimestamp());
             // 15 BODY
@@ -608,10 +608,10 @@ public class CommitLog {
         long physicOffset = byteBuffer.getLong();
 
         // 9 BORNTIMESTAMP
-        long bornTimeStamp = byteBuffer.getLong();
+  //      long bornTimeStamp = byteBuffer.getLong();
 
         // 10 BORNHOST
-        ByteBuffer byteBuffer1 = byteBuffer.get(bytesContent, 0, 8);
+//        ByteBuffer byteBuffer1 = byteBuffer.get(bytesContent, 0, 8);
 
         // 11 STORETIMESTAMP
         long storeTimestamp = byteBuffer.getLong();

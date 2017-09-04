@@ -59,16 +59,17 @@ public class DiskMessageStore implements MessageStore {
         this.commitLog.load();
         this.loadConsumeQueue();
         this.recover();
+        this.shutdown=false;
 
     }
 
-    public void recover(){
+    public void recover() {
         this.recoverConsumeQueue();
         this.commitLog.recoverNormally();
         this.recoverTopicQueueTable();
     }
 
-    public void recoverConsumeQueue(){
+    public void recoverConsumeQueue() {
         for (ConcurrentHashMap<Integer, ConsumeQueue> maps : this.consumeQueueTable.values()) {
             for (ConsumeQueue logic : maps.values()) {
                 logic.recover();
@@ -76,7 +77,7 @@ public class DiskMessageStore implements MessageStore {
         }
     }
 
-    public DiskMessageStore()  {
+    public DiskMessageStore() {
         this.messageStoreConfig = new MessageStoreConfig();
 
         consumeQueueTable = new ConcurrentHashMap<>();
@@ -86,7 +87,7 @@ public class DiskMessageStore implements MessageStore {
         flushConsumeQueueService = new FlushConsumeQueueService();
         reputMessageService = new ReputMessageService();
         systemClock = new SystemClock(1);
-        commitLog = new CommitLog(messageStoreConfig,this);
+        commitLog = new CommitLog(messageStoreConfig, this);
 
     }
 
@@ -142,10 +143,10 @@ public class DiskMessageStore implements MessageStore {
     public Message getMessage(PullMesageInfo pull) {
         GetMessageResult getMessageResult = this.getMessage(pull.getTopic(), pull.getQueueId(), pull.getQueueOffset(), pull.getMaxMsgNums());
 
-       // final byte[] r = this.readGetMessageResult(getMessageResult);
+        // final byte[] r = this.readGetMessageResult(getMessageResult);
 
         Message message = new Message();
-      //  message.setBody(r);
+        //  message.setBody(r);
 
         message.setTopic(pull.getTopic());
 
@@ -161,8 +162,6 @@ public class DiskMessageStore implements MessageStore {
         return getMessage(pull.getTopic(), pull.getQueueId(), pull.getCommitOffset(), pull.getMaxMsgNums());
 
     }
-
-
 
 
     @Override
@@ -184,8 +183,7 @@ public class DiskMessageStore implements MessageStore {
         msg.setTopic(sendMessage.getTopic());
         msg.setQueueId(sendMessage.getQueueId());
         msg.setProperties(sendMessage.getMsg().getProperties());
-        msg.setQueueOffset(sendMessage.getQueueOffset());
-
+        msg.setBornTimestamp(System.currentTimeMillis());
 
         PutMessageResult result = this.commitLog.putMessage(msg);
 

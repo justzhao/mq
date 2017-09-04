@@ -4,8 +4,8 @@ import com.google.common.collect.Maps;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
-import com.zhaopeng.remoting.protocol.RemotingCommand;
 import com.zhaopeng.store.MessageStore;
+import com.zhaopeng.store.disk.GetMessageResult;
 import com.zhaopeng.store.entity.PutMessageResult;
 import com.zhaopeng.store.entity.enums.PutMessageStatus;
 
@@ -55,7 +55,7 @@ public class JvmMessageStore implements MessageStore {
     }
 
     @Override
-    public RemotingCommand getMessageContent(PullMesageInfo pull) {
+    public GetMessageResult getMessageContent(PullMesageInfo pull) {
         return null;
     }
 
@@ -84,6 +84,11 @@ public class JvmMessageStore implements MessageStore {
 
     @Override
     public void shutDown() {
+
+    }
+
+    @Override
+    public void load() {
 
     }
 }
