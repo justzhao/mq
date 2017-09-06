@@ -20,8 +20,7 @@ public class RemotingCommand {
     private static final int RPC_TYPE = 0; // 0 是req 1 是 rep
     private static final int RPC_ONEWAY = 1; // 0  rpc 需要返回结果, 1 ,不需要返回结果
     /**
-     *  消息的个数信息等
-     *
+     * 消息的个数信息等
      */
 
     private Long nextBeginOffset;
@@ -89,10 +88,8 @@ public class RemotingCommand {
         // 1> header length size , 消息头和消息体的总数据长度
         int length = 4;
 
-        // 2> header data length  消息头数据的长度
-        byte[] headerData;
-        headerData = this.headerEncode();
-
+        // 2> header data length  消息头数据的长度。主要数据是 RemotingCommand中非 transient 的属性
+        byte[] headerData = this.headerEncode();
         length += headerData.length;
 
         // 3> body data length

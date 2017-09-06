@@ -1,7 +1,6 @@
 package com.zhaopeng.mq;
 
 
-import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
@@ -24,8 +23,6 @@ public class MessageHandler {
     private static final Logger logger = LoggerFactory.getLogger(MessageHandler.class);
 
 
-
-
     private final MessageStore store;
 
     public MessageHandler(){
@@ -34,26 +31,20 @@ public class MessageHandler {
     }
 
     public void addMessage(SendMessage sendMessage) {
-     /*   String topic = sendMessage.getTopic();
 
-        MessageStore store = topicStore.get(topic);
-        if (store == null) {
-            store = new JvmMessageStore();
-            topicStore.put(topic, store);
-        }*/
         store.addMessage(sendMessage);
 
     }
 
-
+/*
     public Message getMessage(PullMesageInfo pull) {
-       /* int queueId = pull.getQueueId();
+       *//* int queueId = pull.getQueueId();
         MessageStore store = topicStore.get(pull.getTopic());
         if (store == null) {
             return null;
-        }*/
+        }*//*
         return store.getMessage(pull);
-    }
+    }*/
 
 
     public RemotingCommand getRespone(PullMesageInfo pull){

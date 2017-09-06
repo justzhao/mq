@@ -18,7 +18,7 @@ public class NettyEncoder extends MessageToByteEncoder<RemotingCommand> {
     protected void encode(ChannelHandlerContext ctx, RemotingCommand remotingCommand, ByteBuf out) throws Exception {
 
         try {
-            // 包头数据,包括 总长度，包头长度，包头数据
+            // 包头数据 包括 总长度，包头长度，包头数据
             ByteBuffer header = remotingCommand.encodeHeader();
             out.writeBytes(header);
             byte[] body = remotingCommand.getBody();
