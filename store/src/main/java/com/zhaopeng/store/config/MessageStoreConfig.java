@@ -17,11 +17,12 @@ public class MessageStoreConfig {
             + File.separator + "commitlog";
 
     // ConsumeQueue file size, default is 30W
-    private int mapedFileSizeConsumeQueue = 300000 * ConsumeQueue.CQStoreUnitSize;
+    private int mapedFileSizeConsumeQueue = 3000 * ConsumeQueue.CQStoreUnitSize;
     private long osPageCacheBusyTimeOutMills = 1000;
 
-    private int mapedFileSizeCommitLog = 1024 * 1024 * 1024;
-
+    private int mapedFileSizeCommitLog = 1024 * 1024 ;
+    // How many pages are to be flushed when flush ConsumeQueue
+    private int flushConsumeQueueLeastPages = 2;
 
     private int flushIntervalCommitLog = 1000;
     // Whether schedule flush,default is real-time
@@ -179,5 +180,13 @@ public class MessageStoreConfig {
 
         int factor = (int) Math.ceil(this.mapedFileSizeConsumeQueue / (ConsumeQueue.CQStoreUnitSize * 1.0));
         return (int) (factor * ConsumeQueue.CQStoreUnitSize);
+    }
+
+    public int getFlushConsumeQueueLeastPages() {
+        return flushConsumeQueueLeastPages;
+    }
+
+    public void setFlushConsumeQueueLeastPages(int flushConsumeQueueLeastPages) {
+        this.flushConsumeQueueLeastPages = flushConsumeQueueLeastPages;
     }
 }

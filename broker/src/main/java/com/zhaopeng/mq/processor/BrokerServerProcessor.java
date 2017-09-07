@@ -88,10 +88,11 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
 
     private void processPutMessage(final Channel channel, RemotingCommand request) {
 
-
+        String address= channel.remoteAddress().toString();
         byte[] body = request.getBody();
         SendMessage sendMessage = SendMessage.decode(body, SendMessage.class);
         // 这里换成 MessageExtBrokerInner
+        sendMessage.setHost(address.replace("/",""));
         messageHandler.addMessage(sendMessage);
 
 

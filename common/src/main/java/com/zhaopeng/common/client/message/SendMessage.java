@@ -12,6 +12,7 @@ public class SendMessage extends JsonSerializable {
     private int queueOffset;
     private int queueId;
     private Message msg;
+    private String host;
 
     public String getTopic() {
         return topic;
@@ -59,5 +60,13 @@ public class SendMessage extends JsonSerializable {
 
     public void setQueueOffset(int queueOffset) {
         this.queueOffset = queueOffset;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
     }
 }

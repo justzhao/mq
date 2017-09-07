@@ -14,7 +14,6 @@ import com.zhaopeng.store.util.UtilAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,27 +37,15 @@ public class CommitLog {
     private final MapedFileQueue mapedFileQueue;
     private final MessageStoreConfig messageStoreConfig;
     private final FlushCommitLogService flushCommitLogService;
-    //private final AllocateMapedFileService allocateMapedFileService;
-//    private final StoreCheckpoint storeCheckpoint;
+
     private final AppendMessageCallback appendMessageCallback;
     private final DiskMessageStore defaultMessageStore;
-    public CommitLog(DiskMessageStore messageStore) throws IOException {
 
-        this.defaultMessageStore=messageStore;
-        this.messageStoreConfig = new MessageStoreConfig();
-       // this.storeCheckpoint = new StoreCheckpoint("c://defaut");
-        this.flushCommitLogService = new GroupCommitService();
-       // this.allocateMapedFileService = new AllocateMapedFileService();
-        this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
-                messageStoreConfig.getMapedFileSizeCommitLog());
-        this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
-    }
     public CommitLog(MessageStoreConfig config, DiskMessageStore messageStore) {
         this.messageStoreConfig = config;
-       // this.storeCheckpoint = storeCheckpoint;
-        this.flushCommitLogService = new GroupCommitService();
-        this.defaultMessageStore=messageStore;
 
+        this.flushCommitLogService = new GroupCommitService();
+        this.defaultMessageStore = messageStore;
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
                 messageStoreConfig.getMapedFileSizeCommitLog());
         this.appendMessageCallback = new DefaultAppendMessageCallback(messageStoreConfig.getMaxMessageSize());
@@ -76,6 +63,7 @@ public class CommitLog {
 
         return null;
     }
+
     public PutMessageResult putMessage(final MessageExtBrokerInner msg) {
         msg.setStoreTimestamp(System.currentTimeMillis());
         msg.setBodyCRC(UtilAll.crc32(msg.getBody()));
@@ -151,9 +139,14 @@ public class CommitLog {
         return this.mapedFileQueue.deleteExpiredFileByTime(expiredTime, deleteFilesInterval, intervalForcibly, cleanImmediately);
     }
 
+    public void start() {
+        this.flushCommitLogService.start();
+    }
+
 
     abstract class FlushCommitLogService extends ServiceThread {
     }
+
     public static class GroupCommitRequest {
         private final long nextOffset;
         private final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -292,10 +285,6 @@ public class CommitLog {
     }
 
 
-
-
-
-
     public long getConfirmOffset() {
         return confirmOffset;
     }
@@ -356,12 +345,12 @@ public class CommitLog {
                     + 4 // 2 MAGICCODE
                     + 4 // 3 BODYCRC
                     + 4 // 4 QUEUEID
-                  //  + 4 // 5 FLAG
+                    //  + 4 // 5 FLAG
                     + 8 // 6 QUEUEOFFSET
                     + 8 // 7 PHYSICALOFFSET
                     //  + 4 // 8 SYSFLAG
-                  //  + 8 // 9 BORNTIMESTAMP
-              //      + 8 // 10 BORNHOST
+                    //  + 8 // 9 BORNTIMESTAMP
+                    //      + 8 // 10 BORNHOST
                     + 8 // 11 STORETIMESTAMP
                     //+ 8 // 12 STOREHOSTADDRESS
                     //+ 4 // 13 RECONSUMETIMES
@@ -426,9 +415,9 @@ public class CommitLog {
             this.msgStoreItemMemory.putLong(fileFromOffset + byteBuffer.position());
 
             // 9 BORNTIMESTAMP
-         //   this.msgStoreItemMemory.putLong(msgInner.getBornTimestamp());
+            //   this.msgStoreItemMemory.putLong(msgInner.getBornTimestamp());
             // 10 BORNHOST
-        //    this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
+            //    this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
             // 11 STORETIMESTAMP
             this.msgStoreItemMemory.putLong(msgInner.getStoreTimestamp());
             // 15 BODY
@@ -438,7 +427,6 @@ public class CommitLog {
             // 16 TOPIC
             this.msgStoreItemMemory.put((byte) topicLength);
             this.msgStoreItemMemory.put(topicData);
-
 
 
             final long beginTimeMills = System.currentTimeMillis();
@@ -452,8 +440,8 @@ public class CommitLog {
             /**
              * 更新MessageQueue
              */
-            QueueRequest request=new QueueRequest(msgInner.getTopic(),msgInner.getQueueId(),fileFromOffset + byteBuffer.position()
-                    ,msgLen,System.currentTimeMillis(),queueOffset);
+            QueueRequest request = new QueueRequest(msgInner.getTopic(), msgInner.getQueueId(), fileFromOffset + byteBuffer.position()
+                    , msgLen, System.currentTimeMillis(), queueOffset);
 
             defaultMessageStore.doAddConsumeQueueRequest(request);
             CommitLog.this.topicQueueTable.put(key, ++queueOffset);
@@ -504,6 +492,7 @@ public class CommitLog {
 
         return -1;
     }
+
     public long rollNextFile(final long offset) {
         int mapedFileSize = this.defaultMessageStore.getMessageStoreConfig().getMapedFileSizeCommitLog();
         return (offset + mapedFileSize - offset % mapedFileSize);
@@ -523,13 +512,12 @@ public class CommitLog {
             long processOffset = mapedFile.getFileFromOffset();
             long mapedFileOffset = 0;
             while (true) {
-                QueueRequest dispatchRequest = this.checkMessageAndReturnSize(byteBuffer,true);
+                QueueRequest dispatchRequest = this.checkMessageAndReturnSize(byteBuffer, true);
                 int size = dispatchRequest.getMsgSize();
                 // Normal data
                 if (dispatchRequest.isSuccess() && size > 0) {
                     mapedFileOffset += size;
-                }
-                else if (dispatchRequest.isSuccess() && size == 0) {
+                } else if (dispatchRequest.isSuccess() && size == 0) {
                     index++;
                     if (index >= mapedFiles.size()) {
                         log.info("recover last 3 physics file over, last maped file " + mapedFile.getFileName());
@@ -556,7 +544,7 @@ public class CommitLog {
     }
 
 
-    public QueueRequest checkMessageAndReturnSize(java.nio.ByteBuffer byteBuffer,  final boolean readBody) {
+    public QueueRequest checkMessageAndReturnSize(java.nio.ByteBuffer byteBuffer, final boolean readBody) {
 
         /**
          *
@@ -608,7 +596,7 @@ public class CommitLog {
         long physicOffset = byteBuffer.getLong();
 
         // 9 BORNTIMESTAMP
-  //      long bornTimeStamp = byteBuffer.getLong();
+        //      long bornTimeStamp = byteBuffer.getLong();
 
         // 10 BORNHOST
 //        ByteBuffer byteBuffer1 = byteBuffer.get(bytesContent, 0, 8);
@@ -631,7 +619,6 @@ public class CommitLog {
         String topic = new String(bytesContent, 0, topicLen, CHARSET_UTF8);
 
 
-
         return new QueueRequest(//
                 topic, // 1
                 queueId, // 2
@@ -641,7 +628,6 @@ public class CommitLog {
                 queueOffset// 7
         );
     }
-
 
 
 }

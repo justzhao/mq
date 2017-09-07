@@ -259,6 +259,9 @@ public class ConsumeQueue {
         }
     }
 
+    public boolean commit(final int flushLeastPages) {
+        return this.mapedFileQueue.commit(flushLeastPages);
+    }
     public void recover() {
         final List<MapedFile> mapedFiles = this.mapedFileQueue.getMapedFiles();
         if (!mapedFiles.isEmpty()) {

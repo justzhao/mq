@@ -142,9 +142,6 @@ public class DiskMessageStore implements MessageStore {
     @Override
     public Message getMessage(PullMesageInfo pull) {
         GetMessageResult getMessageResult = this.getMessage(pull.getTopic(), pull.getQueueId(), pull.getQueueOffset(), pull.getMaxMsgNums());
-
-        // final byte[] r = this.readGetMessageResult(getMessageResult);
-
         Message message = new Message();
         //  message.setBody(r);
 
@@ -184,6 +181,7 @@ public class DiskMessageStore implements MessageStore {
         msg.setQueueId(sendMessage.getQueueId());
         msg.setProperties(sendMessage.getMsg().getProperties());
         msg.setBornTimestamp(System.currentTimeMillis());
+        msg.setHost(sendMessage.getHost());
 
         PutMessageResult result = this.commitLog.putMessage(msg);
 
@@ -311,6 +309,7 @@ public class DiskMessageStore implements MessageStore {
 
         reputMessageService.start();
 
+        commitLog.start();
 
         shutdown = false;
     }
@@ -386,10 +385,32 @@ public class DiskMessageStore implements MessageStore {
     }
 
     class FlushConsumeQueueService extends ServiceThread {
+
+        private static final int RetryTimesOver = 3;
         @Override
         public String getServiceName() {
             return "FlushConsumeQueueService";
         }
+
+        private void doFlush(int retryTimes) {
+            int flushConsumeQueueLeastPages = DiskMessageStore.this.getMessageStoreConfig().getFlushConsumeQueueLeastPages();
+            if (retryTimes == RetryTimesOver) {
+                flushConsumeQueueLeastPages = 0;
+            }
+
+            ConcurrentHashMap<String, ConcurrentHashMap<Integer, ConsumeQueue>> tables = DiskMessageStore.this.consumeQueueTable;
+            for (ConcurrentHashMap<Integer, ConsumeQueue> maps : tables.values()) {
+                for (ConsumeQueue cq : maps.values()) {
+                    boolean result = false;
+                    for (int i = 0; i < retryTimes && !result; i++) {
+                        result = cq.commit(flushConsumeQueueLeastPages);
+                    }
+                }
+            }
+
+
+        }
+
 
         @Override
         public void run() {
