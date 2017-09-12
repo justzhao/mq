@@ -18,9 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -59,7 +57,7 @@ public class DiskMessageStore implements MessageStore {
         this.commitLog.load();
         this.loadConsumeQueue();
         this.recover();
-        this.shutdown=false;
+        this.shutdown = false;
 
     }
 
@@ -387,6 +385,7 @@ public class DiskMessageStore implements MessageStore {
     class FlushConsumeQueueService extends ServiceThread {
 
         private static final int RetryTimesOver = 3;
+
         @Override
         public String getServiceName() {
             return "FlushConsumeQueueService";
@@ -527,11 +526,11 @@ public class DiskMessageStore implements MessageStore {
     class ReputMessageService extends ServiceThread {
 
 
-        private volatile List<QueueRequest> request = new ArrayList<>();
+        private volatile Queue<QueueRequest> request = new LinkedList<>();
 
         public void putRequest(final QueueRequest request) {
             synchronized (this) {
-                this.request.add(request);
+                this.request.offer(request);
                 if (!this.hasNotified) {
                     this.hasNotified = true;
                     this.notify();
@@ -542,9 +541,10 @@ public class DiskMessageStore implements MessageStore {
 
         private void docommitRequest() {
             if (this.hasNotified && !this.request.isEmpty()) {
-                for (QueueRequest r : request) {
-                    DiskMessageStore.this.doDispatch(r);
-                }
+
+                QueueRequest r = request.poll();
+                DiskMessageStore.this.doDispatch(r);
+
             }
 
         }

@@ -37,7 +37,7 @@ public class ConsumerQuickStart {
 
         while (true) {
             for (MessageQueue q : mqs) {
-                PullResult result = consumer.pull(q, "", 0, 10);
+                PullResult result = consumer.pull(q, "", 0, 1);
                 List<Message> msgs = result.getMessages();
 
                 if (msgs == null) {

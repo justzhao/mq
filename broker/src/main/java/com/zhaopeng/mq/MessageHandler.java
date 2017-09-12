@@ -25,9 +25,10 @@ public class MessageHandler {
 
     private final MessageStore store;
 
-    public MessageHandler(){
-        store=new DiskMessageStore();
+    public MessageHandler() {
+        store = new DiskMessageStore();
         store.load();
+        store.start();
     }
 
     public void addMessage(SendMessage sendMessage) {
@@ -36,52 +37,34 @@ public class MessageHandler {
 
     }
 
-/*
-    public Message getMessage(PullMesageInfo pull) {
-       *//* int queueId = pull.getQueueId();
-        MessageStore store = topicStore.get(pull.getTopic());
-        if (store == null) {
-            return null;
-        }*//*
-        return store.getMessage(pull);
-    }*/
-
-
-    public RemotingCommand getRespone(PullMesageInfo pull){
+    public RemotingCommand getRespone(PullMesageInfo pull) {
 
         RemotingCommand response = RemotingCommand.createRequestCommand(ResponseCode.SUCCESS, null);
 
         GetMessageResult result = store.getMessageContent(pull);
 
         if (result != null) {
-            switch (result.getStatus()) {
-
-                default:
-                    assert false;
-                    break;
-            }
-
             switch (response.getCode()) {
-                case ResponseCode.SUCCESS:
-                default:
-                    assert false;
+                case ResponseCode.SUCCESS: {
+                    byte[] bytes = readGetMessageResult(result);
+
+                    response.setMinOffset(result.getMinOffset());
+                    response.setMaxOffset(result.getMaxOffset());
+                    response.setNextBeginOffset(result.getNextBeginOffset());
+                    response.setBody(bytes);
+
+                }
+                default: {
+                    response.setCode(ResponseCode.SYSTEM_ERROR);
+                    response.setRemark("store getMessage return null");
+                }
             }
+            return response;
 
-
-            byte[] bytes = readGetMessageResult(result);
-
-            response.setMinOffset(result.getMinOffset());
-            response.setMaxOffset(result.getMaxOffset());
-            response.setNextBeginOffset(result.getNextBeginOffset());
-            response.setBody(bytes);
-
-        }else{
+        } else {
             response.setCode(ResponseCode.SYSTEM_ERROR);
             response.setRemark("store getMessage return null");
         }
-
-
-
 
 
         return response;
@@ -101,7 +84,6 @@ public class MessageHandler {
         }
         return byteBuffer.array();
     }
-
 
 
 }

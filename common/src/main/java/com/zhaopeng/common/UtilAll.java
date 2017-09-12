@@ -1,5 +1,5 @@
 
-package com.zhaopeng.store.util;
+package com.zhaopeng.common;
 
 
 import java.io.ByteArrayInputStream;
@@ -18,7 +18,6 @@ import java.util.*;
 import java.util.zip.CRC32;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
-
 
 
 public class UtilAll {

@@ -55,7 +55,6 @@ public class MapedFile extends ReferenceResource {
 
     private boolean firstCreateInQueue = false;
 
-    //  private final ByteBuffer msgStoreItemMemory;
 
     public MapedFile(String fileName, int fileSize) throws IOException {
 
@@ -63,8 +62,6 @@ public class MapedFile extends ReferenceResource {
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.file = new File(fileName);
-        //   this.commitLog = commitLog;
-        // this.msgStoreItemMemory = msgStoreItemMemory;
         this.fileFromOffset = Long.parseLong(this.file.getName());
         boolean ok = false;
         ensureDirOK(this.file.getParent());

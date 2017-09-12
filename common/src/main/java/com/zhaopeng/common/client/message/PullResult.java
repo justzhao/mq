@@ -1,6 +1,7 @@
 package com.zhaopeng.common.client.message;
 
 import com.zhaopeng.common.client.enums.PullStatus;
+import com.zhaopeng.common.message.PullMessage;
 import com.zhaopeng.remoting.protocol.JsonSerializable;
 
 import java.util.List;
@@ -9,11 +10,11 @@ import java.util.List;
  * Created by zhaopeng on 2017/4/25.
  */
 public class PullResult extends JsonSerializable {
-    private  PullStatus pullStatus;
+    private PullStatus pullStatus;
     private final long nextBeginOffset;
     private final long minOffset;
     private final long maxOffset;
-    //private List<MessageInfo> msgFoundList;
+    private List<PullMessage> msgs;
 
     private List<Message> messages;
 
@@ -53,14 +54,14 @@ public class PullResult extends JsonSerializable {
         return maxOffset;
     }
 
- /*   public List<MessageInfo> getMsgFoundList() {
-        return msgFoundList;
+    public List<PullMessage> getMsgs() {
+        return msgs;
     }
 
-    public void setMsgFoundList(List<MessageInfo> msgFoundList) {
-        this.msgFoundList = msgFoundList;
+    public void setMsgs(List<PullMessage> msgs) {
+        this.msgs = msgs;
     }
-*/
+
     public List<Message> getMessages() {
         return messages;
     }

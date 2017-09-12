@@ -6,6 +6,8 @@ import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.enums.PullStatus;
 import com.zhaopeng.common.client.enums.SendStatus;
 import com.zhaopeng.common.client.message.*;
+import com.zhaopeng.common.message.MessageDecoder;
+import com.zhaopeng.common.message.PullMessage;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
@@ -279,17 +281,17 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
             logger.error("Can not find Broker Address for this topic  {}", topic);
             return null;
         }
-
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.PULL_MESSAGE, null);
-
         PullMesageInfo pullMesageInfo = new PullMesageInfo(topic, mq.getQueueId(), offset, maxNums, 0l);
         request.setBody(pullMesageInfo.encode());
-
         RemotingCommand respone = this.nettyClient.invokeSync(brokerAddr, request, timeoutMillis);
-
         if (respone.getCode() == ResponseCode.SUCCESS) {
             if (respone.getBody() != null) {
-                PullResult result = PullResult.decode(respone.getBody(), PullResult.class);
+                // 这反序列化数据有问题. 二进制数据反序列化为对象.
+                List<PullMessage> msgs= MessageDecoder.decodes(respone.getBody());
+
+                PullResult result = new PullResult();
+
                 return result;
 
             }
