@@ -1,9 +1,5 @@
 package com.zhaopeng.common.message;
 
-import com.zhaopeng.common.UtilAll;
-
-import java.net.UnknownHostException;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +72,7 @@ public class MessageDecoder {
                 if (readBody) {
                     byte[] body = new byte[bodyLen];
                     byteBuffer.get(body);
-                    body = UtilAll.uncompress(body);
+                  //  body = UtilAll.uncompress(body);
                     msg.setBody(body);
                 } else {
                     byteBuffer.position(byteBuffer.position() + bodyLen);
@@ -90,10 +86,7 @@ public class MessageDecoder {
             msg.setTopic(new String(topic, CHARSET_UTF8));
 
             return msg;
-        } catch (UnknownHostException e) {
-            byteBuffer.position(byteBuffer.limit());
-        } catch (BufferUnderflowException e) {
-            byteBuffer.position(byteBuffer.limit());
+
         } catch (Exception e) {
             byteBuffer.position(byteBuffer.limit());
         }

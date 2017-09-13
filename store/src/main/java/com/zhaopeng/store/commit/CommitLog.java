@@ -1,5 +1,6 @@
 package com.zhaopeng.store.commit;
 
+import com.zhaopeng.common.UtilAll;
 import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.store.config.MessageStoreConfig;
 import com.zhaopeng.store.disk.DiskMessageStore;
@@ -10,7 +11,6 @@ import com.zhaopeng.store.entity.QueueRequest;
 import com.zhaopeng.store.entity.enums.AppendMessageStatus;
 import com.zhaopeng.store.entity.enums.PutMessageStatus;
 import com.zhaopeng.store.util.MessageUtil;
-import com.zhaopeng.store.util.UtilAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

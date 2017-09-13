@@ -1,8 +1,8 @@
 package com.zhaopeng.mq.start;
 
-import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.client.message.PullResult;
+import com.zhaopeng.common.message.PullMessage;
 import com.zhaopeng.mq.consumer.impl.DefaultMQPullConsumer;
 import com.zhaopeng.mq.exception.MQBrokerException;
 import com.zhaopeng.mq.exception.MQClientException;
@@ -38,12 +38,12 @@ public class ConsumerQuickStart {
         while (true) {
             for (MessageQueue q : mqs) {
                 PullResult result = consumer.pull(q, "", 0, 1);
-                List<Message> msgs = result.getMessages();
+                List<PullMessage> msgs = result.getMsgs();
 
                 if (msgs == null) {
                     log.info("no message");
                 } else {
-                    for (Message m : msgs) {
+                    for (PullMessage m : msgs) {
 
                         log.info("msg is {}, content is {}", m, new String(m.getBody()));
 

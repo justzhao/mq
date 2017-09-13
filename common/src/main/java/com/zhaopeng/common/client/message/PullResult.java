@@ -11,12 +11,11 @@ import java.util.List;
  */
 public class PullResult extends JsonSerializable {
     private PullStatus pullStatus;
-    private final long nextBeginOffset;
-    private final long minOffset;
-    private final long maxOffset;
+    private  long nextBeginOffset;
+    private  long minOffset;
+    private  long maxOffset;
     private List<PullMessage> msgs;
 
-    private List<Message> messages;
 
     public PullResult() {
         this.nextBeginOffset = 0;
@@ -42,6 +41,10 @@ public class PullResult extends JsonSerializable {
         return pullStatus;
     }
 
+    public void setPullStatus(PullStatus pullStatus) {
+        this.pullStatus = pullStatus;
+    }
+
     public long getNextBeginOffset() {
         return nextBeginOffset;
     }
@@ -62,11 +65,15 @@ public class PullResult extends JsonSerializable {
         this.msgs = msgs;
     }
 
-    public List<Message> getMessages() {
-        return messages;
+    public void setNextBeginOffset(long nextBeginOffset) {
+        this.nextBeginOffset = nextBeginOffset;
     }
 
-    public void setMessages(List<Message> messages) {
-        this.messages = messages;
+    public void setMinOffset(long minOffset) {
+        this.minOffset = minOffset;
+    }
+
+    public void setMaxOffset(long maxOffset) {
+        this.maxOffset = maxOffset;
     }
 }

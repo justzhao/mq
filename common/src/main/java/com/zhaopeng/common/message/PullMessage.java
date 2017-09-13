@@ -1,6 +1,7 @@
 package com.zhaopeng.common.message;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * Created by zhaopeng on 2017/9/12.
@@ -102,5 +103,20 @@ public class PullMessage implements Serializable {
 
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    @Override
+    public String toString() {
+        return "PullMessage{" +
+                "size=" + size +
+                ", crc=" + crc +
+                ", queueId=" + queueId +
+                ", queueOffset=" + queueOffset +
+                ", phyOffset=" + phyOffset +
+                ", storeTime=" + storeTime +
+                ", bodyLength=" + bodyLength +
+                ", body=" + Arrays.toString(body) +
+                ", topic='" + topic + '\'' +
+                '}';
     }
 }

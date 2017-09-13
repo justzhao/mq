@@ -52,11 +52,13 @@ public class MessageHandler {
                     response.setMaxOffset(result.getMaxOffset());
                     response.setNextBeginOffset(result.getNextBeginOffset());
                     response.setBody(bytes);
+                    break;
 
                 }
                 default: {
                     response.setCode(ResponseCode.SYSTEM_ERROR);
                     response.setRemark("store getMessage return null");
+                    break;
                 }
             }
             return response;

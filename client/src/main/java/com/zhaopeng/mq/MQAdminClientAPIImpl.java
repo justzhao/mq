@@ -291,6 +291,11 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
                 List<PullMessage> msgs= MessageDecoder.decodes(respone.getBody());
 
                 PullResult result = new PullResult();
+                result.setMsgs(msgs);
+                result.setPullStatus(PullStatus.FOUND);
+                result.setMaxOffset(respone.getMaxOffset());
+                result.setMinOffset(respone.getMinOffset());
+                result.setNextBeginOffset(respone.getMinOffset());
 
                 return result;
 
