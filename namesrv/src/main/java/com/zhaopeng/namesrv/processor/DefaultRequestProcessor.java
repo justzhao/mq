@@ -112,13 +112,10 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
     public RemotingCommand createTopic(ChannelHandlerContext ctx, RemotingCommand request) {
 
         RemotingCommand respone = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SUCCESS, null);
-
-
         TopicInfo topicInfo = new TopicInfo();
         if (request.getBody() != null) {
             topicInfo = RegisterBrokerInfo.decode(request.getBody(), TopicInfo.class);
         }
-
         CreateTopicResult result = this.namesrvController.getRouteInfoManager().createTopic(topicInfo);
         respone.setBody(result.encode());
         return respone;

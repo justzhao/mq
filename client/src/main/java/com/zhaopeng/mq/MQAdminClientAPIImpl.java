@@ -157,7 +157,6 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
 
         switch (response.getCode()) {
             case ResponseCode.TOPIC_NOT_EXIST: {
-
                 logger.warn("get Topic [{}] RouteInfoFromNameServer is not exist value", topic);
                 break;
             }
@@ -288,7 +287,7 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
         if (respone.getCode() == ResponseCode.SUCCESS) {
             if (respone.getBody() != null) {
                 // 这反序列化数据有问题. 二进制数据反序列化为对象.
-                List<PullMessage> msgs= MessageDecoder.decodes(respone.getBody());
+                List<PullMessage> msgs = MessageDecoder.decodes(respone.getBody());
 
                 PullResult result = new PullResult();
                 result.setMsgs(msgs);

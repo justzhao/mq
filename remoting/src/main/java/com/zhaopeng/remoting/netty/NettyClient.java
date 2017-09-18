@@ -106,7 +106,6 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
 
         setBootstrapGroup();
 
-        System.out.println(bootstrap);
         this.timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -238,13 +237,10 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                 if(bootstrap.group()==null){
                     setBootstrapGroup();
                 }
-
                 String addrs[]=addr.split(":");
-
                 if(addrs.length!=2){
                     return null;
                 }
-
                 //9876
                 int port=Integer.valueOf(addrs[1]);
                 final ChannelFuture f = bootstrap.connect(addrs[0], port);
