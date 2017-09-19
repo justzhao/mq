@@ -1,5 +1,6 @@
 package com.zhaopeng.mq;
 
+import com.zhaopeng.common.All;
 import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.protocol.RequestCode;
 import com.zhaopeng.common.protocol.ResponseCode;
@@ -33,6 +34,36 @@ public class BrokerOutApi {
 
     public void updateNamesrv(String namesrv) {
         nettyClient.updateNameServerAddressList(Arrays.asList(namesrv));
+    }
+
+
+    public void registerTopicInfos(List<TopicInfo> topicInfos, long timeout) {
+
+        if (topicInfos != null) {
+
+            for (TopicInfo topicInfo : topicInfos) {
+
+                RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.CREATE_TOPIC, null);
+
+                request.setBody(topicInfo.encode());
+
+                List<String> nameServerAddressList = this.nettyClient.getNameServerAddressList();
+                for (String namesrvAddr : nameServerAddressList) {
+                    try {
+                        nettyClient.invokeSync(namesrvAddr, request, timeout);
+
+                        logger.info("register topic to name server {} OK", namesrvAddr);
+                    } catch (Exception e) {
+                        logger.info("register topic to name server {} Error", namesrvAddr, e);
+                    }
+
+                }
+
+
+            }
+        }
+
+
     }
 
     public RegisterBrokerResult registerBrokerAll(//
@@ -74,7 +105,7 @@ public class BrokerOutApi {
                                                 final int timeoutMills) throws RemotingException, InterruptedException {
 
 
-        TopicInfo topicInfo = new TopicInfo("default");
+        TopicInfo topicInfo = new TopicInfo(All.DEFAULT_TOPIC);
 
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.REGISTER_BROKER, null);
 

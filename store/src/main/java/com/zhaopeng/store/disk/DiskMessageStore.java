@@ -1,5 +1,6 @@
 package com.zhaopeng.store.disk;
 
+import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
@@ -49,6 +50,8 @@ public class DiskMessageStore implements MessageStore {
 
     private volatile boolean shutdown = true;
 
+    private List<TopicInfo> topics;
+
     public void DiskMessageStore() {
     }
 
@@ -86,9 +89,15 @@ public class DiskMessageStore implements MessageStore {
         reputMessageService = new ReputMessageService();
         systemClock = new SystemClock(1);
         commitLog = new CommitLog(messageStoreConfig, this);
+        topics = new ArrayList<>();
 
     }
 
+
+    @Override
+    public List<TopicInfo> getTopicInfosFromConsumeQueue() {
+        return topics;
+    }
 
     public MessageStoreConfig getMessageStoreConfig() {
         return messageStoreConfig;
@@ -321,6 +330,9 @@ public class DiskMessageStore implements MessageStore {
 
     private boolean loadConsumeQueue() {
         File dirLogic = new File(StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()));
+        // 这里需要注册topic信息到namesrv 带上 brokerConfig 的信息
+
+        //
         File[] fileTopicList = dirLogic.listFiles();
         if (fileTopicList != null) {
 
@@ -329,13 +341,16 @@ public class DiskMessageStore implements MessageStore {
 
                 File[] fileQueueIdList = fileTopic.listFiles();
                 if (fileQueueIdList != null) {
+                    int queueNum = 0;
                     for (File fileQueueId : fileQueueIdList) {
                         int queueId;
                         try {
                             queueId = Integer.parseInt(fileQueueId.getName());
+
                         } catch (NumberFormatException e) {
                             continue;
                         }
+                        queueNum++;
                         ConsumeQueue logic = new ConsumeQueue(//
                                 topic, //
                                 queueId, //
@@ -347,7 +362,15 @@ public class DiskMessageStore implements MessageStore {
                             return false;
                         }
                     }
+
+                    TopicInfo topicInfo = new TopicInfo();
+                    topicInfo.setTopicName(topic);
+                    topicInfo.setWriteQueueNums(queueNum);
+                    topicInfo.setReadQueueNums(queueNum);
+                    this.topics.add(topicInfo);
                 }
+
+
             }
         }
 
@@ -380,6 +403,14 @@ public class DiskMessageStore implements MessageStore {
         }
 
         this.commitLog.setTopicQueueTable(table);
+    }
+
+    public List<TopicInfo> getTopics() {
+        return topics;
+    }
+
+    public void setTopics(List<TopicInfo> topics) {
+        this.topics = topics;
     }
 
     class FlushConsumeQueueService extends ServiceThread {

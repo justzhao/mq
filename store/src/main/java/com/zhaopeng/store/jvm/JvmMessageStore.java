@@ -1,6 +1,7 @@
 package com.zhaopeng.store.jvm;
 
 import com.google.common.collect.Maps;
+import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
@@ -10,6 +11,7 @@ import com.zhaopeng.store.entity.PutMessageResult;
 import com.zhaopeng.store.entity.enums.PutMessageStatus;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -90,5 +92,10 @@ public class JvmMessageStore implements MessageStore {
     @Override
     public void load() {
 
+    }
+
+    @Override
+    public List<TopicInfo> getTopicInfosFromConsumeQueue() {
+        return null;
     }
 }

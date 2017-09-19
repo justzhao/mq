@@ -1,11 +1,14 @@
 package com.zhaopeng.store;
 
 
+import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
 import com.zhaopeng.store.disk.GetMessageResult;
 import com.zhaopeng.store.entity.PutMessageResult;
+
+import java.util.List;
 
 /**
  * Created by zhaopeng on 2017/7/24.
@@ -47,4 +50,11 @@ public interface MessageStore {
      * 初始化加载
      */
     public void load();
+
+
+    /**
+     * 从
+     * @return
+     */
+    public List<TopicInfo> getTopicInfosFromConsumeQueue();
 }

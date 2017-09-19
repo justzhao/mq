@@ -1,6 +1,7 @@
 package com.zhaopeng.mq;
 
 import com.zhaopeng.common.ThreadFactoryImpl;
+import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.protocol.body.RegisterBrokerResult;
 import com.zhaopeng.mq.config.BrokerConfig;
 import com.zhaopeng.mq.processor.BrokerClientProcessor;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -44,6 +46,10 @@ public class BrokerController {
 
     private BrokerOutApi brokerOutApi;
 
+    private BrokerServerProcessor brokerServerProcessor;
+
+    private BrokerClientProcessor brokerClientProcessor;
+
     private String namesrv;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryImpl(
@@ -67,12 +73,14 @@ public class BrokerController {
         brokerOutApi = new BrokerOutApi(nettyClient);
         this.namesrv = namesrv;
         brokerOutApi.updateNamesrv(namesrv);
+        brokerServerProcessor = new BrokerServerProcessor();
+        brokerClientProcessor = new BrokerClientProcessor();
     }
 
     public void start() {
 
-        nettyServer.registerDefaultProcessor(new BrokerServerProcessor(), serverExecutor);
-        nettyClient.registerDefaultProcessor(new BrokerClientProcessor(), clientExecutor);
+        nettyServer.registerDefaultProcessor(brokerServerProcessor, serverExecutor);
+        nettyClient.registerDefaultProcessor(brokerClientProcessor, clientExecutor);
         nettyClient.start();
         nettyServer.start();
 
@@ -92,6 +100,11 @@ public class BrokerController {
     }
 
     public synchronized void registerBroker() {
+
+
+        List<TopicInfo> topicInfos = brokerServerProcessor.getTopicInfosFromConsumeQueue();
+        brokerOutApi.registerTopicInfos(topicInfos,this.brokerConfig.getRegisterBrokerTimeoutMills());
+
 
         RegisterBrokerResult registerBrokerResult = this.brokerOutApi.registerBrokerAll(
                 this.brokerConfig.getBrokerName(),

@@ -1,6 +1,7 @@
 package com.zhaopeng.mq;
 
 
+import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.ResponseCode;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
@@ -35,6 +36,10 @@ public class MessageHandler {
 
         store.addMessage(sendMessage);
 
+    }
+
+    public List<TopicInfo> getTopicInfosFromConsumeQueue(){
+        return store.getTopicInfosFromConsumeQueue();
     }
 
     public RemotingCommand getRespone(PullMesageInfo pull) {

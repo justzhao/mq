@@ -1,5 +1,6 @@
 package com.zhaopeng.mq.processor;
 
+import com.zhaopeng.common.TopicInfo;
 import com.zhaopeng.common.client.enums.SendStatus;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.client.message.SendResult;
@@ -13,6 +14,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 import static com.zhaopeng.common.protocol.RequestCode.PULL_MESSAGE;
 import static com.zhaopeng.common.protocol.RequestCode.SEND_MESSAGE;
@@ -28,12 +31,17 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
      * 保存信息。
      */
 
-
     private static final Logger logger = LoggerFactory.getLogger(BrokerServerProcessor.class);
+
     private final MessageHandler messageHandler;
 
     public BrokerServerProcessor() {
         this.messageHandler = new MessageHandler();
+    }
+
+
+    public List<TopicInfo> getTopicInfosFromConsumeQueue(){
+        return messageHandler.getTopicInfosFromConsumeQueue();
     }
 
     public BrokerServerProcessor(MessageHandler messageHandler) {
@@ -42,7 +50,6 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
 
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
-
 
         return this.processRequest(ctx.channel(), request);
     }
@@ -88,11 +95,11 @@ public class BrokerServerProcessor implements NettyRequestProcessor {
 
     private void processPutMessage(final Channel channel, RemotingCommand request) {
 
-        String address= channel.remoteAddress().toString();
+        String address = channel.remoteAddress().toString();
         byte[] body = request.getBody();
         SendMessage sendMessage = SendMessage.decode(body, SendMessage.class);
         // 这里换成 MessageExtBrokerInner
-        sendMessage.setHost(address.replace("/",""));
+        sendMessage.setHost(address.replace("/", ""));
         messageHandler.addMessage(sendMessage);
 
 
