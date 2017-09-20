@@ -245,6 +245,11 @@ public class DiskMessageStore implements MessageStore {
                             // messgeQueue  使用12个字节存取消息的物理位置信息和长度信息
                             long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();
+
+                            if (isTheBatchFull(sizePy, maxMsgNums, getResult.getBufferTotalSize(), getResult.getMessageCount(), true)) {
+                                break;
+                            }
+
                             SelectMapedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
                             if (selectResult != null) {
                                 getResult.addMessage(selectResult);
@@ -254,9 +259,7 @@ public class DiskMessageStore implements MessageStore {
                                     if (offsetPy < nextPhyFileStartOffset)
                                         continue;
                                 }
-                                if (this.isTheBatchFull(sizePy, maxMsgNums, getResult.getBufferTotalSize(), getResult.getMessageCount(), true)) {
-                                    break;
-                                }
+
                             }
                             nextBeginOffset = offset + (i / ConsumeQueue.CQStoreUnitSize);
 
