@@ -294,7 +294,7 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
                 result.setPullStatus(PullStatus.FOUND);
                 result.setMaxOffset(respone.getMaxOffset());
                 result.setMinOffset(respone.getMinOffset());
-                result.setNextBeginOffset(respone.getMinOffset());
+                result.setNextBeginOffset(respone.getNextBeginOffset());
 
                 return result;
 

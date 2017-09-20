@@ -163,7 +163,7 @@ public class DiskMessageStore implements MessageStore {
     public GetMessageResult getMessageContent(PullMesageInfo pull) {
 
 
-        return getMessage(pull.getTopic(), pull.getQueueId(), pull.getCommitOffset(), pull.getMaxMsgNums());
+        return getMessage(pull.getTopic(), pull.getQueueId(), pull.getQueueOffset(), pull.getMaxMsgNums());
 
     }
 
@@ -249,7 +249,6 @@ public class DiskMessageStore implements MessageStore {
                             if (isTheBatchFull(sizePy, maxMsgNums, getResult.getBufferTotalSize(), getResult.getMessageCount(), true)) {
                                 break;
                             }
-
                             SelectMapedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
                             if (selectResult != null) {
                                 getResult.addMessage(selectResult);
@@ -259,12 +258,9 @@ public class DiskMessageStore implements MessageStore {
                                     if (offsetPy < nextPhyFileStartOffset)
                                         continue;
                                 }
-
                             }
-                            nextBeginOffset = offset + (i / ConsumeQueue.CQStoreUnitSize);
-
                         }
-
+                        nextBeginOffset = offset + (i / ConsumeQueue.CQStoreUnitSize);
                     } finally {
 
                         bufferConsumeQueue.release();
