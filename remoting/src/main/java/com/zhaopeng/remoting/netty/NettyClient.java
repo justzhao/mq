@@ -118,7 +118,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
     }
 
 
-    public void  setBootstrapGroup(){
+    public void setBootstrapGroup() {
         bootstrap.group(this.eventLoopGroupWorker).channel(NioSocketChannel.class)//
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.SO_KEEPALIVE, false)
@@ -138,6 +138,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                     }
                 });
     }
+
     @Override
     public void shutdown() {
         defaultEventExecutorGroup.shutdownGracefully();
@@ -234,15 +235,15 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
         if (channel == null) {
             try {
                 this.lockChannelTables.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS);
-                if(bootstrap.group()==null){
+                if (bootstrap.group() == null) {
                     setBootstrapGroup();
                 }
-                String addrs[]=addr.split(":");
-                if(addrs.length!=2){
+                String addrs[] = addr.split(":");
+                if (addrs.length != 2) {
                     return null;
                 }
                 //9876
-                int port=Integer.valueOf(addrs[1]);
+                int port = Integer.valueOf(addrs[1]);
                 final ChannelFuture f = bootstrap.connect(addrs[0], port);
                 //bootstrap.group()
                 logger.info("createChannel: begin to connect remote host[{}] asynchronously", addr);

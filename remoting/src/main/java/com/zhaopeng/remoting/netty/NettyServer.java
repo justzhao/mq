@@ -12,6 +12,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,19 +24,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by zhaopeng on 2017/3/23.
  */
 public class NettyServer extends NettyRemotingAbstract implements Server {
-
+    private static final Logger logger = LoggerFactory.getLogger(NettyServer.class);
 
     private final ServerBootstrap serverBootstrap;
     private final EventLoopGroup eventLoopGroupSelector;
     private final EventLoopGroup eventLoopGroupBoss;
     private final NettyServerConfig nettyServerConfig;
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
-
     private final ExecutorService publicExecutor;
-
     private final ChannelEventListener channelEventListener;
-
-
     public NettyServer(final NettyServerConfig nettyServerConfig, final ChannelEventListener channelEventListener) {
 
         super(10, 10);
@@ -142,6 +140,13 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
             processMessageReceived(ctx, msg);
+        }
+
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
+                throws Exception {
+
+            logger.info("client close ");
+             ctx.close();
         }
     }
 

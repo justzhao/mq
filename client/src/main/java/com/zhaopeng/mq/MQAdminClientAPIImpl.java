@@ -299,15 +299,10 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
                 return result;
 
             }
-        } else if (respone.getCode() == ResponseCode.FAIL) {
-
-            PullResult result = new PullResult(PullStatus.FAIL);
-
-            return result;
-
         }
+        PullResult result = new PullResult(PullStatus.FAIL);
 
-        return null;
+        return result;
     }
 
     public TopicRouteData getDefaultTopicRouteInfoFromNameServer(final String topic, final long timeoutMillis)
