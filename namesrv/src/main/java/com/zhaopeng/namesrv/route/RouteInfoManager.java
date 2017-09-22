@@ -197,7 +197,6 @@ public class RouteInfoManager {
     }
 
     public void scanAliveBroker() {
-
         Iterator<Map.Entry<String, BrokerLiveInfo>> it = this.brokerLiveTable.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, BrokerLiveInfo> next = it.next();

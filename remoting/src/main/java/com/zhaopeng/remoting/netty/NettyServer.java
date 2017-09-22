@@ -33,6 +33,7 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
     private final ExecutorService publicExecutor;
     private final ChannelEventListener channelEventListener;
+
     public NettyServer(final NettyServerConfig nettyServerConfig, final ChannelEventListener channelEventListener) {
 
         super(10, 10);
@@ -77,6 +78,7 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
                     public Thread newThread(Runnable r) {
                         return new Thread(r, "NettyServerCodecThread_" + this.threadIndex.incrementAndGet());
                     }
+
                     private AtomicInteger threadIndex = new AtomicInteger(0);
                 });
 
@@ -97,7 +99,6 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
-
                         ch.pipeline().addLast(defaultEventExecutorGroup,
                                 new NettyEncoder(), //
                                 new NettyDecoder(), //
@@ -146,7 +147,7 @@ public class NettyServer extends NettyRemotingAbstract implements Server {
                 throws Exception {
 
             logger.info("client close ");
-             ctx.close();
+            ctx.close();
         }
     }
 

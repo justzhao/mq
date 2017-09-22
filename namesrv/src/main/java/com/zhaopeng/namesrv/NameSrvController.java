@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by zhaopeng on 2017/4/5.
@@ -64,22 +65,18 @@ public class NameSrvController {
         // 注册请求处理器
         this.registerProcessor();
         // 定时任务
-
-     /*   this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-
+        this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 NameSrvController.this.routeInfoManager.scanAliveBroker();
             }
         }, 5, 10, TimeUnit.SECONDS);
-
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-
             @Override
             public void run() {
                 NameSrvController.this.routeInfoManager.printAllNameSrvStatistics();
             }
-        }, 1, 10, TimeUnit.SECONDS);*/
+        }, 1, 10, TimeUnit.SECONDS);
 
 
         return true;
