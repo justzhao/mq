@@ -144,6 +144,11 @@ public class CommitLog {
     }
 
 
+    public void shutdown() {
+       
+        this.flushCommitLogService.shutdown();
+    }
+
     abstract class FlushCommitLogService extends ServiceThread {
     }
 

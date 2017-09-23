@@ -246,10 +246,10 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                 int port = Integer.valueOf(addrs[1]);
                 final ChannelFuture f = bootstrap.connect(addrs[0], port);
                 //bootstrap.group()
-                logger.info("createChannel: begin to connect remote host[{}] asynchronously", addr);
+            //    logger.info("createChannel: begin to connect remote host[{}] asynchronously", addr);
                 if (f.awaitUninterruptibly(this.nettyClientConfig.getConnectTimeoutMillis())) {
                     if (ischannelFutureOK(f)) {
-                        logger.info("createChannel: connect remote host[{}] success, {}", addr, f.toString());
+                       // logger.info("createChannel: connect remote host[{}] success, {}", addr, f.toString());
                         return f.channel();
                     } else {
                         logger.info("createChannel: connect remote host[" + addr + "] failed, " + f.toString(), f.cause());
@@ -286,7 +286,7 @@ public class NettyClient extends NettyRemotingAbstract implements Client {
                 throws Exception {
             final String local = localAddress == null ? "UNKNOW" : localAddress.toString();
             final String remote = remoteAddress == null ? "UNKNOW" : remoteAddress.toString();
-            logger.info("NETTY CLIENT PIPELINE: CONNECT  {} => {}", local, remote);
+         //   logger.info("NETTY CLIENT PIPELINE: CONNECT  {} => {}", local, remote);
             super.connect(ctx, remoteAddress, localAddress, promise);
 
             if (NettyClient.this.channelEventListener != null) {

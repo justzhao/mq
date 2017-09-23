@@ -49,6 +49,16 @@ public class QueueData implements Comparable<QueueData> {
     }
 
     @Override
+    public String toString() {
+        return "QueueData{" +
+                "brokerName='" + brokerName + '\'' +
+                ", readQueueNums=" + readQueueNums +
+                ", writeQueueNums=" + writeQueueNums +
+                ", perm=" + perm +
+                '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof QueueData)) return false;

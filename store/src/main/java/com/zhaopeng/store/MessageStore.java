@@ -2,7 +2,6 @@ package com.zhaopeng.store;
 
 
 import com.zhaopeng.common.TopicInfo;
-import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
 import com.zhaopeng.store.disk.GetMessageResult;
@@ -14,12 +13,6 @@ import java.util.List;
  * Created by zhaopeng on 2017/7/24.
  */
 public interface MessageStore {
-
-    /**
-     * 获取消息
-     * @return
-     */
-    public Message getMessage(PullMesageInfo pull);
 
 
     /**

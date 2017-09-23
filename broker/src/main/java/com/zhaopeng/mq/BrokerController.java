@@ -100,12 +100,8 @@ public class BrokerController {
     }
 
     public synchronized void registerBroker() {
-
-
         List<TopicInfo> topicInfos = brokerServerProcessor.getTopicInfosFromConsumeQueue();
-        brokerOutApi.registerTopicInfos(topicInfos,this.brokerConfig.getRegisterBrokerTimeoutMills());
-
-
+        brokerOutApi.registerTopicInfos(topicInfos, this.brokerConfig.getRegisterBrokerTimeoutMills());
         RegisterBrokerResult registerBrokerResult = this.brokerOutApi.registerBrokerAll(
                 this.brokerConfig.getBrokerName(),
                 this.getBrokerAddr(), //
@@ -113,8 +109,35 @@ public class BrokerController {
                 this.brokerConfig.getBrokerId(), //
                 false,// 需要返回值
                 this.brokerConfig.getRegisterBrokerTimeoutMills());
-
         logger.info(" register broker Result is {}", registerBrokerResult);
+    }
+
+
+    public void shutdown() {
+
+
+        if (nettyServer != null) {
+            this.nettyServer.shutdown();
+        }
+        if (nettyClient != null) {
+            this.nettyClient.shutdown();
+        }
+        this.scheduledExecutorService.shutdown();
+        try {
+            this.scheduledExecutorService.awaitTermination(5000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            logger.error("scheduledExecutorService shutdown error {}", e);
+        }
+
+        if (this.clientExecutor != null) {
+            this.clientExecutor.shutdown();
+        }
+
+        if (this.serverExecutor != null) {
+            this.serverExecutor.shutdown();
+        }
+
+
 
     }
 

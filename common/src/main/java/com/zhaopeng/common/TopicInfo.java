@@ -42,4 +42,13 @@ public class TopicInfo extends JsonSerializable {
     public void setWriteQueueNums(int writeQueueNums) {
         this.writeQueueNums = writeQueueNums;
     }
+
+    @Override
+    public String toString() {
+        return "TopicInfo{" +
+                "topicName='" + topicName + '\'' +
+                ", readQueueNums=" + readQueueNums +
+                ", writeQueueNums=" + writeQueueNums +
+                '}';
+    }
 }

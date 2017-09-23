@@ -519,4 +519,13 @@ class BrokerLiveInfo {
     public void setChannel(Channel channel) {
         this.channel = channel;
     }
+
+    @Override
+    public String toString() {
+        return "BrokerLiveInfo{" +
+                "lastUpdateTimestamp=" + lastUpdateTimestamp +
+                ", dataVersion=" + dataVersion +
+                ", channel=" + channel +
+                '}';
+    }
 }

@@ -1,7 +1,6 @@
 package com.zhaopeng.store.disk;
 
 import com.zhaopeng.common.TopicInfo;
-import com.zhaopeng.common.client.message.Message;
 import com.zhaopeng.common.client.message.SendMessage;
 import com.zhaopeng.common.protocol.body.PullMesageInfo;
 import com.zhaopeng.remoting.common.ServiceThread;
@@ -29,22 +28,15 @@ public class DiskMessageStore implements MessageStore {
 
     private static final Logger logger = LoggerFactory.getLogger(ServiceThread.class);
 
-
     private final MessageStoreConfig messageStoreConfig;
     private final CommitLog commitLog;
-
     private final ConcurrentHashMap<String/* topic */, ConcurrentHashMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
-
-
     private final FlushConsumeQueueService flushConsumeQueueService;
-
     private final CleanCommitLogService cleanCommitLogService;
-
     private final CleanConsumeQueueService cleanConsumeQueueService;
-
     private final ReputMessageService reputMessageService;
 
-    private final IndexService indexService;
+
 
     private final SystemClock systemClock;
 
@@ -82,7 +74,6 @@ public class DiskMessageStore implements MessageStore {
         this.messageStoreConfig = new MessageStoreConfig();
 
         consumeQueueTable = new ConcurrentHashMap<>();
-        indexService = new IndexService();
         cleanConsumeQueueService = new CleanConsumeQueueService();
         cleanCommitLogService = new CleanCommitLogService();
         flushConsumeQueueService = new FlushConsumeQueueService();
@@ -123,9 +114,7 @@ public class DiskMessageStore implements MessageStore {
         return cleanConsumeQueueService;
     }
 
-    public IndexService getIndexService() {
-        return indexService;
-    }
+
 
     public boolean isShutdown() {
         return shutdown;
@@ -139,25 +128,6 @@ public class DiskMessageStore implements MessageStore {
         return systemClock;
     }
 
-    /**
-     * 这里设计有问题，添加进去就是二进制，取出来也是二进制，
-     * 附加信息放在head中，比如下一次拉取的offset
-     *
-     * @param pull
-     * @return
-     */
-    @Override
-    public Message getMessage(PullMesageInfo pull) {
-        GetMessageResult getMessageResult = this.getMessage(pull.getTopic(), pull.getQueueId(), pull.getQueueOffset(), pull.getMaxMsgNums());
-        Message message = new Message();
-        //  message.setBody(r);
-
-        message.setTopic(pull.getTopic());
-
-        message.setCommitLogOffset(pull.getCommitOffset());
-
-        return message;
-    }
 
     @Override
     public GetMessageResult getMessageContent(PullMesageInfo pull) {
@@ -288,7 +258,6 @@ public class DiskMessageStore implements MessageStore {
     private long nextOffsetCorrection(long oldOffset, long newOffset) {
         long nextOffset = oldOffset;
         nextOffset = newOffset;
-
         return nextOffset;
     }
 
@@ -296,19 +265,14 @@ public class DiskMessageStore implements MessageStore {
     public boolean isOSPageCacheBusy() {
         long begin = this.getCommitLog().getBeginTimeInLock();
         long diff = this.systemClock.now() - begin;
-
         if (diff < 10000000 //
                 && diff > this.messageStoreConfig.getOsPageCacheBusyTimeOutMills()) {
             return true;
         }
-
         return false;
     }
-
     @Override
     public void start() {
-
-
         flushConsumeQueueService.start();
 
         cleanCommitLogService.start();
@@ -319,11 +283,22 @@ public class DiskMessageStore implements MessageStore {
 
         shutdown = false;
     }
-
     @Override
     public void shutDown() {
 
-        shutdown = true;
+        if (!this.shutdown) {
+            this.shutdown = true;
+
+            try {
+
+                Thread.sleep(1000 * 3);
+            } catch (InterruptedException e) {
+                logger.error("shutdown Exception, ", e);
+            }
+            this.commitLog.shutdown();
+            this.reputMessageService.shutdown();
+            this.flushConsumeQueueService.shutdown();
+        }
     }
 
 

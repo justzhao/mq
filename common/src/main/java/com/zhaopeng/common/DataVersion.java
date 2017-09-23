@@ -27,4 +27,12 @@ public class DataVersion {
     public void setCounter(AtomicLong counter) {
         this.counter = counter;
     }
+
+    @Override
+    public String toString() {
+        return "DataVersion{" +
+                "timestatmp=" + timestatmp +
+                ", counter=" + counter +
+                '}';
+    }
 }

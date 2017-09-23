@@ -45,7 +45,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
      */
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
-        logger.info("receive request {}  {}", ctx, request);
+       // logger.info("receive request {}  {}", ctx, request);
         switch (request.getCode()) {
             case RequestCode.REGISTER_BROKER:
                 return this.registerBroker(ctx, request);
