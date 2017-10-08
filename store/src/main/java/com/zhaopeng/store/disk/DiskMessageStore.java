@@ -216,7 +216,7 @@ public class DiskMessageStore implements MessageStore {
                             long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();
 
-                            if (isTheBatchFull(sizePy, maxMsgNums, getResult.getBufferTotalSize(), getResult.getMessageCount(), true)) {
+                            if (isTheBatchFull( maxMsgNums, getResult.getBufferTotalSize(), getResult.getMessageCount())) {
                                 break;
                             }
                             SelectMapedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
@@ -285,12 +285,9 @@ public class DiskMessageStore implements MessageStore {
     }
     @Override
     public void shutDown() {
-
         if (!this.shutdown) {
             this.shutdown = true;
-
             try {
-
                 Thread.sleep(1000 * 3);
             } catch (InterruptedException e) {
                 logger.error("shutdown Exception, ", e);
@@ -493,7 +490,7 @@ public class DiskMessageStore implements MessageStore {
     }
 
 
-    private boolean isTheBatchFull(int sizePy, int maxMsgNums, int bufferTotal, int messageTotal, boolean isInDisk) {
+    private boolean isTheBatchFull(int maxMsgNums, int bufferTotal, int messageTotal) {
 
         if (0 == bufferTotal || 0 == messageTotal) {
             return false;
@@ -521,7 +518,6 @@ public class DiskMessageStore implements MessageStore {
     public void doDispatch(QueueRequest req) {
 
         //
-
         DiskMessageStore.this.putMessagePostionInfo(req.getTopic(), req.getQueueId(), req.getCommitLogOffset(), req.getMsgSize(),
                 req.getStoreTimestamp(), req.getConsumeQueueOffset());
 
@@ -563,8 +559,6 @@ public class DiskMessageStore implements MessageStore {
                 } catch (InterruptedException e) {
                 }
             }
-
-
             super.shutdown();
         }
 
