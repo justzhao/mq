@@ -1,7 +1,6 @@
 package com.zhaopeng.store.commit;
 
 import com.zhaopeng.common.UtilAll;
-import com.zhaopeng.remoting.common.ServiceThread;
 import com.zhaopeng.store.config.MessageStoreConfig;
 import com.zhaopeng.store.disk.DiskMessageStore;
 import com.zhaopeng.store.disk.SelectMapedBufferResult;
@@ -15,11 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static com.zhaopeng.store.util.MessageUtil.CHARSET_UTF8;
 import static com.zhaopeng.store.util.MessageUtil.MSG_ID_LENGTH;
@@ -36,7 +32,6 @@ public class CommitLog {
     private HashMap<String/* topic-queueid */, Long/* offset */> topicQueueTable = new HashMap<String, Long>(1024);
     private final MapedFileQueue mapedFileQueue;
     private final MessageStoreConfig messageStoreConfig;
-    private final FlushCommitLogService flushCommitLogService;
 
     private final AppendMessageCallback appendMessageCallback;
     private final DiskMessageStore defaultMessageStore;
@@ -44,7 +39,6 @@ public class CommitLog {
     public CommitLog(MessageStoreConfig config, DiskMessageStore messageStore) {
         this.messageStoreConfig = config;
 
-        this.flushCommitLogService = new GroupCommitService();
         this.defaultMessageStore = messageStore;
         this.mapedFileQueue = new MapedFileQueue(messageStoreConfig.getStorePathCommitLog(),
                 messageStoreConfig.getMapedFileSizeCommitLog());
@@ -114,21 +108,6 @@ public class CommitLog {
             beginTimeInLock = 0;
         }
 
-        GroupCommitService service = (GroupCommitService) this.flushCommitLogService;
-        if (msg.isWaitStoreMsgOK()) {
-            GroupCommitRequest request = new GroupCommitRequest(result.getWroteOffset() + result.getWroteBytes());
-            service.putRequest(request);
-            boolean flushOK = request.waitForFlush(messageStoreConfig.getSyncFlushTimeout());
-            if (!flushOK) {
-                log.error("do groupcommit, wait for flush failed, topic: " + msg.getTopic()
-                        + " client address: " + msg.getHost());
-                PutMessageResult putMessageResult = new PutMessageResult(PutMessageStatus.FLUSH_DISK_TIMEOUT);
-                return putMessageResult;
-            }
-        } else {
-            service.wakeup();
-        }
-
         PutMessageResult putMessageResult = new PutMessageResult(PutMessageStatus.PUT_OK);
         return putMessageResult;
     }
@@ -140,140 +119,18 @@ public class CommitLog {
     }
 
     public void start() {
-        this.flushCommitLogService.start();
+
+
     }
 
 
     public void shutdown() {
        
-        this.flushCommitLogService.shutdown();
+
     }
 
-    abstract class FlushCommitLogService extends ServiceThread {
-    }
-
-    public static class GroupCommitRequest {
-        private final long nextOffset;
-        private final CountDownLatch countDownLatch = new CountDownLatch(1);
-        private volatile boolean flushOK = false;
 
 
-        public GroupCommitRequest(long nextOffset) {
-            this.nextOffset = nextOffset;
-        }
-
-
-        public long getNextOffset() {
-            return nextOffset;
-        }
-
-
-        public void wakeupCustomer(final boolean flushOK) {
-            this.flushOK = flushOK;
-            this.countDownLatch.countDown();
-        }
-
-
-        public boolean waitForFlush(long timeout) {
-            try {
-                this.countDownLatch.await(timeout, TimeUnit.MILLISECONDS);
-                return this.flushOK;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-    }
-
-    class GroupCommitService extends FlushCommitLogService {
-        private volatile List<GroupCommitRequest> requestsWrite = new ArrayList<>();
-        private volatile List<GroupCommitRequest> requestsRead = new ArrayList<>();
-
-        public void putRequest(final GroupCommitRequest request) {
-            synchronized (this) {
-                this.requestsWrite.add(request);
-                if (!this.hasNotified) {
-                    this.hasNotified = true;
-                    this.notify();
-                }
-            }
-        }
-        private void swapRequests() {
-            List<GroupCommitRequest> tmp = this.requestsWrite;
-            this.requestsWrite = this.requestsRead;
-            this.requestsRead = tmp;
-        }
-
-
-        private void doCommit() {
-            if (!this.requestsRead.isEmpty()) {
-                for (GroupCommitRequest req : this.requestsRead) {
-
-                    boolean flushOK = false;
-                    for (int i = 0; (i < 2) && !flushOK; i++) {
-                        flushOK = (CommitLog.this.mapedFileQueue.getCommittedWhere() >= req.getNextOffset());
-
-                        if (!flushOK) {
-                            CommitLog.this.mapedFileQueue.commit(0);
-                        }
-                    }
-
-                    req.wakeupCustomer(flushOK);
-                }
-
-
-                this.requestsRead.clear();
-            } else {
-
-                CommitLog.this.mapedFileQueue.commit(0);
-            }
-        }
-
-
-        public void run() {
-            log.info(this.getServiceName() + " service started");
-
-            while (!this.isStoped()) {
-                try {
-                    this.waitForRunning(0);
-                    this.doCommit();
-                } catch (Exception e) {
-                    log.warn(this.getServiceName() + " service has exception. ", e);
-                }
-            }
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                CommitLog.log.warn("GroupCommitService Exception, ", e);
-            }
-
-            synchronized (this) {
-                this.swapRequests();
-            }
-
-            this.doCommit();
-
-            log.info(this.getServiceName() + " service end");
-        }
-
-
-        @Override
-        protected void onWaitEnd() {
-            this.swapRequests();
-        }
-
-
-        @Override
-        public String getServiceName() {
-            return GroupCommitService.class.getSimpleName();
-        }
-
-
-        @Override
-        public long getJointime() {
-            return 1000 * 60 * 5;
-        }
-    }
 
     public MapedFileQueue getMapedFileQueue() {
         return mapedFileQueue;
@@ -283,9 +140,7 @@ public class CommitLog {
         return messageStoreConfig;
     }
 
-    public FlushCommitLogService getFlushCommitLogService() {
-        return flushCommitLogService;
-    }
+
 
 
     public long getConfirmOffset() {
@@ -417,10 +272,7 @@ public class CommitLog {
             // 7 PHYSICALOFFSET
             this.msgStoreItemMemory.putLong(fileFromOffset + byteBuffer.position());
 
-            // 9 BORNTIMESTAMP
-            //   this.msgStoreItemMemory.putLong(msgInner.getBornTimestamp());
-            // 10 BORNHOST
-            //    this.msgStoreItemMemory.put(msgInner.getBornHostBytes());
+
             // 11 STORETIMESTAMP
             this.msgStoreItemMemory.putLong(msgInner.getStoreTimestamp());
             // 15 BODY

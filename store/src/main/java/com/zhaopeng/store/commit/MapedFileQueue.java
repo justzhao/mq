@@ -28,7 +28,6 @@ public class MapedFileQueue {
     private final List<MapedFile> mapedFiles = new ArrayList<>();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    // private final AllocateMapedFileService allocateMapedFileService;
 
     private long committedWhere = 0;
 
@@ -38,7 +37,6 @@ public class MapedFileQueue {
     public MapedFileQueue(final String storePath, int mapedFileSize) {
         this.storePath = storePath;
         this.mapedFileSize = mapedFileSize;
-        //      this.allocateMapedFileService = allocateMapedFileService;
     }
 
 
@@ -208,9 +206,6 @@ public class MapedFileQueue {
 
         if (createOffset != -1 && needCreate) {
             String nextFilePath = this.storePath + File.separator + UtilAll.offset2FileName(createOffset);
-            String nextNextFilePath =
-                    this.storePath + File.separator
-                            + UtilAll.offset2FileName(createOffset + this.mapedFileSize);
             MapedFile mapedFile = null;
 
             try {
