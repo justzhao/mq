@@ -8,25 +8,16 @@ import java.util.List;
  * Created by zhaopeng on 2017/8/13.
  */
 public class GetMessageResult {
-
-
     private final List<SelectMapedBufferResult> messageMapedList =
             new ArrayList<>(100);
-
     private final List<ByteBuffer> messageBufferList = new ArrayList<ByteBuffer>(100);
-
     private GetMessageStatus status;
     private long nextBeginOffset;
     private long minOffset;
     private long maxOffset;
-
     private int bufferTotalSize = 0;
-
     private boolean suggestPullingFromSlave = false;
-
     private int msgCount4Commercial = 0;
-
-
     public List<SelectMapedBufferResult> getMessageMapedList() {
         return messageMapedList;
     }
@@ -97,8 +88,6 @@ public class GetMessageResult {
         this.messageMapedList.add(mapedBuffer);
         this.messageBufferList.add(mapedBuffer.getByteBuffer());
         this.bufferTotalSize += mapedBuffer.getSize();
-    //    this.msgCount4Commercial += (int) Math.ceil(
-           //     mapedBuffer.getSize() / BrokerStatsManager.SIZE_PER_COUNT);
     }
     public void release() {
         for (SelectMapedBufferResult select : this.messageMapedList) {

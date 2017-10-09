@@ -44,10 +44,8 @@ public class ConsumeQueue {
         this.storePath = storePath;
         this.mapedFileSize = mapedFileSize;
         this.defaultMessageStore = defaultMessageStore;
-
         this.topic = topic;
         this.queueId = queueId;
-
         String queueDir = this.storePath//
                 + File.separator + topic//
                 + File.separator + queueId;//
@@ -146,16 +144,12 @@ public class ConsumeQueue {
     public void putMessagePostionInfoWrapper(long offset, int size, long storeTimestamp,
                                              long logicOffset) {
         final int MaxRetries = 30;
-
         for (int i = 0; i < MaxRetries ; i++) {
             boolean result = this.putMessagePostionInfo(offset, size, logicOffset);
             if (result) {
-
                 return;
             }
-
             else {
-
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -163,8 +157,6 @@ public class ConsumeQueue {
                 }
             }
         }
-
-        // XXX: warn and notify me
         logger.error("[BUG]consume queue can not write, {} {}", this.topic, this.queueId);
 
     }
@@ -181,13 +173,9 @@ public class ConsumeQueue {
         this.byteBufferIndex.limit(CQStoreUnitSize);
         this.byteBufferIndex.putLong(offset);
         this.byteBufferIndex.putInt(size);
-//        this.byteBufferIndex.putLong(tagsCode);
-
         final long expectLogicOffset = cqOffset * CQStoreUnitSize;
-
         MapedFile mapedFile = this.mapedFileQueue.getLastMapedFile(expectLogicOffset);
         if (mapedFile != null) {
-
             if (mapedFile.isFirstCreateInQueue() && cqOffset != 0 && mapedFile.getWrotePostion() == 0) {
                 this.minLogicOffset = expectLogicOffset;
                 this.fillPreBlank(mapedFile, expectLogicOffset);
@@ -290,12 +278,9 @@ public class ConsumeQueue {
                         break;
                     }
                 }
-
-
                 if (mapedFileOffset == mapedFileSizeLogics) {
                     index++;
                     if (index >= mapedFiles.size()) {
-
                         logger.info("recover last consume queue file over, last maped file "
                                 + mapedFile.getFileName());
                         break;

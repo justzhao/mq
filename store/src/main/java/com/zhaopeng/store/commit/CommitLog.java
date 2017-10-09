@@ -198,8 +198,6 @@ public class CommitLog {
                 }
             }
         }
-
-
         private void swapRequests() {
             List<GroupCommitRequest> tmp = this.requestsWrite;
             this.requestsWrite = this.requestsRead;
@@ -443,7 +441,7 @@ public class CommitLog {
 
 
             /**
-             * 更新MessageQueue
+             * 更新MessageQueue，messageQueue 的offset+1
              */
             QueueRequest request = new QueueRequest(msgInner.getTopic(), msgInner.getQueueId(), fileFromOffset + byteBuffer.position()
                     , msgLen, System.currentTimeMillis(), queueOffset);

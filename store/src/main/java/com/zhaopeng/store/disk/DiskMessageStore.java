@@ -35,11 +35,7 @@ public class DiskMessageStore implements MessageStore {
     private final CleanCommitLogService cleanCommitLogService;
     private final CleanConsumeQueueService cleanConsumeQueueService;
     private final ReputMessageService reputMessageService;
-
-
-
     private final SystemClock systemClock;
-
     private volatile boolean shutdown = true;
 
     private List<TopicInfo> topics;
@@ -131,10 +127,7 @@ public class DiskMessageStore implements MessageStore {
 
     @Override
     public GetMessageResult getMessageContent(PullMesageInfo pull) {
-
-
         return getMessage(pull.getTopic(), pull.getQueueId(), pull.getQueueOffset(), pull.getMaxMsgNums());
-
     }
 
 
@@ -159,9 +152,7 @@ public class DiskMessageStore implements MessageStore {
         msg.setProperties(sendMessage.getMsg().getProperties());
         msg.setBornTimestamp(System.currentTimeMillis());
         msg.setHost(sendMessage.getHost());
-
         PutMessageResult result = this.commitLog.putMessage(msg);
-
         return result;
     }
 
@@ -274,13 +265,9 @@ public class DiskMessageStore implements MessageStore {
     @Override
     public void start() {
         flushConsumeQueueService.start();
-
         cleanCommitLogService.start();
-
         reputMessageService.start();
-
         commitLog.start();
-
         shutdown = false;
     }
     @Override
