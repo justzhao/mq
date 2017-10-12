@@ -1,8 +1,17 @@
 package com.zhaopeng.mq.consumer.impl;
 
+import com.zhaopeng.common.UtilAll;
+import com.zhaopeng.common.client.message.ConsumeFromWhere;
+import com.zhaopeng.common.client.message.MessageModel;
 import com.zhaopeng.mq.consumer.MQPushConsumer;
+import com.zhaopeng.mq.consumer.MQPushConsumerInner;
 import com.zhaopeng.mq.consumer.listener.MessageListener;
+import com.zhaopeng.mq.exception.MQClientException;
+import com.zhaopeng.mq.store.AllocateMessageQueueStrategy;
+import com.zhaopeng.mq.store.OffsetStore;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -10,12 +19,127 @@ import java.util.concurrent.ExecutorService;
  */
 public class DefaultMQPushConsumer implements MQPushConsumer {
 
+
+    protected final transient MQPushConsumerInner mqPushConsumerInner;
+
+
+
+
+    /**
+     * 集群消费和广播消费，集群消费：同一个分组的消费者会共享他们的订阅的主题，也就是同一个topic
+     * 的消息只会被同一个分组的一个客户端消费。
+     * 广播消费：每个客户端都会消费自己订阅的信息
+     */
+    private MessageModel messageModel = MessageModel.CLUSTERING;
+
+
+    private ConsumeFromWhere consumeFromWhere = ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET;
+
+
+
+    private String consumeTimestamp = UtilAll.timeMillisToHumanString3(System.currentTimeMillis() - (1000 * 60 * 30));
+
+
+    /**
+     *  用来决定怎么分配mq给每个消费者
+     */
+    private AllocateMessageQueueStrategy allocateMessageQueueStrategy;
+
+    /**
+     * Subscription relationship
+     */
+    private Map<String /* topic */, String /* sub expression */> subscription = new HashMap<String, String>();
+
+    /**
+     * 消费消息的监听类，开发者实现
+     */
+    private MessageListener messageListener;
+
+    /**
+     * 用来存放消费进度的类
+     */
+    private OffsetStore offsetStore;
+
+    /**
+     * Minimum consumer thread number
+     */
+    private int consumeThreadMin = 20;
+
+    /**
+     * Max consumer thread number
+     */
+    private int consumeThreadMax = 64;
+
+    /**
+     * Threshold for dynamic adjustment of the number of thread pool
+     */
+    private long adjustThreadPoolNumsThreshold = 100000;
+
+    /**
+     * Concurrently max span offset.it has no effect on sequential consumption
+     */
+    private int consumeConcurrentlyMaxSpan = 2000;
+
+    /**
+     * Flow control threshold
+     */
+    private int pullThresholdForQueue = 1000;
+
+    /**
+     * Message pull Interval
+     */
+    private long pullInterval = 0;
+
+    /**
+     * 批量消费个数
+     */
+    private int consumeMessageBatchMaxSize = 1;
+
+    /**
+     * 批量拉取消息消息的个数
+     */
+    private int pullBatchSize = 32;
+
+    /**
+     * Whether update subscription relationship when every pull
+     */
+    private boolean postSubscriptionWhenPull = false;
+
+    /**
+     * Whether the unit of subscription group
+     */
+    private boolean unitMode = false;
+
+    /**
+     * Max re-consume times. -1 means 16 times.
+     * </p>
+     *
+     * If messages are re-consumed more than {@link #maxReconsumeTimes} before success, it's be directed to a deletion
+     * queue waiting.
+     */
+    private int maxReconsumeTimes = -1;
+
+    /**
+     * Suspending pulling time for cases requiring slow pulling like flow-control scenario.
+     */
+    private long suspendCurrentQueueTimeMillis = 1000;
+
+    /**
+     * Maximum amount of time in minutes a message may block the consuming thread.
+     */
+    private long consumeTimeout = 15;
+
     private final ExecutorService executorService;
     // namesrv的地址
     private String addr;
 
-    public DefaultMQPushConsumer(ExecutorService executorService) {
+    public DefaultMQPushConsumer(MQPushConsumerInner mqPushConsumerInner, AllocateMessageQueueStrategy allocateMessageQueueStrategy, MessageListener messageListener, OffsetStore offsetStore, ExecutorService executorService, String addr) {
+        this.mqPushConsumerInner = mqPushConsumerInner;
+        this.allocateMessageQueueStrategy = allocateMessageQueueStrategy;
+        this.messageListener = messageListener;
+        this.offsetStore = offsetStore;
         this.executorService = executorService;
+        this.addr = addr;
     }
 
 
@@ -31,6 +155,11 @@ public class DefaultMQPushConsumer implements MQPushConsumer {
 
     @Override
     public void registerMessageListener(MessageListener messageListener) {
+
+    }
+
+    @Override
+    public void subscribe(String topic, String subExpression) throws MQClientException {
 
     }
 }
