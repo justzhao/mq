@@ -5,6 +5,7 @@ import com.zhaopeng.common.client.message.MessageModel;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.client.message.SubscriptionData;
 import com.zhaopeng.mq.consumer.MQPushConsumerInner;
+import com.zhaopeng.mq.consumer.listener.MessageListener;
 
 import java.util.Set;
 
@@ -12,6 +13,13 @@ import java.util.Set;
  * Created by zhaopeng on 2017/10/11.
  */
 public class MQPushConsumerInnerImpl implements MQPushConsumerInner {
+
+
+    private final DefaultMQPushConsumer defaultMQPushConsumer;
+
+    public MQPushConsumerInnerImpl(DefaultMQPushConsumer defaultMQPushConsumer) {
+        this.defaultMQPushConsumer = defaultMQPushConsumer;
+    }
 
 
     @Override
@@ -53,4 +61,10 @@ public class MQPushConsumerInnerImpl implements MQPushConsumerInner {
     public boolean isUnitMode() {
         return false;
     }
+
+    @Override
+    public void registerMessageListener(MessageListener messageListener) {
+
+    }
+
 }

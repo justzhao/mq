@@ -4,6 +4,7 @@ import com.zhaopeng.common.client.message.ConsumeFromWhere;
 import com.zhaopeng.common.client.message.MessageModel;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.client.message.SubscriptionData;
+import com.zhaopeng.mq.consumer.listener.MessageListener;
 
 import java.util.Set;
 
@@ -29,5 +30,7 @@ public interface MQPushConsumerInner {
     boolean isSubscribeTopicNeedUpdate(final String topic);
 
     boolean isUnitMode();
+
+    public void registerMessageListener(MessageListener messageListener) ;
 
 }

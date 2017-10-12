@@ -17,7 +17,7 @@ public interface MQPushConsumer {
     void registerMessageListener(MessageListener messageListener);
 
 
-    void subscribe(final String topic, final String subExpression) throws MQClientException;
+    void subscribe(final String topic) throws MQClientException;
 
 
 }

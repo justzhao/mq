@@ -7,12 +7,9 @@ import com.zhaopeng.mq.consumer.MQPushConsumer;
 import com.zhaopeng.mq.consumer.MQPushConsumerInner;
 import com.zhaopeng.mq.consumer.listener.MessageListener;
 import com.zhaopeng.mq.exception.MQClientException;
+import com.zhaopeng.mq.rebalance.AllocateMessageQueueAveragely;
 import com.zhaopeng.mq.store.AllocateMessageQueueStrategy;
 import com.zhaopeng.mq.store.OffsetStore;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Created by zhaopeng on 2017/10/11.
@@ -21,8 +18,6 @@ public class DefaultMQPushConsumer implements MQPushConsumer {
 
 
     protected final transient MQPushConsumerInner mqPushConsumerInner;
-
-
 
 
     /**
@@ -36,19 +31,14 @@ public class DefaultMQPushConsumer implements MQPushConsumer {
     private ConsumeFromWhere consumeFromWhere = ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET;
 
 
-
     private String consumeTimestamp = UtilAll.timeMillisToHumanString3(System.currentTimeMillis() - (1000 * 60 * 30));
 
 
     /**
-     *  用来决定怎么分配mq给每个消费者
+     * 用来决定怎么分配mq给每个消费者
      */
     private AllocateMessageQueueStrategy allocateMessageQueueStrategy;
 
-    /**
-     * Subscription relationship
-     */
-    private Map<String /* topic */, String /* sub expression */> subscription = new HashMap<String, String>();
 
     /**
      * 消费消息的监听类，开发者实现
@@ -113,7 +103,7 @@ public class DefaultMQPushConsumer implements MQPushConsumer {
     /**
      * Max re-consume times. -1 means 16 times.
      * </p>
-     *
+     * <p>
      * If messages are re-consumed more than {@link #maxReconsumeTimes} before success, it's be directed to a deletion
      * queue waiting.
      */
@@ -129,17 +119,16 @@ public class DefaultMQPushConsumer implements MQPushConsumer {
      */
     private long consumeTimeout = 15;
 
-    private final ExecutorService executorService;
+
     // namesrv的地址
     private String addr;
 
-    public DefaultMQPushConsumer(MQPushConsumerInner mqPushConsumerInner, AllocateMessageQueueStrategy allocateMessageQueueStrategy, MessageListener messageListener, OffsetStore offsetStore, ExecutorService executorService, String addr) {
-        this.mqPushConsumerInner = mqPushConsumerInner;
-        this.allocateMessageQueueStrategy = allocateMessageQueueStrategy;
-        this.messageListener = messageListener;
-        this.offsetStore = offsetStore;
-        this.executorService = executorService;
+
+    public DefaultMQPushConsumer(String addr) {
+
+        this.allocateMessageQueueStrategy = new AllocateMessageQueueAveragely();
         this.addr = addr;
+        this.mqPushConsumerInner = new MQPushConsumerInnerImpl(this);
     }
 
 
@@ -155,11 +144,106 @@ public class DefaultMQPushConsumer implements MQPushConsumer {
 
     @Override
     public void registerMessageListener(MessageListener messageListener) {
+        this.messageListener = messageListener;
+        this.mqPushConsumerInner.registerMessageListener(messageListener);
 
     }
 
     @Override
-    public void subscribe(String topic, String subExpression) throws MQClientException {
+    public void subscribe(String topic) throws MQClientException {
 
     }
+
+
+    public AllocateMessageQueueStrategy getAllocateMessageQueueStrategy() {
+        return allocateMessageQueueStrategy;
+    }
+
+    public void setAllocateMessageQueueStrategy(AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
+        this.allocateMessageQueueStrategy = allocateMessageQueueStrategy;
+    }
+
+    public int getConsumeConcurrentlyMaxSpan() {
+        return consumeConcurrentlyMaxSpan;
+    }
+
+    public void setConsumeConcurrentlyMaxSpan(int consumeConcurrentlyMaxSpan) {
+        this.consumeConcurrentlyMaxSpan = consumeConcurrentlyMaxSpan;
+    }
+
+    public ConsumeFromWhere getConsumeFromWhere() {
+        return consumeFromWhere;
+    }
+
+    public void setConsumeFromWhere(ConsumeFromWhere consumeFromWhere) {
+        this.consumeFromWhere = consumeFromWhere;
+    }
+
+    public int getConsumeMessageBatchMaxSize() {
+        return consumeMessageBatchMaxSize;
+    }
+
+    public void setConsumeMessageBatchMaxSize(int consumeMessageBatchMaxSize) {
+        this.consumeMessageBatchMaxSize = consumeMessageBatchMaxSize;
+    }
+
+
+    public int getConsumeThreadMax() {
+        return consumeThreadMax;
+    }
+
+    public void setConsumeThreadMax(int consumeThreadMax) {
+        this.consumeThreadMax = consumeThreadMax;
+    }
+
+    public int getConsumeThreadMin() {
+        return consumeThreadMin;
+    }
+
+    public void setConsumeThreadMin(int consumeThreadMin) {
+        this.consumeThreadMin = consumeThreadMin;
+    }
+
+
+    public MessageListener getMessageListener() {
+        return messageListener;
+    }
+
+    public void setMessageListener(MessageListener messageListener) {
+        this.messageListener = messageListener;
+    }
+
+    public MessageModel getMessageModel() {
+        return messageModel;
+    }
+
+    public void setMessageModel(MessageModel messageModel) {
+        this.messageModel = messageModel;
+    }
+
+    public int getPullBatchSize() {
+        return pullBatchSize;
+    }
+
+    public void setPullBatchSize(int pullBatchSize) {
+        this.pullBatchSize = pullBatchSize;
+    }
+
+    public long getPullInterval() {
+        return pullInterval;
+    }
+
+    public void setPullInterval(long pullInterval) {
+        this.pullInterval = pullInterval;
+    }
+
+    public int getPullThresholdForQueue() {
+        return pullThresholdForQueue;
+    }
+
+    public void setPullThresholdForQueue(int pullThresholdForQueue) {
+        this.pullThresholdForQueue = pullThresholdForQueue;
+    }
+
+
 }
