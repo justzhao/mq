@@ -33,4 +33,5 @@ public interface MQPushConsumerInner {
 
     public void registerMessageListener(MessageListener messageListener) ;
 
-}
+    public void subscribe(String topic);
+    }

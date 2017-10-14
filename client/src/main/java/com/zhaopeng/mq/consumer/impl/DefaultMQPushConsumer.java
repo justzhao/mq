@@ -3,6 +3,7 @@ package com.zhaopeng.mq.consumer.impl;
 import com.zhaopeng.common.UtilAll;
 import com.zhaopeng.common.client.message.ConsumeFromWhere;
 import com.zhaopeng.common.client.message.MessageModel;
+import com.zhaopeng.mq.consumer.AbstractMQConsumer;
 import com.zhaopeng.mq.consumer.MQPushConsumer;
 import com.zhaopeng.mq.consumer.MQPushConsumerInner;
 import com.zhaopeng.mq.consumer.listener.MessageListener;
@@ -10,11 +11,12 @@ import com.zhaopeng.mq.exception.MQClientException;
 import com.zhaopeng.mq.rebalance.AllocateMessageQueueAveragely;
 import com.zhaopeng.mq.store.AllocateMessageQueueStrategy;
 import com.zhaopeng.mq.store.OffsetStore;
+import com.zhaopeng.remoting.netty.NettyClientConfig;
 
 /**
  * Created by zhaopeng on 2017/10/11.
  */
-public class DefaultMQPushConsumer implements MQPushConsumer {
+public class DefaultMQPushConsumer extends AbstractMQConsumer implements MQPushConsumer {
 
 
     protected final transient MQPushConsumerInner mqPushConsumerInner;
@@ -124,11 +126,12 @@ public class DefaultMQPushConsumer implements MQPushConsumer {
     private String addr;
 
 
-    public DefaultMQPushConsumer(String addr) {
+    public DefaultMQPushConsumer(NettyClientConfig config,String addr) {
+        super(config);
 
         this.allocateMessageQueueStrategy = new AllocateMessageQueueAveragely();
         this.addr = addr;
-        this.mqPushConsumerInner = new MQPushConsumerInnerImpl(this);
+        this.mqPushConsumerInner = new MQPushConsumerInnerImpl(this, addr);
     }
 
 
@@ -151,6 +154,7 @@ public class DefaultMQPushConsumer implements MQPushConsumer {
 
     @Override
     public void subscribe(String topic) throws MQClientException {
+        mqPushConsumerInner.subscribe(topic);
 
     }
 

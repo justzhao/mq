@@ -17,7 +17,7 @@ public class MQPushConsumerInnerImpl implements MQPushConsumerInner {
 
     private final DefaultMQPushConsumer defaultMQPushConsumer;
 
-    public MQPushConsumerInnerImpl(DefaultMQPushConsumer defaultMQPushConsumer) {
+    public MQPushConsumerInnerImpl(DefaultMQPushConsumer defaultMQPushConsumer,String addr) {
         this.defaultMQPushConsumer = defaultMQPushConsumer;
     }
 
@@ -67,4 +67,8 @@ public class MQPushConsumerInnerImpl implements MQPushConsumerInner {
 
     }
 
+    @Override
+    public void subscribe(String topic) {
+
+    }
 }
