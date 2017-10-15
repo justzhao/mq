@@ -5,7 +5,11 @@ import com.zhaopeng.common.client.message.MessageModel;
 import com.zhaopeng.common.client.message.MessageQueue;
 import com.zhaopeng.common.client.message.SubscriptionData;
 import com.zhaopeng.mq.consumer.MQPushConsumerInner;
+import com.zhaopeng.mq.consumer.RebalanceImpl;
 import com.zhaopeng.mq.consumer.listener.MessageListener;
+import com.zhaopeng.mq.consumer.push.RebalancePushImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
@@ -14,8 +18,12 @@ import java.util.Set;
  */
 public class MQPushConsumerInnerImpl implements MQPushConsumerInner {
 
+    private static final Logger logger = LoggerFactory.getLogger(MQPushConsumerInnerImpl.class);
+
 
     private final DefaultMQPushConsumer defaultMQPushConsumer;
+
+    private final RebalanceImpl rebalanceImpl = new RebalancePushImpl(this);
 
     public MQPushConsumerInnerImpl(DefaultMQPushConsumer defaultMQPushConsumer,String addr) {
         this.defaultMQPushConsumer = defaultMQPushConsumer;
@@ -69,6 +77,20 @@ public class MQPushConsumerInnerImpl implements MQPushConsumerInner {
 
     @Override
     public void subscribe(String topic) {
+
+
+        try {
+            SubscriptionData subscriptionData = new SubscriptionData();
+            subscriptionData.setTopic(topic);
+            this.rebalanceImpl.getSubscriptionInner().put(topic, subscriptionData);
+
+        } catch (Exception e) {
+
+            logger.error("subscription exception {}",e);
+        }
+
+
+       // 2582661
 
     }
 }

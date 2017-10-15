@@ -3,16 +3,12 @@ package com.zhaopeng.common.client.message;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class SubscriptionData implements Comparable<SubscriptionData> {
     public final static String SUB_ALL = "*";
     private boolean classFilterMode = false;
     private String topic;
     private String subString;
-    private Set<String> tagsSet = new HashSet<String>();
-    private Set<Integer> codeSet = new HashSet<Integer>();
+
     private long subVersion = System.currentTimeMillis();
     private String expressionType;
 
@@ -53,13 +49,7 @@ public class SubscriptionData implements Comparable<SubscriptionData> {
         this.subString = subString;
     }
 
-    public Set<String> getTagsSet() {
-        return tagsSet;
-    }
 
-    public void setTagsSet(Set<String> tagsSet) {
-        this.tagsSet = tagsSet;
-    }
 
     public long getSubVersion() {
         return subVersion;
@@ -69,13 +59,7 @@ public class SubscriptionData implements Comparable<SubscriptionData> {
         this.subVersion = subVersion;
     }
 
-    public Set<Integer> getCodeSet() {
-        return codeSet;
-    }
 
-    public void setCodeSet(Set<Integer> codeSet) {
-        this.codeSet = codeSet;
-    }
 
     public boolean isClassFilterMode() {
         return classFilterMode;
@@ -98,9 +82,9 @@ public class SubscriptionData implements Comparable<SubscriptionData> {
         final int prime = 31;
         int result = 1;
         result = prime * result + (classFilterMode ? 1231 : 1237);
-        result = prime * result + ((codeSet == null) ? 0 : codeSet.hashCode());
+
         result = prime * result + ((subString == null) ? 0 : subString.hashCode());
-        result = prime * result + ((tagsSet == null) ? 0 : tagsSet.hashCode());
+
         result = prime * result + ((topic == null) ? 0 : topic.hashCode());
         result = prime * result + ((expressionType == null) ? 0 : expressionType.hashCode());
         return result;
@@ -117,11 +101,7 @@ public class SubscriptionData implements Comparable<SubscriptionData> {
         SubscriptionData other = (SubscriptionData) obj;
         if (classFilterMode != other.classFilterMode)
             return false;
-        if (codeSet == null) {
-            if (other.codeSet != null)
-                return false;
-        } else if (!codeSet.equals(other.codeSet))
-            return false;
+
         if (subString == null) {
             if (other.subString != null)
                 return false;
@@ -129,11 +109,7 @@ public class SubscriptionData implements Comparable<SubscriptionData> {
             return false;
         if (subVersion != other.subVersion)
             return false;
-        if (tagsSet == null) {
-            if (other.tagsSet != null)
-                return false;
-        } else if (!tagsSet.equals(other.tagsSet))
-            return false;
+
         if (topic == null) {
             if (other.topic != null)
                 return false;
@@ -149,9 +125,14 @@ public class SubscriptionData implements Comparable<SubscriptionData> {
 
     @Override
     public String toString() {
-        return "SubscriptionData [classFilterMode=" + classFilterMode + ", topic=" + topic + ", subString="
-            + subString + ", tagsSet=" + tagsSet + ", codeSet=" + codeSet + ", subVersion=" + subVersion
-            + ", expressionType=" + expressionType + "]";
+        return "SubscriptionData{" +
+                "classFilterMode=" + classFilterMode +
+                ", topic='" + topic + '\'' +
+                ", subString='" + subString + '\'' +
+                ", subVersion=" + subVersion +
+                ", expressionType='" + expressionType + '\'' +
+                ", filterClassSource='" + filterClassSource + '\'' +
+                '}';
     }
 
     @Override

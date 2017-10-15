@@ -1,6 +1,7 @@
 package com.zhaopeng.common.client.message;
 
 import java.net.SocketAddress;
+import java.util.HashMap;
 
 /**
  * Created by zhaopeng on 2017/4/23.
@@ -128,5 +129,12 @@ public class MessageInfo extends Message {
 
     public void setPreparedTransactionOffset(long preparedTransactionOffset) {
         this.preparedTransactionOffset = preparedTransactionOffset;
+    }
+    public String getProperty(final String name) {
+        if (null == this.properties) {
+            this.properties = new HashMap<String, String>();
+        }
+
+        return this.properties.get(name);
     }
 }

@@ -6,4 +6,6 @@ package com.zhaopeng.common.message;
 public class MessageConst {
 
     public static final String PROPERTY_WAIT_STORE_MSG_OK = "WAIT";
+
+    public static final String PROPERTY_MAX_OFFSET = "MAX_OFFSET";
 }
