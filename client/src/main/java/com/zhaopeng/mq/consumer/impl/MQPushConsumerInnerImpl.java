@@ -82,7 +82,7 @@ public class MQPushConsumerInnerImpl implements MQPushConsumerInner {
         try {
             SubscriptionData subscriptionData = new SubscriptionData();
             subscriptionData.setTopic(topic);
-            this.rebalanceImpl.getSubscriptionInner().put(topic, subscriptionData);
+       //     this.rebalanceImpl.getSubscriptionInner().put(topic, subscriptionData);
 
         } catch (Exception e) {
 

@@ -1,5 +1,6 @@
 package com.zhaopeng.mq.consumer;
 
+import com.zhaopeng.common.All;
 import com.zhaopeng.common.client.message.*;
 import com.zhaopeng.mq.consumer.impl.MQPushClientOperation;
 import com.zhaopeng.mq.store.AllocateMessageQueueStrategy;
@@ -30,75 +31,20 @@ public abstract class RebalanceImpl {
 
     public RebalanceImpl(String consumerGroup, MessageModel messageModel,
                          AllocateMessageQueueStrategy allocateMessageQueueStrategy,
-                         MQPushClientOperation mQClientFactory) {
+                         MQPushClientOperation mqPushClientOperation) {
         this.consumerGroup = consumerGroup;
         this.messageModel = messageModel;
         this.allocateMessageQueueStrategy = allocateMessageQueueStrategy;
-        this.mqPushClientOperation = mQClientFactory;
+        this.mqPushClientOperation = mqPushClientOperation;
     }
 
-/*
-    public void unlock(final MessageQueue mq, final boolean oneway) {
-        FindBrokerResult findBrokerResult = this.mQClientFactory.findBrokerAddressInSubscribe(mq.getBrokerName(), MixAll.MASTER_ID, true);
-        if (findBrokerResult != null) {
-            UnlockBatchRequestBody requestBody = new UnlockBatchRequestBody();
-            requestBody.setConsumerGroup(this.consumerGroup);
-            requestBody.setClientId(this.mQClientFactory.getClientId());
-            requestBody.getMqSet().add(mq);
 
-            try {
-                this.mQClientFactory.getMQClientAPIImpl().unlockBatchMQ(findBrokerResult.getBrokerAddr(), requestBody, 1000, oneway);
-                log.warn("unlock messageQueue. group:{}, clientId:{}, mq:{}",
-                        this.consumerGroup,
-                        this.mQClientFactory.getClientId(),
-                        mq);
-            } catch (Exception e) {
-                logger.error("unlockBatchMQ exception, " + mq, e);
-            }
-        }
-    }
-*/
-
- /*   public void unlockAll(final boolean oneway) {
-        HashMap<String, Set<MessageQueue>> brokerMqs = this.buildProcessQueueTableByBrokerName();
-
-        for (final Map.Entry<String, Set<MessageQueue>> entry : brokerMqs.entrySet()) {
-            final String brokerName = entry.getKey();
-            final Set<MessageQueue> mqs = entry.getValue();
-
-            if (mqs.isEmpty())
-                continue;
-
-            FindBrokerResult findBrokerResult = this.mQClientFactory.findBrokerAddressInSubscribe(brokerName, MixAll.MASTER_ID, true);
-            if (findBrokerResult != null) {
-                UnlockBatchRequestBody requestBody = new UnlockBatchRequestBody();
-                requestBody.setConsumerGroup(this.consumerGroup);
-                requestBody.setClientId(this.mQClientFactory.getClientId());
-                requestBody.setMqSet(mqs);
-
-                try {
-                    this.mQClientFactory.getMQClientAPIImpl().unlockBatchMQ(findBrokerResult.getBrokerAddr(), requestBody, 1000, oneway);
-
-                    for (MessageQueue mq : mqs) {
-                        ProcessQueue processQueue = this.processQueueTable.get(mq);
-                        if (processQueue != null) {
-                            processQueue.setLocked(false);
-                            log.info("the message queue unlock OK, Group: {} {}", this.consumerGroup, mq);
-                        }
-                    }
-                } catch (Exception e) {
-                    log.error("unlockBatchMQ exception, " + mqs, e);
-                }
-            }
-        }
-    }
-*/
     private HashMap<String/* brokerName */, Set<MessageQueue>> buildProcessQueueTableByBrokerName() {
         HashMap<String, Set<MessageQueue>> result = new HashMap<String, Set<MessageQueue>>();
         for (MessageQueue mq : this.processQueueTable.keySet()) {
             Set<MessageQueue> mqs = result.get(mq.getBrokerName());
             if (null == mqs) {
-                mqs = new HashSet<MessageQueue>();
+                mqs = new HashSet<>();
                 result.put(mq.getBrokerName(), mqs);
             }
 
@@ -108,92 +54,7 @@ public abstract class RebalanceImpl {
         return result;
     }
 
-/*
-    public boolean lock(final MessageQueue mq) {
-        FindBrokerResult findBrokerResult = this.mQClientFactory.findBrokerAddressInSubscribe(mq.getBrokerName(), MixAll.MASTER_ID, true);
-        if (findBrokerResult != null) {
-            LockBatchRequestBody requestBody = new LockBatchRequestBody();
-            requestBody.setConsumerGroup(this.consumerGroup);
-            requestBody.setClientId(this.mQClientFactory.getClientId());
-            requestBody.getMqSet().add(mq);
 
-            try {
-                Set<MessageQueue> lockedMq =
-                        this.mQClientFactory.getMQClientAPIImpl().lockBatchMQ(findBrokerResult.getBrokerAddr(), requestBody, 1000);
-                for (MessageQueue mmqq : lockedMq) {
-                    ProcessQueue processQueue = this.processQueueTable.get(mmqq);
-                    if (processQueue != null) {
-                        processQueue.setLocked(true);
-                        processQueue.setLastLockTimestamp(System.currentTimeMillis());
-                    }
-                }
-
-                boolean lockOK = lockedMq.contains(mq);
-                log.info("the message queue lock {}, {} {}",
-                        lockOK ? "OK" : "Failed",
-                        this.consumerGroup,
-                        mq);
-                return lockOK;
-            } catch (Exception e) {
-                log.error("lockBatchMQ exception, " + mq, e);
-            }
-        }
-
-        return false;
-    }
-
-    public void lockAll() {
-        HashMap<String, Set<MessageQueue>> brokerMqs = this.buildProcessQueueTableByBrokerName();
-
-        Iterator<Map.Entry<String, Set<MessageQueue>>> it = brokerMqs.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, Set<MessageQueue>> entry = it.next();
-            final String brokerName = entry.getKey();
-            final Set<MessageQueue> mqs = entry.getValue();
-
-            if (mqs.isEmpty())
-                continue;
-
-            FindBrokerResult findBrokerResult = this.mQClientFactory.findBrokerAddressInSubscribe(brokerName, MixAll.MASTER_ID, true);
-            if (findBrokerResult != null) {
-                LockBatchRequestBody requestBody = new LockBatchRequestBody();
-                requestBody.setConsumerGroup(this.consumerGroup);
-                requestBody.setClientId(this.mQClientFactory.getClientId());
-                requestBody.setMqSet(mqs);
-
-                try {
-                    Set<MessageQueue> lockOKMQSet =
-                            this.mQClientFactory.getMQClientAPIImpl().lockBatchMQ(findBrokerResult.getBrokerAddr(), requestBody, 1000);
-
-                    for (MessageQueue mq : lockOKMQSet) {
-                        ProcessQueue processQueue = this.processQueueTable.get(mq);
-                        if (processQueue != null) {
-                            if (!processQueue.isLocked()) {
-                                log.info("the message queue locked OK, Group: {} {}", this.consumerGroup, mq);
-                            }
-
-                            processQueue.setLocked(true);
-                            processQueue.setLastLockTimestamp(System.currentTimeMillis());
-                        }
-                    }
-                    for (MessageQueue mq : mqs) {
-                        if (!lockOKMQSet.contains(mq)) {
-                            ProcessQueue processQueue = this.processQueueTable.get(mq);
-                            if (processQueue != null) {
-                                processQueue.setLocked(false);
-                                log.warn("the message queue locked Failed, Group: {} {}", this.consumerGroup, mq);
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    log.error("lockBatchMQ exception, " + mqs, e);
-                }
-            }
-        }
-    }
-*/
-
-/*
     public void doRebalance(final boolean isOrder) {
         //topic 对应的订阅信息
         Map<String, SubscriptionData> subTable = this.getSubscriptionInner();
@@ -212,14 +73,14 @@ public abstract class RebalanceImpl {
 
         this.truncateMessageQueueNotMyTopic();
     }
-*/
+
 
     public ConcurrentMap<String, SubscriptionData> getSubscriptionInner() {
         return subscriptionInner;
     }
 
     // 根据topic 均衡消费者和mq。
-/*
+
     private void rebalanceByTopic(final String topic, final boolean isOrder) {
         switch (messageModel) {
             // 如果是广播消费.根据topic获取到所有的mq，
@@ -243,15 +104,15 @@ public abstract class RebalanceImpl {
             //如果是集群消费,根据group和topic 获取当前topic所有的 consumerId,然后制定 mq 和consumer的分配策略,默认是平均分配
             case CLUSTERING: {
                 Set<MessageQueue> mqSet = this.topicSubscribeInfoTable.get(topic);
-                List<String> cidAll = this.mQClientFactory.findConsumerIdList(topic, consumerGroup);
+                List<String> cidAll = this.mqPushClientOperation.findConsumerIdList(topic, consumerGroup);
                 if (null == mqSet) {
-                    if (!topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
-                        log.warn("doRebalance, {}, but the topic[{}] not exist.", consumerGroup, topic);
+                    if (!topic.startsWith(All.RETRY_GROUP_TOPIC_PREFIX)) {
+                        logger.warn("doRebalance, {}, but the topic[{}] not exist.", consumerGroup, topic);
                     }
                 }
 
                 if (null == cidAll) {
-                    log.warn("doRebalance, {} {}, get consumer id list failed", consumerGroup, topic);
+                    logger.warn("doRebalance, {} {}, get consumer id list failed", consumerGroup, topic);
                 }
 
                 if (mqSet != null && cidAll != null) {
@@ -267,11 +128,11 @@ public abstract class RebalanceImpl {
                     try {
                         allocateResult = strategy.allocate(
                                 this.consumerGroup,
-                                this.mQClientFactory.getClientId(),
+                                this.mqPushClientOperation.getClientId(),
                                 mqAll,
                                 cidAll);
                     } catch (Throwable e) {
-                        log.error("AllocateMessageQueueStrategy.allocate Exception. allocateMessageQueueStrategyName={}", strategy.getName(),
+                        logger.error("AllocateMessageQueueStrategy.allocate Exception. allocateMessageQueueStrategyName={}", strategy.getName(),
                                 e);
                         return;
                     }
@@ -283,9 +144,9 @@ public abstract class RebalanceImpl {
                     // 更新processQueueTable 并且发起请求
                     boolean changed = this.updateProcessQueueTableInRebalance(topic, allocateResultSet, isOrder);
                     if (changed) {
-                        log.info(
+                        logger.info(
                                 "rebalanced result changed. allocateMessageQueueStrategyName={}, group={}, topic={}, clientId={}, mqAllSize={}, cidAllSize={}, rebalanceResultSize={}, rebalanceResultSet={}",
-                                strategy.getName(), consumerGroup, topic, this.mQClientFactory.getClientId(), mqSet.size(), cidAll.size(),
+                                strategy.getName(), consumerGroup, topic, this.mqPushClientOperation.getClientId(), mqSet.size(), cidAll.size(),
                                 allocateResultSet.size(), allocateResultSet);
                         this.messageQueueChanged(topic, mqSet, allocateResultSet);
                     }
@@ -296,7 +157,7 @@ public abstract class RebalanceImpl {
                 break;
         }
     }
-*/
+
 
     private void truncateMessageQueueNotMyTopic() {
         Map<String, SubscriptionData> subTable = this.getSubscriptionInner();
@@ -313,7 +174,7 @@ public abstract class RebalanceImpl {
         }
     }
 
- /*   private boolean updateProcessQueueTableInRebalance(final String topic, final Set<MessageQueue> mqSet,
+    private boolean updateProcessQueueTableInRebalance(final String topic, final Set<MessageQueue> mqSet,
                                                        final boolean isOrder) {
         boolean changed = false;
 
@@ -329,10 +190,10 @@ public abstract class RebalanceImpl {
                     if (this.removeUnnecessaryMessageQueue(mq, pq)) {
                         it.remove();
                         changed = true;
-                        log.info("doRebalance, {}, remove unnecessary mq, {}", consumerGroup, mq);
+                        logger.info("doRebalance, {}, remove unnecessary mq, {}", consumerGroup, mq);
                     }
                 } else if (pq.isPullExpired()) {
-                    switch (this.consumeType()) {
+     /*               switch (this.consumeType()) {
                         case CONSUME_ACTIVELY:
                             break;
                         case CONSUME_PASSIVELY:
@@ -340,13 +201,13 @@ public abstract class RebalanceImpl {
                             if (this.removeUnnecessaryMessageQueue(mq, pq)) {
                                 it.remove();
                                 changed = true;
-                                log.error("[BUG]doRebalance, {}, remove unnecessary mq, {}, because pull is pause, so try to fixed it",
+                                logger.error("[BUG]doRebalance, {}, remove unnecessary mq, {}, because pull is pause, so try to fixed it",
                                         consumerGroup, mq);
                             }
                             break;
                         default:
                             break;
-                    }
+                    }*/
                 }
             }
         }
@@ -354,10 +215,10 @@ public abstract class RebalanceImpl {
         List<PullRequest> pullRequestList = new ArrayList<PullRequest>();
         for (MessageQueue mq : mqSet) {
             if (!this.processQueueTable.containsKey(mq)) {
-                if (isOrder && !this.lock(mq)) {
+            /*    if (isOrder && !this.lock(mq)) {
                     log.warn("doRebalance, {}, add a new mq failed, {}, because lock failed", consumerGroup, mq);
                     continue;
-                }
+                }*/
 
                 this.removeDirtyOffset(mq);
                 ProcessQueue pq = new ProcessQueue();
@@ -366,9 +227,9 @@ public abstract class RebalanceImpl {
                 if (nextOffset >= 0) {
                     ProcessQueue pre = this.processQueueTable.putIfAbsent(mq, pq);
                     if (pre != null) {
-                        log.info("doRebalance, {}, mq already exists, {}", consumerGroup, mq);
+                        logger.info("doRebalance, {}, mq already exists, {}", consumerGroup, mq);
                     } else {
-                        log.info("doRebalance, {}, add a new mq, {}", consumerGroup, mq);
+                        logger.info("doRebalance, {}, add a new mq, {}", consumerGroup, mq);
                         PullRequest pullRequest = new PullRequest();
                         pullRequest.setConsumerGroup(consumerGroup);
                         pullRequest.setNextOffset(nextOffset);
@@ -378,7 +239,7 @@ public abstract class RebalanceImpl {
                         changed = true;
                     }
                 } else {
-                    log.warn("doRebalance, {}, add new mq failed, {}", consumerGroup, mq);
+                    logger.warn("doRebalance, {}, add new mq failed, {}", consumerGroup, mq);
                 }
             }
         }
@@ -387,7 +248,7 @@ public abstract class RebalanceImpl {
 
         return changed;
     }
-*/
+
     public abstract void messageQueueChanged(final String topic, final Set<MessageQueue> mqAll,
                                              final Set<MessageQueue> mqDivided);
 

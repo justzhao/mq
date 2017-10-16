@@ -370,5 +370,11 @@ public class MQAdminClientAPIImpl implements MQAdminClientAPI {
 
     }
 
+    public List<String> getConsumerIdListByGroup(
+            final String addr,
+            final String consumerGroup,
+            final long timeoutMillis) {
+        return null;
+    }
 
 }
